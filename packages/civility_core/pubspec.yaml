@@ -1,0 +1,26 @@
+# =============================================================================
+# civility_core — NSosyal Nezaket Motoru (paylaşılan çekirdek)
+# Dosya: packages/civility_core/pubspec.yaml
+#
+# SAF DART. Flutter'a bağımlı DEĞİLDİR — bu kasıtlıdır.
+# Aynı motor iki yerde çalışır:
+#   • mobile/  → Flutter uygulaması, cihaz üzerinde, çevrimdışı
+#   • server/  → Dart HTTP servisi, LLM çıktısını doğrulamak için
+# Tek kaynak, tek davranış. Sunucu ile istemcinin farklı karar vermesi
+# mümkün değildir çünkü ikisi de bu paketi çağırır.
+# =============================================================================
+name: civility_core
+description: Türkçe saldırgan dil tespiti ve bağlam çözümlemesi — saf Dart çekirdek.
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+# Bağımlılık yok. Motor tamamen kendi kendine yeterlidir; bu, cihaz üzerinde
+# çalışma ve denetlenebilirlik iddialarının teknik dayanağıdır.
+dependencies:
+
+dev_dependencies:
+  lints: ^4.0.0
+  test: ^1.25.0

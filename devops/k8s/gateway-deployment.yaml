@@ -1,0 +1,178 @@
+# =============================================================================
+# TurkiyeMesajlasma - Gateway Kubernetes Deployment (Stateless)
+# Dosya: devops/k8s/gateway-deployment.yaml
+#
+# Amaç: WebSocket sunucularının otomatik ölçeklenmesini (HPA) ve 
+# kesintisiz güncellemelerini (RollingUpdate) sağlamak.
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-ws
+  namespace: turkiye-mesajlasma
+  labels:
+    app: gateway-ws
+    tier: edge
+spec:
+  replicas: 3 # Başlangıç replika sayısı. HPA tarafından 300'e kadar çıkarılabilir.
+  selector:
+    matchLabels:
+      app: gateway-ws
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%       # Güncelleme sırasında eklenebilecek max pod
+      maxUnavailable: 0   # Sıfır kesinti (Zero-downtime) için 0
+  template:
+    metadata:
+      labels:
+        app: gateway-ws
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        # Anti-Affinity: Aynı node'a iki gateway pod'u koymamaya çalış
+        # Bu, bir donanım arızasında etkilenen kullanıcı sayısını azaltır
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - gateway-ws
+              topologyKey: kubernetes.io/hostname
+      
+      # Yüksek I/O için Epoll optimizasyonları
+      securityContext:
+        sysctls:
+        - name: net.core.somaxconn
+          value: "65535"
+        - name: net.ipv4.tcp_max_syn_backlog
+          value: "65535"
+        - name: net.ipv4.ip_local_port_range
+          value: "1024 65535"
+
+      containers:
+      - name: gateway-ws
+        image: turkiyemesajlasma/gateway-ws:v1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: websocket
+        - containerPort: 9090
+          name: grpc
+        - containerPort: 9091
+          name: metrics
+        
+        envFrom:
+        - configMapRef:
+            name: gateway-config
+        - secretRef:
+            name: gateway-secrets
+            
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+
+        # Readiness Probe: Pod'un trafik almaya hazır olup olmadığını denetler
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        # Liveness Probe: Pod donarsa K8s tarafından yeniden başlatılır
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+
+        # Graceful Shutdown: Bağlantıları koparmadan kapatmak için K8s'e bekleme süresi verilir
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+
+---
+# =============================================================================
+# Gateway Horizontal Pod Autoscaler (HPA)
+# CPU %70'i veya Memory %80'i geçerse Pod sayısını otomatik artırır.
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: gateway-ws-hpa
+  namespace: turkiye-mesajlasma
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gateway-ws
+  minReplicas: 3
+  maxReplicas: 300
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+# =============================================================================
+# LoadBalancer Service - Dışarıdan WebSocket bağlantılarını alır.
+# Anycast IP (BGP) entegrasyonu bu noktada externalTrafficPolicy: Local ile yapılır.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-ws-lb
+  namespace: turkiye-mesajlasma
+  annotations:
+    # AWS/GCP/Azure LoadBalancer Optimizasyonları (Örnek: AWS NLB)
+    service.beta.kubernetes.io/aws-load-balancer-type: "external"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+spec:
+  type: LoadBalancer
+  # Client'ın gerçek IP'sini (X-Forwarded-For olmadan) gateway'e iletmek için şart:
+  externalTrafficPolicy: Local 
+  selector:
+    app: gateway-ws
+  ports:
+  - name: ws
+    port: 443
+    targetPort: 8080
+    protocol: TCP

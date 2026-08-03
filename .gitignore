@@ -1,0 +1,58 @@
+# ── Rust ──────────────────────────────────────────────────────────────────────
+/target/
+**/*.rs.bk
+
+# ── Flutter / Dart ────────────────────────────────────────────────────────────
+mobile/build/
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.pub-cache/
+mobile/.pub/
+mobile/**/generated_plugin_registrant.dart
+
+# Platform derleme çıktıları
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/key.properties
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/linux/flutter/ephemeral/
+mobile/macos/Flutter/ephemeral/
+mobile/windows/flutter/ephemeral/
+
+# ── Saf Dart paketleri (packages/, server/) ───────────────────────────────────
+# pubspec.lock uygulamalar için DEPOYA GİRER (yeniden üretilebilir derleme),
+# kütüphaneler için girmez.
+.dart_tool/
+packages/*/pubspec.lock
+server/.dart_tool/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+*.iws
+.DS_Store
+
+# ── Gizli bilgiler — ASLA depoya girmemeli ────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.jks
+*.keystore
+secrets/
+
+# ── Model yapıtları (büyük ikili dosyalar) ────────────────────────────────────
+# ONNX modelleri Git LFS ile veya sürüm eklerinde dağıtılır, depoda tutulmaz.
+*.onnx
+*.pt
+*.bin
+!**/vocab.txt

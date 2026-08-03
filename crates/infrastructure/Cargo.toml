@@ -1,0 +1,26 @@
+[package]
+name = "infrastructure"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+domain = { path = "../domain" }
+proto = { path = "../proto" }
+prost = { workspace = true }
+prost-types = { workspace = true }
+futures = { workspace = true }
+tokio-stream = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true }
+scylla = { workspace = true }
+fred = { workspace = true }
+clickhouse = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+bytes = { workspace = true }
+metrics = { workspace = true }
+dashmap = { workspace = true }

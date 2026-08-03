@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Türkiye Mesajlaşma - Mavi Vatan">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Türkiye Mesajlaşma">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Türkiye Mesajlaşma</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    /* Tarayıcıda telefon simülasyonu (Light Theme) */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #F0F2F5; /* WhatsApp benzeri açık gri arka plan */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Telefon çerçevesi */
+    #phone-frame {
+      width: 390px;
+      height: 844px;
+      max-height: 95vh;
+      max-width: 95vw;
+      border-radius: 40px;
+      overflow: hidden;
+      position: relative;
+      background: #FFFFFF;
+      box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.1),
+        0 0 0 10px #FFFFFF,
+        0 0 0 12px #E30A17; /* İnce kırmızı dış çerçeve */
+    }
+
+    /* Flutter uygulaması bu div içine render edilir */
+    #flutter-view {
+      width: 100%;
+      height: 100%;
+      border-radius: 30px;
+      overflow: hidden;
+      background: #FFFFFF;
+    }
+
+    /* Responsive - küçük ekranlarda tam ekran */
+    @media (max-width: 420px) {
+      #phone-frame {
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        max-width: 100vw;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+      }
+      #flutter-view {
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="phone-frame">
+    <div id="flutter-view"></div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
