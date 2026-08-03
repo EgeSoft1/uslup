@@ -144,14 +144,12 @@ Kullanıcı yazıyor (her tuş vuruşu)
 │  5. Öneri üretimi      Yerel, deterministik yeniden yazım             │
 └────────────────────────────────────────────────────────────────────────┘
    │
-   ▼  yalnızca kullanıcı "daha iyi öneri" derse ve ONAY VERİRSE
-┌─────────────────────────── SUNUCUDA ──────────────────────────────────┐
-│  LLM ile akıcı yeniden yazım                                          │
-│  → dönen öneri AYNI MOTORLA yeniden ölçülür; geçemeyen atılır         │
-└────────────────────────────────────────────────────────────────────────┘
-   │
    ▼
 Kullanıcı seçer → gönderir → anonim sinyal → topluluk sağlığı paneli
+
+        ⚠ SUNUCU ADIMI YOKTUR. Hattın tamamı cihazda biter.
+        Bulut kademesi yazılmış, ölçülmüş ve 3 Ağustos'ta kasıtlı olarak
+        kaldırılmıştır — gerekçe: `03_LLM_SERVISI.md`.
 ```
 
 **Ölçülen performans:** ortalama **323 µs** / çözümleme (her iki örüntü
@@ -177,7 +175,7 @@ Tek ürün, üç tema maddesi — dağınık özellik listesi değil, tek akış
 | YZ destekli içerik moderasyonu | Cihaz-üstü Türkçe toksisite sınıflandırıcı | ✅ Çalışıyor |
 | Duygu analizi | Bağlam/niyet çözümleme katmanı | ✅ Çalışıyor |
 | **Nefret söylemi tespiti** | **Kimlik hedefli kuruluş katmanı** | ✅ **Çalışıyor** |
-| Büyük Dil Modelleri (LLM) | Yeniden yazma önerisi (bulut kademesi) | 🔜 Planlı |
+| Büyük Dil Modelleri (LLM) | — | ❌ **Kasıtlı olarak kapsam dışı** (`03_LLM_SERVISI.md`) |
 | YZ destekli topluluk yönetimi | Topluluk sağlığı paneli | 🔜 Planlı |
 | Spam/bot tespiti | — | ❌ Kapsam dışı (yol haritası) |
 | YZ tabanlı arama | — | ❌ Kapsam dışı |
@@ -218,10 +216,11 @@ teslimatının çekirdeğidir.
   doldurur. Dilim F1 %96,8, **kesinlik %100** (20 masum kimlik cümlesinin
   hiçbiri işaretlenmiyor)
 - **Ölçüm altyapısı**: 330 etiketli örnek, kesinlik/duyarlılık/F1/F0.5
-- **LLM yeniden yazma servisi** — doğrulama kapısıyla (`server/`)
+- ~~LLM yeniden yazma servisi~~ — yazıldı, ölçüldü, **kasıtlı olarak
+  kaldırıldı** (3 Ağustos). Gerekçe: `03_LLM_SERVISI.md`
 - Yerel yeniden yazma önerisi
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) **+ sohbet mesaj kutusu**
-- **172 test geçiyor** (101 çekirdek + 50 servis + 21 mobil), 0 analiz uyarısı
+- **111 test geçiyor** (101 çekirdek + 10 mobil), 0 analiz uyarısı
 - Ölçülen performans: 323 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
 
 ### Devralınan varlıklar (önceki mesajlaşma projesinden)
@@ -236,7 +235,10 @@ teslimatının çekirdeğidir.
   hakem uyumu (kappa) ölçülmedi. Nefret dilimi için bu bir kat daha kritik.
 - **Cümleler arası gönderge çözümlemesi** — "bunların soyunu kurutmak lazım"
   gibi kimliğin önceki cümlede geçtiği durumlar kaçıyor
-- LLM servisinin **gerçek API anahtarıyla** uçtan uca doğrulaması
+- **Yerel yeniden yazıcının akıcılığı** — kelime ikamesi morfoloji
+  farkındalığından yoksun ("aptalsın" → "yanlış", olması gereken
+  "haksızsın"). Bulut kademesi kaldırıldığı için bu sınır artık
+  Türkçe'ye özel dönüşümlerle kapatılacak (`03_LLM_SERVISI.md` §3)
 - Topluluk sağlığı paneli
 - Rust backend **derlenmiyor** — kapsam dışı bırakıldı (`02_TEKNIK_BORC.md` §5)
 - Kullanıcı testi, erişilebilirlik değerlendirmesi

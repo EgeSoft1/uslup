@@ -102,13 +102,13 @@ Raporun ana bölümleri ve kaynakları:
 |---|---|
 | Problem tanımı | `00_URUN_TANIMI.md` §2 |
 | Yenilikçi yön | `00_URUN_TANIMI.md` §3 |
-| Sistem mimarisi | `00_URUN_TANIMI.md` §4 + `03_LLM_SERVISI.md` §1–2 |
+| Sistem mimarisi | `00_URUN_TANIMI.md` §4 (tamamı cihaz üstü) |
 | Yöntem | `packages/civility_core/` kaynak kodu ve yorumları |
 | Doğrulama / metrikler | **`04_MODEL_DEGERLENDIRME.md`** — kesinlik/duyarlılık/F1 |
 | Model karşılaştırması | `04_MODEL_DEGERLENDIRME.md` §3.3 (katman A/B) |
-| Etik ve mahremiyet | `00_URUN_TANIMI.md` §6 + `03_LLM_SERVISI.md` §6 |
+| Etik ve mahremiyet | `00_URUN_TANIMI.md` §6 + `03_LLM_SERVISI.md` §2 |
 | Performans | ~174 µs ölçümü |
-| Büyük dil modeli kullanımı | `03_LLM_SERVISI.md` §3–5 |
+| Büyük dil modeli kullanımı | `03_LLM_SERVISI.md` — **neden kullanmadığımız** |
 
 ---
 
@@ -124,9 +124,13 @@ durulmaz. Öncelik sırası:
    (`bin/evaluate.dart --karsilastir`). Sinir ağının deterministik katmandan
    daha iyi olduğu iddiası ancak bu karşılaştırmayla kanıtlanabilir.
 2. ~~**LLM yeniden yazma** — sunucu tarafı, kullanıcı onaylı.~~
-   ✅ **Tamamlandı (1 Ağustos).** `server/` — 48 test, doğrulama kapısı
-   dahil. Bkz. `03_LLM_SERVISI.md`. Kalan tek iş: gerçek API anahtarıyla
-   uçtan uca duman testi.
+   ❌ **Kaldırıldı (3 Ağustos).** Yazıldı ve ölçüldü (50 test, doğrulama
+   kapısı dahil), sonra kasıtlı olarak kapsam dışına alındı: üçüncü taraf
+   API bağımlılığı ve "metin cihazdan çıkmaz" iddiasına eklediği istisna
+   nedeniyle. Gerekçe: `03_LLM_SERVISI.md`.
+   **Yerine:** yerel yeniden yazıcıya morfoloji farkındalığı — ikinci şahıs
+   bildirme eki taşıyan ikame ("aptalsın" → "haksızsın"), edimbilimsel aile
+   başına cümle şablonları. Ölçümü mevcut altyapıyla yapılabilir.
 3. **Topluluk sağlığı paneli** — anonim toplulaştırılmış sinyaller.
 4. **Kullanıcı testi** — 5–8 kişi, görev tabanlı. Teslimat listesindeki
    *"kullanılabilirlik testi sonuçları"* ve *"kullanıcı araştırması özeti"*
@@ -145,7 +149,7 @@ durulmaz. Öncelik sırası:
 | 1 | Teknik rapor | ⬜ Şablon indirilecek |
 | 2 | Sunum dosyası | ⬜ |
 | 3 | Kullanıcı senaryoları | ⬜ |
-| 4 | Çalışan prototip | 🟩 Nezaket Koçu ekranı + çalışan LLM servisi |
+| 4 | Çalışan prototip | 🟩 Nezaket Koçu ekranı + sohbet kutusu, tamamen cihaz üstü |
 | 5 | Kaynak kod | 🟩 Git deposu kuruldu (`main`, 276 dosya); uzak depoya push kaldı |
 | 6 | Proje / demo videosu | ⬜ |
 | 7 | İş modeli ve gelir modeli | ⬜ (bu temada ağırlık %0 — kısa tutulabilir) |

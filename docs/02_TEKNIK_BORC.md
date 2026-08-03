@@ -182,7 +182,24 @@ maddesini karşılar hem de kanıtlanabilir olur. Mevcut Rust mimarisi raporda
 "ölçeklenebilirlik yaklaşımı" olarak anlatılır — ama **çalışıyor diye
 sunulmaz**.
 
-### ✅ KARAR: B uygulandı (1 Ağustos 2026)
+### ⏪ KARAR GÜNCELLEMESİ: B geri alındı, A'ya dönüldü (3 Ağustos 2026)
+
+Aşağıdaki B kararı uygulandı, çalıştı ve **kaldırıldı.** Servis yazıldı,
+50 testle doğrulandı, mobil uygulamaya bağlandı — sonra kapsam dışına alındı.
+
+Gerekçe iki maddede: üçüncü taraf bir dil modeline (ve ücretli API
+anahtarına) bağımlılık, ve bulut kademesinin *"metin cihazdan çıkmaz"*
+iddiasına eklediği istisna. İstisnasız bir mahremiyet iddiası, onay
+diyaloğuyla iyi savunulan bir istisnadan güçlüdür.
+
+Sonuç: **A seçeneği geçerli** — backend kapsam dışı, ürün tamamen cihaz
+üstü. Ayrıntılı karar kaydı: `docs/03_LLM_SERVISI.md`.
+
+Aşağıdaki bölüm tarihsel kayıt olarak korunuyor.
+
+---
+
+### ✅ KARAR: B uygulandı (1 Ağustos 2026) — *sonradan geri alındı*
 
 Servis **Dart** ile yazıldı, Rust ile değil. Gerekçe iki katmanlı:
 
