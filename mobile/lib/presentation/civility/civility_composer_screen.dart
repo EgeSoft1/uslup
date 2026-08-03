@@ -30,6 +30,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../core/network/rewrite_api_client.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_surfaces.dart';
@@ -50,6 +51,18 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
   CivilityAnalysis? _analysis;
   RewriteSuggestion? _suggestion;
 
+  // ── 3. KADEME: BULUT ───────────────────────────────────────────────────────
+  // Kademe 1 (tespit) ve 2 (yerel öneri) cihazda, ağsız çalışır. Bu kademe
+  // bir EKLENTİDİR: sunucu kapalıyken yukarıdaki hiçbir şey değişmez.
+  final RewriteApiClient _api = RewriteApiClient();
+
+  /// Bulut onayı OTURUM İÇİDİR, kalıcı değildir. Kasıtlı: kullanıcı her
+  /// oturumda metnin cihazdan çıkacağını bilerek onay verir. Bir kez verilip
+  /// unutulan onay, mahremiyet vaadini sessizce boşaltır.
+  bool _cloudConsent = false;
+  bool _cloudLoading = false;
+  CloudRewriteResult? _cloudResult;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +73,7 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
   void dispose() {
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
+    _api.close();
     super.dispose();
   }
 
@@ -74,6 +88,8 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
     setState(() {
       _analysis = analysis;
       _suggestion = null;
+      // Metin değişti; önceki bulut önerisi artık başka bir cümleye ait.
+      _cloudResult = null;
     });
 
     if (analysis.risk == RiskLevel.riskli || analysis.risk == RiskLevel.yuksek) {
@@ -84,6 +100,123 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
         setState(() => _suggestion = suggestion);
       });
     }
+  }
+
+  // ─── 3. Kademe: bulut yeniden yazımı ───────────────────────────────────────
+
+  /// Kullanıcı "daha iyi öneri" istediğinde çalışır.
+  ///
+  /// Sıralama önemli: ONAY ÖNCE alınır, metin sonra gönderilir. Onay
+  /// verilmezse hiçbir istek yapılmaz — metin cihazdan çıkmaz.
+  Future<void> _requestCloudRewrite() async {
+    final analysis = _analysis;
+    if (analysis == null || !analysis.hasFindings) return;
+
+    if (!_cloudConsent) {
+      final granted = await _askCloudConsent();
+      if (!mounted || granted != true) return;
+      setState(() => _cloudConsent = true);
+    }
+
+    // Gönderilen metni sabitle; kullanıcı beklerken yazmaya devam edebilir.
+    final sentText = _controller.text;
+    setState(() {
+      _cloudLoading = true;
+      _cloudResult = null;
+    });
+
+    final result = await _api.rewrite(text: sentText, consent: true);
+    if (!mounted) return;
+
+    // Metin değiştiyse sonuç artık başka bir cümleye ait — gösterme.
+    if (_controller.text != sentText) {
+      setState(() => _cloudLoading = false);
+      return;
+    }
+
+    setState(() {
+      _cloudLoading = false;
+      _cloudResult = result;
+    });
+  }
+
+  /// Mahremiyet vaadinin arayüzdeki karşılığı.
+  ///
+  /// Metin varsayılan akışta cihazdan çıkmaz; bu ekran o istisnayı
+  /// kullanıcıya açıkça anlatır ve rızasını ister.
+  Future<bool?> _askCloudConsent() {
+    final p = context.palette;
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: p.surfaceElevated,
+        shape: const RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
+        title: Row(
+          children: [
+            Icon(Icons.cloud_upload_rounded, size: 20, color: p.brandInk),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Metin sunucuya gönderilsin mi?',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: p.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Buraya kadar her şey cihazında yapıldı; yazdığın metin '
+              'telefondan hiç çıkmadı.\n\n'
+              'Daha akıcı bir alternatif için metnin bir dil modeline '
+              'gönderilmesi gerekiyor. Gelen öneri, sana gösterilmeden önce '
+              'aynı motorla yeniden ölçülür.',
+              style: TextStyle(
+                fontSize: 13.5,
+                height: 1.45,
+                color: p.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, size: 14, color: p.textTertiary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Metin diske yazılmaz ve loglanmaz. Onay bu oturum için '
+                    'geçerlidir.',
+                    style: TextStyle(fontSize: 11.5, color: p.textTertiary),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            style: TextButton.styleFrom(foregroundColor: p.textTertiary),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: p.brandInk,
+              foregroundColor: p.brandOn,
+            ),
+            child: const Text('Gönder'),
+          ),
+        ],
+      ),
+    );
   }
 
   Color _riskColor(AppPalette p, RiskLevel risk) => switch (risk) {
@@ -131,6 +264,10 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
                     if (_suggestion != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       _buildSuggestion(p, _suggestion!),
+                    ],
+                    if (analysis != null && analysis.hasFindings) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      _buildCloudTier(p),
                     ],
                     if (analysis != null && !analysis.hasFindings && hasText) ...[
                       const SizedBox(height: AppSpacing.md),
@@ -401,6 +538,234 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
         ],
       ),
     ).animate().fadeIn(duration: 250.ms).slideY(begin: 0.06, end: 0);
+  }
+
+  // ─── 3. Kademe arayüzü ─────────────────────────────────────────────────────
+
+  /// Bulut kademesi bloğu: düğme → yükleniyor → sonuç.
+  ///
+  /// Bu blok hiçbir durumda hata göstermez, yalnızca durum bildirir. Sunucu
+  /// kapalıyken bile ekran sakin kalır ve yerel öneri yerinde durur.
+  Widget _buildCloudTier(AppPalette p) {
+    final result = _cloudResult;
+
+    if (_cloudLoading) {
+      return _cloudShell(
+        p,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 15,
+              height: 15,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation(p.brandInk),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Text(
+                'Alternatif hazırlanıyor…',
+                style: TextStyle(fontSize: 13, color: p.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (result == null) {
+      return _cloudShell(
+        p,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Daha akıcı bir alternatif ister misin?',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: p.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Yukarıdaki öneri cihazında üretildi. Dil modeli daha doğal bir '
+              'ifade bulabilir — ama bunun için metnin sunucuya gitmesi gerekir.',
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.4,
+                color: p.textTertiary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _requestCloudRewrite,
+                icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+                label: const Text('Daha iyi öneri iste'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: p.brandInk,
+                  side: BorderSide(color: p.brandInk.withValues(alpha: 0.4)),
+                  minimumSize: const Size(0, 44),
+                  textStyle:
+                      const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final cloudSuggestions = result.cloudOnly;
+
+    return _cloudShell(
+      p,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                cloudSuggestions.isEmpty
+                    ? Icons.cloud_off_rounded
+                    : Icons.auto_awesome_rounded,
+                size: 15,
+                color: cloudSuggestions.isEmpty ? p.textTertiary : p.brandInk,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  result.status.label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: p.textPrimary,
+                  ),
+                ),
+              ),
+              if (result.rejectedByVerification > 0)
+                AppBadge(
+                  label: '${result.rejectedByVerification} elendi',
+                  color: p.warning,
+                  dense: true,
+                ),
+            ],
+          ),
+          if (result.detail != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              result.detail!,
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.4,
+                color: p.textTertiary,
+              ),
+            ),
+          ],
+          for (final suggestion in cloudSuggestions) ...[
+            const SizedBox(height: AppSpacing.md),
+            _buildCloudSuggestion(p, suggestion),
+          ],
+          if (result.servedBy != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Model: ${result.servedBy}',
+              style: TextStyle(fontSize: 10, color: p.textTertiary),
+            ),
+          ],
+          if (result.status.retryable) ...[
+            const SizedBox(height: AppSpacing.sm),
+            TextButton.icon(
+              onPressed: _requestCloudRewrite,
+              icon: const Icon(Icons.refresh_rounded, size: 15),
+              label: const Text('Yeniden dene'),
+              style: TextButton.styleFrom(
+                foregroundColor: p.textSecondary,
+                padding: EdgeInsets.zero,
+                textStyle: const TextStyle(fontSize: 12.5),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _cloudShell(AppPalette p, {required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: p.surfaceMuted,
+        borderRadius: AppRadius.xlAll,
+        border: Border.all(color: p.border),
+      ),
+      child: child,
+    ).animate().fadeIn(duration: 220.ms);
+  }
+
+  Widget _buildCloudSuggestion(AppPalette p, CloudSuggestion suggestion) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: p.surface,
+        borderRadius: AppRadius.lgAll,
+        border: Border.all(color: p.brandInk.withValues(alpha: 0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              AppBadge(label: 'bulut', color: p.brandInk, dense: true),
+              const Spacer(),
+              // Bu puan tahmin değil: öneri, kullanıcıya gösterilmeden önce
+              // sunucuda AYNI motordan geçirildi.
+              AppBadge(
+                label: '${suggestion.civilityScore} puan',
+                color: p.success,
+                dense: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            suggestion.text,
+            style: TextStyle(fontSize: 14.5, color: p.textPrimary, height: 1.4),
+          ),
+          if (suggestion.rationale.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              suggestion.rationale,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.35,
+                color: p.textTertiary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: p.brandInk,
+                foregroundColor: p.brandOn,
+                minimumSize: const Size(0, 40),
+                textStyle:
+                    const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+              ),
+              // Karar yine KULLANICININ.
+              onPressed: () => _loadExample(suggestion.text),
+              child: const Text('Bunu kullan'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildCleanState(AppPalette p) {
