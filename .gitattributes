@@ -1,0 +1,31 @@
+# =============================================================================
+# Satır sonu politikası
+#
+# Kaynak dosyalar depoda DAİMA LF ile saklanır ve çalışma kopyasında da LF
+# kalır. Bu, işletim sistemi karışık bir takımda "dosyanın tamamı değişmiş"
+# görünen sahte diff'leri önler — iki kişi aynı dosyaya dokunduğunda birleştirme
+# çakışması yaşanmaz.
+#
+# Windows varsayılanı (core.autocrlf=true) bu dosya olmadan devreye girer ve
+# checkout sırasında CRLF'e çevirir; `eol=lf` bunu açıkça bastırır.
+# =============================================================================
+
+* text=auto eol=lf
+
+# ── İkili dosyalar — dönüşüm uygulanmaz ──────────────────────────────────────
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.jar   binary
+*.ttf   binary
+*.otf   binary
+*.onnx  binary
+*.keystore binary
+*.jks   binary
+
+# ── Platform betikleri — kendi satır sonlarını korumalı ──────────────────────
+*.bat   text eol=crlf
+*.ps1   text eol=crlf
+gradlew text eol=lf
