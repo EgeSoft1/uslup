@@ -221,7 +221,7 @@ teslimatının çekirdeğidir.
 - **LLM yeniden yazma servisi** — doğrulama kapısıyla (`server/`)
 - Yerel yeniden yazma önerisi
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) **+ sohbet mesaj kutusu**
-- **159 test geçiyor** (101 çekirdek + 48 servis + 10 mobil), 0 analiz uyarısı
+- **172 test geçiyor** (101 çekirdek + 50 servis + 21 mobil), 0 analiz uyarısı
 - Ölçülen performans: 323 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
 
 ### Devralınan varlıklar (önceki mesajlaşma projesinden)

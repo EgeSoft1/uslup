@@ -14,7 +14,7 @@ Nezaket motoru `mobile/lib/ai/` altındaydı. Saf Dart olduğu (tek bir Flutter
 importu içermediği) doğrulandıktan sonra bağımsız bir pakete taşındı:
 
 ```
-packages/civility_core/     ← saf Dart, sıfır bağımlılık, 31 test
+packages/civility_core/     ← saf Dart, sıfır bağımlılık, 101 test
         │
         ├──► mobile/        ← Flutter uygulaması (cihaz üstü, çevrimdışı)
         └──► server/        ← Dart HTTP servisi (LLM doğrulaması)
@@ -41,6 +41,14 @@ Kademe 3 isteğe bağlıdır. Sunucu kapalıyken, ağ yokken veya API kotası
 bittiğinde 1. ve 2. kademe çalışmaya devam eder — ürün bozulmaz, sadece
 öneri kalitesi düşer. Bu bir yedeklilik tasarımı değil, **varsayılan
 tasarımdır**: bulut istisnadır.
+
+> **3 Ağustos 2026 — kademe 3 artık üründe.** Servis yazılmıştı ama mobil
+> uygulamadan erişilemiyordu; yalnızca `curl` ile gösterilebiliyordu. Nezaket
+> Koçu ekranına "Daha iyi öneri iste" düğmesi, onay diyaloğu ve bulut önerisi
+> kartları eklendi (`mobile/lib/core/network/rewrite_api_client.dart`).
+> İstemci istisna fırlatmaz: ağ/sunucu sorunları `kullanilamadi` durumu
+> olarak döner, yerel öneri yerinde kalır. Geçersiz anahtarla uçtan uca
+> doğrulandı.
 
 Yerel yeniden yazıcının sınırı bilinçlidir ve canlı çıktıda görülür:
 
@@ -163,8 +171,9 @@ etmiyor.
 
 | Ölçüm | Değer |
 |---|---|
-| `civility_core` testleri | 31/31 geçiyor |
-| `server` testleri | 48/48 geçiyor |
+| `civility_core` testleri | 101/101 geçiyor |
+| `server` testleri | 50/50 geçiyor |
+| `mobile` testleri | 21/21 geçiyor |
 | Analiz uyarısı (her iki paket) | 0 |
 | Ortalama çözümleme süresi | ~174 µs (16 ms bütçesinin %1'i) |
 | Mobil derleme | 0 hata, 0 uyarı |
