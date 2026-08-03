@@ -21,6 +21,7 @@ export 'src/eval/gold_case.dart';
 export 'src/eval/gold_dataset.dart';
 export 'src/lexicon/toxicity_lexicon.dart';
 export 'src/normalization/tokenizer.dart';
+export 'src/normalization/turkish_morphology.dart';
 export 'src/normalization/turkish_normalizer.dart';
 export 'src/rewrite/rewrite_suggester.dart';
 export 'src/eval/holdout_dataset.dart';
