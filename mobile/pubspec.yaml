@@ -19,34 +19,34 @@ dependencies:
   civility_core:
     path: ../packages/civility_core
 
-  # State Management (BLoC / Yüksek performanslı state yönetimi)
-  flutter_bloc: ^8.1.5
-  equatable: ^2.0.5
-
   # UI / UX
   cupertino_icons: ^1.0.6
   cached_network_image: ^3.3.1
   flutter_animate: ^4.5.0
   google_fonts: ^6.2.1
 
-  # Yerel Veritabanı (sqflite - basit ve stabil)
-  sqflite: ^2.3.0
-  path_provider: ^2.1.2
-
-  # FFI (Rust - Dart entegrasyonu)
-  ffi: ^2.1.2
-
-  # Ağ ve WebSocket
-  web_socket_channel: ^3.0.1
+  # Ağ — bulut kademesi (POST /v1/rewrite)
   dio: ^5.4.3
-  protobuf: ^3.1.0
 
   # QR Kod (oluşturma ve tarama)
   qr_flutter: ^4.1.0
   mobile_scanner: ^6.0.0
   pinput: ^6.0.2
   country_picker: ^2.0.28
-  uuid: ^4.3.3
+
+# ── KALDIRILAN BAĞIMLILIKLAR (3 Ağustos 2026) ────────────────────────────────
+# Aşağıdakiler devralınan mesajlaşma altyapısından kalmıştı ve hiçbir yerde
+# kullanılmıyordu; APK'ya giriyor ama tek satır kod çalıştırmıyorlardı:
+#
+#   flutter_bloc, equatable  — projede tek bir BlocProvider yoktu
+#   sqflite, path_provider   — sıfır import; kalıcı depolama hiç yazılmadı
+#   ffi                      — sıfır import; ffi_bridge.dart onu import bile
+#                              etmiyordu, tamamen sahte bir modüldü
+#   web_socket_channel, uuid — yalnızca ölü WebSocket katmanında
+#   protobuf                 — sıfır import
+#
+# Bağlı olmayan katmanlar, çalışan çekirdeğin güvenilirliğini düşürür.
+# Gerektiğinde geri eklenebilir: git geçmişinde duruyorlar.
 
 dev_dependencies:
   flutter_test:
