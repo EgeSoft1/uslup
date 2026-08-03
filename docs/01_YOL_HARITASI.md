@@ -13,7 +13,7 @@ Bunlar çözülmeden diğer her şey anlamsız.
 | # | İş | Neden kritik | Süre |
 |---|---|---|---|
 | 0.1 | **En az 1 takım arkadaşı bul** | Şartname: *"bireysel başvuru kabul edilmemektedir, en az 2 en fazla 5 kişi"*. Tek kişiyle başvuru **geçersiz**. | Acil |
-| 0.2 | **Git kur + repo başlat** | Şu an sürüm kontrolü yok. "Kaynak kod" zorunlu teslimat. Ekip çalışması imkânsız. | 30 dk |
+| ~~0.2~~ | ~~**Git kur + repo başlat**~~ | ✅ **Tamamlandı (3 Ağustos).** Git 2.55.0.3 kuruldu, depo `main` dalında başlatıldı, ilk commit atıldı (276 dosya, 3,4 MB). Flutter sarmalayıcısı da artık geçici çözümsüz çalışıyor. | — |
 | 0.3 | KYS'de takım oluştur, Google Groups'a katıl | Şartname: her takımdan en az 1 kişinin gruba katılması **zorunlu** | 1 saat |
 
 ### 0.1 hakkında — nerede aranır
@@ -25,17 +25,21 @@ Aranan profil (şartname farklı disiplinleri teşvik ediyor):
 Kanallar: üniversite yapay zekâ/veri bilimi kulüpleri, T3 Vakfı Deneyap
 toplulukları, bölüm hocaları üzerinden, TEKNOFEST takım arkadaşı arama grupları.
 
-### 0.2 — komutlar
+### 0.2 — yapıldı; kalan iş uzak depo
+
+Yerel depo hazır (`a5eb597`, 276 dosya, 3,4 MB — öngörülen ~3 MB ile uyumlu).
+`.gitignore` `target/`, `build/`, `.dart_tool/` dizinlerini dışlıyor;
+`.gitattributes` satır sonlarını LF'e sabitliyor (işletim sistemi karışık
+takımda sahte diff'leri önler).
+
+Kaynak kodun teslim edilebilir olması için sıradaki adım uzak depo:
+
 ```powershell
-winget install --id Git.Git -e
-# Terminali yeniden başlat, sonra:
+# GitHub'da boş bir depo açtıktan sonra:
 cd C:\TurkiyeMesajlasma
-git init
-git add .
-git commit -m "NSosyal Sosyal YZ: nezaket motoru ve bağlam çözümleme katmanı"
+git remote add origin https://github.com/<kullanici>/<repo>.git
+git push -u origin main
 ```
-`.gitignore` hazır (bkz. depo kökü). `target/`, `build/`, `.dart_tool/`
-dışlanır — bunlar olmadan depo ~3 MB kalır.
 
 ---
 
@@ -47,15 +51,20 @@ Başvuru formu kısa; asıl iş formu doldurmak değil, **rapora hazır olmak**.
 |---|---|
 | Proje adı ve marka kimliği kesinleştir | Şu an çalışma adı "Nezaket Koçu" |
 | Başvuru metnini yaz | `docs/00_URUN_TANIMI.md` §1–3'ten türetilir |
-| ~~Etiketli veri kümesi oluştur~~ | ✅ 291 örnek + ölçüm altyapısı — `04_MODEL_DEGERLENDIRME.md` |
+| ~~Etiketli veri kümesi oluştur~~ | ✅ 330 örnek + ölçüm altyapısı — `04_MODEL_DEGERLENDIRME.md` |
 | **Bağımsız ikinci küme** (takım arkadaşı) | 🔴 Metriklerin bağımsız olması için şart |
 | Danışman ara (zorunlu değil, tavsiye ediliyor) | NLP/dilbilim alanından akademisyen |
 
 ### Veri kümesi — durum
 
-**Yapıldı:** 291 etiketli örnek (211 geliştirme + 80 ayrık), dört dilimli,
+**Yapıldı:** 330 etiketli örnek (250 geliştirme + 80 ayrık), beş dilimli,
 kesinlik/duyarlılık/F1/F0.5 ölçen değerlendirme altyapısıyla birlikte.
 Ölçülen genelleme: **F1 = %84,2** (ayrık küme, tek çalıştırma).
+
+> ⚠️ Ayrık küme o ölçümden sonra motor düzeltmeleri için kullanıldı ve
+> **yanmıştır**; bugün aynı kümede F1 %99,0 çıkıyor ama bu sayı genelleme
+> olarak raporlanamaz. Raporlanacak sayı %84,2'dir.
+> Gerekçe: `04_MODEL_DEGERLENDIRME.md` §5.
 
 **Eksik olan ve takım arkadaşının yapması gereken:**
 
@@ -137,11 +146,11 @@ durulmaz. Öncelik sırası:
 | 2 | Sunum dosyası | ⬜ |
 | 3 | Kullanıcı senaryoları | ⬜ |
 | 4 | Çalışan prototip | 🟩 Nezaket Koçu ekranı + çalışan LLM servisi |
-| 5 | Kaynak kod | 🟨 Var ama **Git yok** (araç zincirini de bozuyor) |
+| 5 | Kaynak kod | 🟩 Git deposu kuruldu (`main`, 276 dosya); uzak depoya push kaldı |
 | 6 | Proje / demo videosu | ⬜ |
 | 7 | İş modeli ve gelir modeli | ⬜ (bu temada ağırlık %0 — kısa tutulabilir) |
 | 8 | Yapay zekâ mimarisi dokümanı | 🟩 `00_URUN_TANIMI.md` §4 + `03_LLM_SERVISI.md` |
-| 9 | Veri, model, etik ve performans | 🟩 `04_MODEL_DEGERLENDIRME.md` — 291 etiketli örnek, F1 ölçüldü |
+| 9 | Veri, model, etik ve performans | 🟩 `04_MODEL_DEGERLENDIRME.md` — 330 etiketli örnek, F1 ölçüldü |
 | 10 | UI/UX tasarımları | 🟩 30 ekran mevcut |
 | 11 | Kullanıcı akışları | ⬜ |
 | 12 | Kullanıcı araştırması özeti | ⬜ Gerçek kullanıcı gerekiyor |

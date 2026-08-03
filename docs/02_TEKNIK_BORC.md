@@ -155,7 +155,7 @@ bir dinleme altyapısı bulunması bu iddiayı çürütür.
 
 | Eksik | Etki |
 |---|---|
-| **Git kurulu değil, depo yok** | Sürüm kontrolü yok. "Kaynak kod" zorunlu teslimat. Takım çalışması imkânsız. Geri alma yok. |
+| ~~**Git kurulu değil, depo yok**~~ | ✅ **Çözüldü (3 Ağustos).** Git 2.55.0.3 kuruldu, depo `main` dalında başlatıldı, ilk commit `a5eb597` (276 dosya, 3,4 MB). `.gitattributes` ile satır sonları LF'e sabitlendi. Kalan: uzak depoya push. |
 | Test yok (yeni `test/ai/` hariç) | Devralınan 9.600 satır UI kodunun tek testi yok. |
 | CI yok | Derlemenin bozulduğu fark edilmedi — nitekim bozulmuştu. |
 
@@ -204,10 +204,16 @@ sunulamaz**.
 
 ---
 
-## 6. Ortam borcu — Git artık sadece süreç sorunu değil
+## 6. ✅ Ortam borcu — çözüldü (3 Ağustos 2026)
+
+Git kurulduktan sonra aşağıdaki sorun ortadan kalktı. Doğrulama:
+`flutter --version` geçici çözüm ortam değişkeni **olmadan** çalışıyor
+(Flutter 3.44.8 · Dart 3.12.2). Aşağıdaki bölüm tarihsel kayıt olarak duruyor.
+
+---
 
 Git kurulu olmadığı için Flutter'ın sarmalayıcı betiği (`flutter`, `dart`)
-başarısız oluyor:
+başarısız oluyordu:
 
 ```
 update_engine_version.ps1: git : The term 'git' is not recognized...

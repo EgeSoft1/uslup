@@ -248,9 +248,9 @@ teslimatının çekirdeğidir.
 | Risk | Etki | Durum |
 |---|---|---|
 | **Takım tek kişi** | Başvuru geçersiz — şartname en az 2 kişi şartı koyuyor | 🔴 **20 Ağustos'a kadar çözülmeli** |
-| Git kurulu değil | Sürüm kontrolü yok, kaynak kod teslimi riskli | 🔴 Acil |
+| ~~Git kurulu değil~~ | ~~Sürüm kontrolü yok, kaynak kod teslimi riskli~~ | 🟢 Çözüldü (3 Ağustos); uzak depoya push kaldı |
 | Rust backend derlenmiyor | Backend iddiaları kanıtlanamaz | 🟢 Kapsam dışı bırakıldı |
-| ~~Etiketli veri kümesi yok~~ | ~~Metrikler raporlanamaz~~ | 🟢 291 örnek + ölçüm altyapısı |
+| ~~Etiketli veri kümesi yok~~ | ~~Metrikler raporlanamaz~~ | 🟢 330 örnek + ölçüm altyapısı |
 | **Metrikler bağımsız değil** | Kümeyi ve örüntüleri aynı kişi yazdı; jüri sorgulayabilir | 🟡 İkinci etiketleyici gerekiyor |
 | ~~Nefret söylemi kapsanmıyor~~ | ~~Sözlükte 0 girdi~~ | 🟢 5 kuruluş ailesi + ölçüm dilimi eklendi |
 | **Kimlik söz varlığı eksik kalabilir** | 40 terim kapsanıyor; kapsanmayan bir grup hedef alındığında sistem sessiz kalır — ve bu, o grubu korumasız bırakır | 🟡 Genişletme sürüyor |

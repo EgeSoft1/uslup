@@ -355,5 +355,5 @@ dart run bin/evaluate.dart               # geliştirme kümesi
 dart run bin/evaluate.dart --ayrik       # ayrık küme
 dart run bin/evaluate.dart --karsilastir # katman katkısı (A/B)
 dart run bin/evaluate.dart --hepsi       # üçü birden
-dart test                                # 72 test
+dart test                                # 101 test
 ```
