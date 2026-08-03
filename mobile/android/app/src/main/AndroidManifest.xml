@@ -1,13 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.CAMERA" />
-    <!-- Bulut kademesi (POST /v1/rewrite) için. Daha önce yalnızca debug
-         manifestinde vardı; release derlemesinde istek sessizce başarısız
-         oluyordu. -->
+    <!-- Nezaket motoru ağ KULLANMAZ. Bu izin yalnızca demo verisindeki
+         avatar görselleri (cached_network_image) içindir.
+         Bkz. docs/02_TEKNIK_BORC.md — avatarlar yerelleştirilince bu izin
+         tamamen kaldırılabilir. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="Nezaket Koçu"
         android:name="${applicationName}"
-        android:networkSecurityConfig="@xml/network_security_config"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

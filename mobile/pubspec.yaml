@@ -25,9 +25,6 @@ dependencies:
   flutter_animate: ^4.5.0
   google_fonts: ^6.2.1
 
-  # Ağ — bulut kademesi (POST /v1/rewrite)
-  dio: ^5.4.3
-
   # QR Kod (oluşturma ve tarama)
   qr_flutter: ^4.1.0
   mobile_scanner: ^6.0.0

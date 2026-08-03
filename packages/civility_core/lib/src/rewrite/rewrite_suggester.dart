@@ -8,15 +8,24 @@
 //
 //   "sen tam bir aptalsın"  →  "bu konuda sana katılmıyorum"
 //
-// İKİ KADEMELİ TASARIM:
+// TEK KADEMELİ TASARIM — CİHAZ ÜSTÜ:
 //   • `LocalRewriteSuggester` — cihazda, deterministik, çevrimdışı, 0 ms.
-//     Metin telefondan hiç çıkmaz. Her zaman çalışır.
-//   • `LlmRewriteSuggester`   — sunucuda, büyük dil modeli ile akıcı yeniden
-//     yazım. YALNIZCA kullanıcı açıkça "daha iyi öneri" derse çağrılır ve
-//     bu durumda metnin sunucuya gideceği kullanıcıya AÇIKÇA bildirilir.
+//     Metin telefondan HİÇ çıkmaz. Her zaman çalışır.
 //
-// Bu kademelendirme bir mahremiyet kararıdır: varsayılan davranış hiçbir
-// veri sızdırmaz; bulut yalnızca kullanıcının bilinçli onayıyla devreye girer.
+// ── NEDEN BULUT KADEMESİ YOK (3 Ağustos 2026 kararı) ──────────────────────
+// Önceki sürümde ikinci bir kademe vardı: metni bir dil modeline gönderip
+// daha akıcı bir alternatif isteyen sunucu tarafı yeniden yazıcı. Kaldırıldı.
+//
+// Gerekçe ürünün kendi tezidir. "Metin cihazdan çıkmaz" iddiası, istisnası
+// olan bir iddiadan çok daha güçlüdür — onay diyaloğuyla korunan bir istisna
+// bile açıklanması gereken bir yüzey yaratır. Üçüncü taraf bir API'ye
+// bağımlı olmamak ayrıca maliyeti, anahtar yönetimini ve kota riskini
+// tamamen ortadan kaldırır.
+//
+// Bunun bedeli akıcılıktır ve bilinçli olarak kabul edilmiştir: yeniden
+// yazma kalitesini bir dil modelinden değil, BU DOSYADAKİ Türkçe'ye özel
+// dönüşümlerden almak gerekiyor. Sınır burada görünür kalsın diye ölçüm
+// altyapısı (`bin/evaluate.dart`) korunmuştur.
 // =============================================================================
 
 import '../civility_engine.dart';
@@ -54,8 +63,8 @@ abstract class RewriteSuggester {
 ///   2. Bağırmayı (tümü büyük harf) normal yazıma indir.
 ///   3. Noktalama patlamasını ("!!!") tek işarete indir.
 ///
-/// Sonuç akıcı bir cümle olmayabilir; amaç kullanıcıya BAŞLANGIÇ NOKTASI
-/// vermektir. Akıcı yeniden yazım LLM kademesinin işidir.
+/// Sonuç her zaman akıcı olmayabilir; bilinen sınır budur ve iyileştirme
+/// yönü morfoloji farkındalığıdır (bkz. dosya başlığı).
 class LocalRewriteSuggester implements RewriteSuggester {
   final ToxicityClassifier _classifier;
 
