@@ -218,7 +218,10 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
 
               const SizedBox(height: 36),
 
-              // --- E2EE Bilgi Kartı ---
+              // --- Cihaz Üstü İşleme Bilgi Kartı ---
+              // Önceden "Uçtan Uca Şifreleme Aktif" yazıyordu; E2EE bu
+              // prototipte YOK (bkz. docs/02_TEKNIK_BORC.md §1). Kart artık
+              // kanıtlanabilir olanı söylüyor: nezaket motoru cihazda çalışır.
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -241,10 +244,10 @@ class _ProfileCreationScreenState extends State<ProfileCreationScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Uçtan Uca Şifreleme Aktif',
+                          const Text('Nezaket Motoru Cihazında Çalışır',
                             style: TextStyle(color: AppTheme.primaryRed, fontSize: 13, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 2),
-                          Text('Kimlik anahtarınız bu cihazda güvenle oluşturulacak.',
+                          Text('Yazdığın metin çözümlenirken telefondan çıkmaz.',
                             style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5), fontSize: 11)),
                         ],
                       ),

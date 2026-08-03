@@ -134,18 +134,10 @@ class _CallScreenState extends State<CallScreen> with TickerProviderStateMixin {
           child: Column(
             children: [
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.lock_rounded, color: Color(0xFF10B981), size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Uçtan uca şifreli',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ).animate().fadeIn(duration: 600.ms),
-
+              // "Uçtan uca şifreli" rozeti kaldırıldı: E2EE bu prototipte yok
+              // (bkz. docs/02_TEKNIK_BORC.md §1). Yerine bir şey konmadı —
+              // nezaket motoru metin üzerinde çalışır, aramayla ilgisi yok;
+              // buraya doğru bir iddia yazmanın da yolu yoktu.
               const Spacer(flex: 2),
 
               SizedBox(

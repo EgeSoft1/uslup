@@ -194,12 +194,15 @@ class _SplashScreenState extends State<SplashScreen>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.lock_rounded,
+                            // Kilit ikonu, olmayan bir şifreleme katmanını
+                            // ima ediyordu. Telefon ikonu, gerçekten doğru
+                            // olan şeyi anlatıyor: işlem cihazın kendisinde.
+                            Icon(Icons.phone_iphone_rounded,
                                 color: const Color(0xFFD4920A).withValues(alpha: 0.85),
                                 size: 16),
                             const SizedBox(width: 10),
                             Text(
-                              'Uçtan Uca Şifrelenmiş',
+                              'Cihazda Çalışır · Metin Çıkmaz',
                               style: TextStyle(
                                 color: const Color(0xFFD4920A).withValues(alpha: 0.9),
                                 fontSize: 13,
