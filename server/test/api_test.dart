@@ -158,4 +158,88 @@ void main() {
       expect(decode(blocked)['error'], 'rate_limited');
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('5. Dayanıklılık — tek istek servisi düşürmemeli', () {
+    test('işleyici patlarsa 500 döner ve sunucu ayakta kalır', () async {
+      await api.dispose();
+      await server.close(force: true);
+
+      final crashing = _CrashingApi(
+        config: const ServerConfig(apiKey: 'sk-ant-test', port: 0),
+        service: RewriteService(
+          engine: LexicalTurkishClassifier(),
+          cloud: FakeRewriteModel(proposing(const [])),
+        ),
+        respondBeforeThrowing: false,
+      );
+      server = await crashing.start();
+      api = crashing;
+      base = 'http://127.0.0.1:${server.port}';
+
+      final response = await http.get(Uri.parse('$base/health'));
+      expect(response.statusCode, 500);
+      expect(decode(response)['error'], 'internal_error');
+
+      // Asıl iddia: süreç hâlâ istek kabul ediyor.
+      expect((await http.get(Uri.parse('$base/health'))).statusCode, 500);
+    });
+
+    // REGRESYON: yanıt YAZILDIKTAN sonra fırlatılan istisna.
+    //
+    // Eski kod bu durumda 500 yazmayı deniyor, ikinci yazım `StateError`
+    // fırlatıyor ve bu istisna `unawaited` bir Future içinde kök zone'a
+    // çıkarak SÜRECİ ÖLDÜRÜYORDU. Gerçek hayatta tetikleyicisi: istemcinin
+    // yanıt akışı sırasında bağlantıyı koparması (uygulamanın arka plana
+    // alınması, ağ değişimi, kullanıcının ekranı kapatması).
+    test('yanıt yazıldıktan sonra patlarsa süreç ölmez', () async {
+      await api.dispose();
+      await server.close(force: true);
+
+      final crashing = _CrashingApi(
+        config: const ServerConfig(apiKey: 'sk-ant-test', port: 0),
+        service: RewriteService(
+          engine: LexicalTurkishClassifier(),
+          cloud: FakeRewriteModel(proposing(const [])),
+        ),
+        respondBeforeThrowing: true,
+      );
+      server = await crashing.start();
+      api = crashing;
+      base = 'http://127.0.0.1:${server.port}';
+
+      // İlk istek: yanıt başarıyla döner, ardından işleyici patlar.
+      final first = await http.get(Uri.parse('$base/health'));
+      expect(first.statusCode, 200);
+
+      // Yakalanmamış istisnanın zone'a ulaşması için bir tur bekle.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // Düzeltme öncesi burası ya asılı kalıyor ya da süreç ölüyordu.
+      final second = await http.get(Uri.parse('$base/health'));
+      expect(second.statusCode, 200,
+          reason: 'sunucu ikinci isteği hâlâ karşılayabilmeli');
+    });
+  });
+}
+
+/// Hata yollarını sınamak için `handle`'ı kasıtlı olarak patlatan API.
+class _CrashingApi extends NezaketApi {
+  /// `true` ise ÖNCE yanıtı yazar, SONRA patlar — çift yazım tuzağı.
+  final bool respondBeforeThrowing;
+
+  _CrashingApi({
+    required super.config,
+    required super.service,
+    required this.respondBeforeThrowing,
+  });
+
+  @override
+  Future<void> handle(HttpRequest request) async {
+    if (respondBeforeThrowing) {
+      request.response.statusCode = HttpStatus.ok;
+      await request.response.close();
+    }
+    throw StateError('kasıtlı test hatası');
+  }
 }

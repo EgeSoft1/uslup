@@ -54,13 +54,47 @@ class NezaketApi {
   Future<void> _serve(HttpServer server) async {
     await for (final request in server) {
       // Tek bir isteğin hatası servisi düşürmemeli.
-      unawaited(handle(request).catchError((Object e) async {
-        _log('unhandled', {'error': e.runtimeType.toString()});
+      unawaited(_handleSafely(request));
+    }
+  }
+
+  /// Tek bir isteği, HİÇBİR koşulda süreci düşürmeyecek şekilde işler.
+  ///
+  /// ── NEDEN İKİ KATMANLI TRY ────────────────────────────────────────────────
+  /// Önceki sürüm hatayı yakalayıp 500 yazmayı deniyordu ama o YAZMA da
+  /// başarısız olabilir: yanıt zaten kapatılmışsa ya da istemci bağlantıyı
+  /// ortada koparmışsa `HttpResponse`'a yazmak `StateError` fırlatır.
+  ///
+  /// O ikinci istisna `unawaited` bir Future içinde kaldığı için hiçbir yerde
+  /// yakalanmıyor, kök zone'a çıkıyor ve **sürecin tamamını öldürüyordu**.
+  /// Yani "tek bir isteğin hatası servisi düşürmemeli" diyen kod, tam olarak
+  /// servisi düşüren yol hâline gelmişti.
+  ///
+  /// Buradaki sözleşme: bu fonksiyon asla istisna ile tamamlanmaz.
+  Future<void> _handleSafely(HttpRequest request) async {
+    try {
+      await handle(request);
+    } catch (e) {
+      _log('unhandled', {'error': e.runtimeType.toString()});
+      try {
         await _json(request, HttpStatus.internalServerError, {
           'error': 'internal_error',
           'message': 'Beklenmeyen bir hata oluştu.',
         });
-      }));
+      } catch (_) {
+        // Yanıt zaten yazılmış ya da bağlantı kopmuş. İstemciye söyleyecek
+        // bir şey kalmadı; önemli olan sürecin ayakta kalması.
+        await _closeQuietly(request);
+      }
+    }
+  }
+
+  /// Yanıtı kapatmayı dener; kapatma da başarısız olursa sessizce geçer.
+  Future<void> _closeQuietly(HttpRequest request) async {
+    try {
+      await request.response.close();
+    } catch (_) {
+      // Zaten kapalı veya bağlantı düşmüş.
     }
   }
 
