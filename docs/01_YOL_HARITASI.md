@@ -1,8 +1,11 @@
 # Yol Haritası — Başvurudan Finale
 
-**Bugün:** 1 Ağustos 2026
-**Kritik tarihler:** Başvuru 20 Ağustos · Teknik rapor 24 Ağustos 17:00 ·
-Final sunumu 14 Eylül 17:00 · TEKNOFEST Şanlıurfa 30 Eylül – 4 Ekim
+**Son güncelleme:** 12 Ağustos 2026
+**Kritik tarihler:** Başvuru 20 Ağustos (**8 gün**) · Teknik rapor 24 Ağustos
+17:00 (12 gün) · Final sunumu 14 Eylül 17:00 · TEKNOFEST Şanlıurfa 30 Eylül – 4 Ekim
+
+**Türetilen belgeler:** başvuru metni → `05_BASVURU_METNI.md` ·
+teknik rapor planı → `06_TEKNIK_RAPOR_TASLAGI.md`
 
 ---
 
@@ -107,7 +110,7 @@ Raporun ana bölümleri ve kaynakları:
 | Doğrulama / metrikler | **`04_MODEL_DEGERLENDIRME.md`** — kesinlik/duyarlılık/F1 |
 | Model karşılaştırması | `04_MODEL_DEGERLENDIRME.md` §3.3 (katman A/B) |
 | Etik ve mahremiyet | `00_URUN_TANIMI.md` §6 + `03_LLM_SERVISI.md` §2 |
-| Performans | ~174 µs ölçümü |
+| Performans | `04_MODEL_DEGERLENDIRME.md` §3.4 — **322,7 µs** (T3, her iki örüntü katmanı dahil) |
 | Büyük dil modeli kullanımı | `03_LLM_SERVISI.md` — **neden kullanmadığımız** |
 
 ---
@@ -128,9 +131,15 @@ durulmaz. Öncelik sırası:
    kapısı dahil), sonra kasıtlı olarak kapsam dışına alındı: üçüncü taraf
    API bağımlılığı ve "metin cihazdan çıkmaz" iddiasına eklediği istisna
    nedeniyle. Gerekçe: `03_LLM_SERVISI.md`.
-   **Yerine:** yerel yeniden yazıcıya morfoloji farkındalığı — ikinci şahıs
-   bildirme eki taşıyan ikame ("aptalsın" → "haksızsın"), edimbilimsel aile
-   başına cümle şablonları. Ölçümü mevcut altyapıyla yapılabilir.
+   **Yerine:** yerel yeniden yazıcıya morfoloji farkındalığı.
+   ✅ **Yapıldı (3 Ağustos, `185efab`).** İki mod, yan cümle düzeyinde
+   seçiliyor: kişiye yöneltilmiş saldırıda **öbek modu** (yan cümlenin tamamı
+   nötr kalıpla değişir), nesneyi niteleyen sıfatta **yerinde mod** (kelime
+   yerinde değişir ve taşıdığı ek korunur: "bu karar salakça" → "bu karar
+   hatalı"). Ölçüm, önceki durumda 130 vakanın 119'unun "öneri üretti"
+   göründüğü hâlde çoğunun anlamsız olduğunu göstermişti.
+   ⬜ **Kalan:** düzeltme sonrası akıcılık ölçümü (`bin/rewrite_audit.dart`)
+   rapora sayı olarak girmeli.
 3. **Topluluk sağlığı paneli** — anonim toplulaştırılmış sinyaller.
 4. **Kullanıcı testi** — 5–8 kişi, görev tabanlı. Teslimat listesindeki
    *"kullanılabilirlik testi sonuçları"* ve *"kullanıcı araştırması özeti"*

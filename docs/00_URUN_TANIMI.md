@@ -4,7 +4,7 @@
 > sunumu bu belgeden türetilir. Bir karar bu belgeyle çelişiyorsa, belge
 > güncellenir — kod değil.
 
-**Belge sürümü:** v1 · 1 Ağustos 2026
+**Belge sürümü:** v2 · 12 Ağustos 2026
 **Yarışma teması:** Sosyal Yapay Zekâ
 **Durum:** Çekirdek motor çalışıyor ve test edilmiş, ürünleştirme sürüyor
 
@@ -218,7 +218,8 @@ teslimatının çekirdeğidir.
 - **Ölçüm altyapısı**: 330 etiketli örnek, kesinlik/duyarlılık/F1/F0.5
 - ~~LLM yeniden yazma servisi~~ — yazıldı, ölçüldü, **kasıtlı olarak
   kaldırıldı** (3 Ağustos). Gerekçe: `03_LLM_SERVISI.md`
-- Yerel yeniden yazma önerisi
+- Yerel yeniden yazma önerisi — **iki mod** (öbek / yerinde), Türkçe
+  morfoloji farkındalığıyla; ikame edilen kelime taşıdığı eki korur
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) **+ sohbet mesaj kutusu**
 - **111 test geçiyor** (101 çekirdek + 10 mobil), 0 analiz uyarısı
 - Ölçülen performans: 323 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
@@ -235,10 +236,10 @@ teslimatının çekirdeğidir.
   hakem uyumu (kappa) ölçülmedi. Nefret dilimi için bu bir kat daha kritik.
 - **Cümleler arası gönderge çözümlemesi** — "bunların soyunu kurutmak lazım"
   gibi kimliğin önceki cümlede geçtiği durumlar kaçıyor
-- **Yerel yeniden yazıcının akıcılığı** — kelime ikamesi morfoloji
-  farkındalığından yoksun ("aptalsın" → "yanlış", olması gereken
-  "haksızsın"). Bulut kademesi kaldırıldığı için bu sınır artık
-  Türkçe'ye özel dönüşümlerle kapatılacak (`03_LLM_SERVISI.md` §3)
+- ~~**Yerel yeniden yazıcının akıcılığı**~~ — ✅ büyük ölçüde kapatıldı
+  (3 Ağustos, `185efab`): iki mod + Türkçe morfoloji farkındalığı.
+  ⬜ **Kalan:** düzeltme sonrası akıcılık `bin/rewrite_audit.dart` ile
+  yeniden ölçülüp sayı olarak rapora girmeli
 - Topluluk sağlığı paneli
 - Rust backend **derlenmiyor** — kapsam dışı bırakıldı (`02_TEKNIK_BORC.md` §5)
 - Kullanıcı testi, erişilebilirlik değerlendirmesi
@@ -250,7 +251,8 @@ teslimatının çekirdeğidir.
 | Risk | Etki | Durum |
 |---|---|---|
 | **Takım tek kişi** | Başvuru geçersiz — şartname en az 2 kişi şartı koyuyor | 🔴 **20 Ağustos'a kadar çözülmeli** |
-| ~~Git kurulu değil~~ | ~~Sürüm kontrolü yok, kaynak kod teslimi riskli~~ | 🟢 Çözüldü (3 Ağustos); uzak depoya push kaldı |
+| **Git kalıcı kurulu değil** | Depo `main` dalında çalışıyor (son commit `185efab`, 3 Ağustos) ama `git` PATH'te yok; çalışan tek kopya bir runtime **önbelleğinin** içinde (`~\.cache\codex-runtimes\...\native\git\cmd\git.exe`). Önbellek temizlenirse depo yönetilemez hâle gelir. | 🔴 **Kalıcı kurulum gerekli** |
+| **Uzak depo yok** | `git remote -v` boş. Şartnamenin "kaynak kod" teslimatı bugün verilemez; ayrıca tek kopya bu diskte — donanım arızası projeyi silip götürür. | 🔴 **Başvurudan önce** |
 | Rust backend derlenmiyor | Backend iddiaları kanıtlanamaz | 🟢 Kapsam dışı bırakıldı |
 | ~~Etiketli veri kümesi yok~~ | ~~Metrikler raporlanamaz~~ | 🟢 330 örnek + ölçüm altyapısı |
 | **Metrikler bağımsız değil** | Kümeyi ve örüntüleri aynı kişi yazdı; jüri sorgulayabilir | 🟡 İkinci etiketleyici gerekiyor |
