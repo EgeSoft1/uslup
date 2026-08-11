@@ -384,11 +384,11 @@ dart run bin/evaluate.dart               # geliştirme kümesi
 dart run bin/evaluate.dart --ayrik       # ayrık küme
 dart run bin/evaluate.dart --karsilastir # katman katkısı (A/B)
 dart run bin/evaluate.dart --hepsi       # üçü birden
-dart test                                # 122 test
+dart test                                # 136 test
 ```
 
-Mobil taraf (`mobile/`): `flutter test` → 10 test, `flutter analyze` → temiz.
-**Toplam 132 test, 0 analiz uyarısı** (12 Ağustos 2026).
+Mobil taraf (`mobile/`): `flutter test` → 17 test, `flutter analyze` → temiz.
+**Toplam 153 test, 0 analiz uyarısı** (12 Ağustos 2026).
 
 Araç zinciri bu makinede `D:\flutter` (3.44.9 · Dart 3.12.2) ve `D:\git`
 (MinGit 2.55.0.4) altındadır; `PUB_CACHE=D:\pub-cache`. C: sürücüsünde yer

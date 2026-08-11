@@ -12,6 +12,7 @@
 // =============================================================================
 
 export 'src/civility_engine.dart';
+export 'src/community/community_health.dart';
 export 'src/context/context_analyzer.dart';
 export 'src/detect/hate_patterns.dart';
 export 'src/detect/implicit_detector.dart';

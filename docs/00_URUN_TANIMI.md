@@ -185,7 +185,7 @@ Tek ürün, üç tema maddesi — dağınık özellik listesi değil, tek akış
 | Duygu analizi | Bağlam/niyet çözümleme katmanı | ✅ Çalışıyor |
 | **Nefret söylemi tespiti** | **Kimlik hedefli kuruluş katmanı** | ✅ **Çalışıyor** |
 | Büyük Dil Modelleri (LLM) | — | ❌ **Kasıtlı olarak kapsam dışı** (`03_LLM_SERVISI.md`) |
-| YZ destekli topluluk yönetimi | Topluluk sağlığı paneli | 🔜 Planlı |
+| YZ destekli topluluk yönetimi | **Topluluk sağlığı paneli** — metni değil DAVRANIŞI toplulaştırır, k-anonimlik uygular | ✅ **Çalışıyor** |
 | Spam/bot tespiti | — | ❌ Kapsam dışı (yol haritası) |
 | YZ tabanlı arama | — | ❌ Kapsam dışı |
 
@@ -232,7 +232,10 @@ teslimatının çekirdeğidir.
 - Yerel yeniden yazma önerisi — **iki mod** (öbek / yerinde), Türkçe
   morfoloji farkındalığıyla; ikame edilen kelime taşıdığı eki korur
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) **+ sohbet mesaj kutusu**
-- **132 test geçiyor** (122 çekirdek + 10 mobil), 0 analiz uyarısı
+- **Topluluk sağlığı paneli** — anonim sinyallerden üretilir; sinyal sınıfı
+  metin **taşıyamaz** (yapısal testle korunur) ve 5 gözlemin altındaki
+  kategoriler k-anonimlik gereği açılmaz
+- **153 test geçiyor** (136 çekirdek + 17 mobil), 0 analiz uyarısı
   — 12 Ağustos 2026'da `dart test` + `flutter test` ile doğrulandı
 - Ölçülen performans: 268 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
 
@@ -255,7 +258,9 @@ teslimatının çekirdeğidir.
   (3 Ağustos, `185efab`): iki mod + Türkçe morfoloji farkındalığı.
   ⬜ **Kalan:** düzeltme sonrası akıcılık `bin/rewrite_audit.dart` ile
   yeniden ölçülüp sayı olarak rapora girmeli
-- Topluluk sağlığı paneli
+- ~~Topluluk sağlığı paneli~~ — ✅ eklendi (12 Ağustos). ⬜ **Kalan:**
+  kalıcılık yok, sinyaller uygulama kapanınca kayboluyor (kasıtlı; gerekçe
+  `community_health_store.dart`)
 - Rust backend **derlenmiyor** — kapsam dışı bırakıldı (`02_TEKNIK_BORC.md` §5)
 - Kullanıcı testi, erişilebilirlik değerlendirmesi
 
@@ -265,7 +270,8 @@ teslimatının çekirdeğidir.
 
 | Risk | Etki | Durum |
 |---|---|---|
-| **Takım tek kişi** | Başvuru geçersiz — şartname en az 2 kişi şartı koyuyor | 🔴 **20 Ağustos'a kadar çözülmeli** |
+| ~~Takım tek kişi~~ | ~~Başvuru geçersiz~~ | 🟢 **Çözüldü (12 Ağustos):** 1 takım arkadaşı hazır → 2 kişi, şartname §3'ün alt sınırı karşılandı. ⬜ KYS'de takıma eklenmeli |
+| **Metrikler hâlâ tek etiketleyicili** | Takım arkadaşı geldi ama kümeleri hâlâ tek kişi yazdı. İkinci etiketleyicinin **kodu ve mevcut kümeleri görmeden** kendi kümesini üretmesi, artık yapılabilir durumda ve rapordaki en büyük kazanç olur | 🟡 **Sıradaki iş** |
 | ~~Git kalıcı kurulu değil~~ | ~~Çalışan tek kopya bir runtime önbelleğindeydi~~ | 🟢 **Çözüldü (12 Ağustos).** MinGit 2.55.0.4 → `D:\git`, kullanıcı PATH'ine eklendi |
 | ~~Dart/Flutter kurulu değil~~ | ~~Testler ve ölçüm çalıştırılamıyordu; rapordaki her sayı doğrulanamaz durumdaydı~~ | 🟢 **Çözüldü (12 Ağustos).** Flutter 3.44.9 / Dart 3.12.2 → `D:\flutter`, `PUB_CACHE=D:\pub-cache` |
 | **C: sürücüsü dolu** | 143 GB'ın yalnızca ~3 GB'ı boş (12 Ağustos'ta `mobile/build` temizlendikten sonra). Android derlemesi ve Gradle önbelleği bunu hızla yiyebilir. Araç zinciri bu yüzden D:'ye kuruldu. | 🟡 İzlenmeli |

@@ -15,7 +15,7 @@ Bunlar çözülmeden diğer her şey anlamsız.
 
 | # | İş | Neden kritik | Süre |
 |---|---|---|---|
-| 0.1 | **En az 1 takım arkadaşı bul** | Şartname: *"bireysel başvuru kabul edilmemektedir, en az 2 en fazla 5 kişi"*. Tek kişiyle başvuru **geçersiz**. | Acil |
+| ~~0.1~~ | ~~**En az 1 takım arkadaşı bul**~~ | ✅ **Tamamlandı (12 Ağustos).** 1 takım arkadaşı hazır → takım 2 kişi, şartname §3'ün alt sınırı karşılandı. ⬜ Kalan: KYS'de takıma eklenmesi. | — |
 | ~~0.2~~ | ~~**Git kur + repo başlat**~~ | ✅ **Tamamlandı (3 Ağustos).** Git 2.55.0.3 kuruldu, depo `main` dalında başlatıldı, ilk commit atıldı (276 dosya, 3,4 MB). Flutter sarmalayıcısı da artık geçici çözümsüz çalışıyor. | — |
 | 0.3 | KYS'de takım oluştur, Google Groups'a katıl | Şartname: her takımdan en az 1 kişinin gruba katılması **zorunlu** | 1 saat |
 
@@ -142,7 +142,13 @@ durulmaz. Öncelik sırası:
    göründüğü hâlde çoğunun anlamsız olduğunu göstermişti.
    ⬜ **Kalan:** düzeltme sonrası akıcılık ölçümü (`bin/rewrite_audit.dart`)
    rapora sayı olarak girmeli.
-3. **Topluluk sağlığı paneli** — anonim toplulaştırılmış sinyaller.
+3. ~~**Topluluk sağlığı paneli**~~ ✅ **Yapıldı (12 Ağustos).** Anonim
+   toplulaştırma `civility_core` içinde (saf Dart, 14 test); panel
+   `mobile/lib/presentation/community/`. Sinyal sınıfı metin taşıyamaz ve
+   bu yapısal bir testle korunuyor; 5 gözlemin altındaki kategoriler
+   k-anonimlik gereği açılmıyor. Panelde ihlal eden mesajların listesi
+   **yoktur ve olamaz** — ürünün tezi budur.
+   ⬜ **Kalan:** kalıcılık yok (kasıtlı), gerçek kullanıcıyla doğrulanmadı.
 4. **Kullanıcı testi** — 5–8 kişi, görev tabanlı. Teslimat listesindeki
    *"kullanılabilirlik testi sonuçları"* ve *"kullanıcı araştırması özeti"*
    bundan çıkar.
@@ -157,19 +163,19 @@ durulmaz. Öncelik sırası:
 
 | # | Teslimat | Durum |
 |---|---|---|
-| 1 | Teknik rapor | ⬜ Şablon indirilecek |
+| 1 | Teknik rapor | 🟨 Plan hazır: `06_TEKNIK_RAPOR_TASLAGI.md`; şablon KYS'den indirilecek |
 | 2 | Sunum dosyası | ⬜ |
-| 3 | Kullanıcı senaryoları | ⬜ |
-| 4 | Çalışan prototip | 🟩 Nezaket Koçu ekranı + sohbet kutusu, tamamen cihaz üstü |
-| 5 | Kaynak kod | 🟩 Git deposu kuruldu (`main`, 276 dosya); uzak depoya push kaldı |
+| 3 | Kullanıcı senaryoları | 🟩 `07_KULLANICI_AKISLARI.md` §3 — 5 senaryo, 4 persona |
+| 4 | Çalışan prototip | 🟩 Nezaket Koçu ekranı + sohbet kutusu + topluluk paneli, tamamen cihaz üstü |
+| 5 | Kaynak kod | 🔴 Git deposu yerel hazır; **uzak depoya push kaldı** |
 | 6 | Proje / demo videosu | ⬜ |
 | 7 | İş modeli ve gelir modeli | ⬜ (bu temada ağırlık %0 — kısa tutulabilir) |
 | 8 | Yapay zekâ mimarisi dokümanı | 🟩 `00_URUN_TANIMI.md` §4 + `03_LLM_SERVISI.md` |
-| 9 | Veri, model, etik ve performans | 🟩 `04_MODEL_DEGERLENDIRME.md` — 330 etiketli örnek, F1 ölçüldü |
-| 10 | UI/UX tasarımları | 🟩 30 ekran mevcut |
-| 11 | Kullanıcı akışları | ⬜ |
+| 9 | Veri, model, etik ve performans | 🟩 `04_MODEL_DEGERLENDIRME.md` — 336 etiketli örnek, F1 ölçüldü |
+| 10 | UI/UX tasarımları | 🟩 30 ekran + topluluk sağlığı paneli |
+| 11 | Kullanıcı akışları | 🟩 `07_KULLANICI_AKISLARI.md` §4 — 4 akış diyagramı |
 | 12 | Kullanıcı araştırması özeti | ⬜ Gerçek kullanıcı gerekiyor |
 | 13 | Kullanılabilirlik testi sonuçları | ⬜ Gerçek kullanıcı gerekiyor |
-| 14 | Erişilebilirlik değerlendirmesi | ⬜ |
+| 14 | Erişilebilirlik değerlendirmesi | 🟨 Akışa gömülü kararlar yazıldı (`07` §5); tam değerlendirme kaldı |
 
 🟩 hazır · 🟨 kısmen · ⬜ yapılmadı

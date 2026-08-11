@@ -3,11 +3,9 @@
 **Hazırlanma tarihi:** 12 Ağustos 2026 · **Son başvuru:** 20 Ağustos 2026 (8 gün)
 **Tema:** Sosyal Yapay Zekâ · **Kaynak:** `00_URUN_TANIMI.md` §1–3, `04_MODEL_DEGERLENDIRME.md`
 
-> 🔴 **Bu metin tek başına başvuruyu geçerli kılmaz.** Şartname V2 §3:
-> *"Yarışmaya bireysel başvuru kabul edilmemektedir. Başvurular, en az 2 en
-> fazla 5 kişiden oluşacak takımlar halinde yapılacaktır."*
-> Takım hâlâ tek kişi. İkinci üye bulunmadan 20 Ağustos'ta atılan başvuru
-> **geçersizdir** — aşağıdaki metnin kalitesi bunu değiştirmez.
+> 🟢 **Takım şartı karşılandı (12 Ağustos):** 1 takım arkadaşı hazır → 2 kişi.
+> Şartname V2 §3'ün alt sınırı sağlandı. ⬜ **Kalan:** üyenin KYS'de takıma
+> eklenmesi ve en az bir üyenin Google Groups'a katılması (zorunlu).
 
 > ✅ **Sayılar 12 Ağustos 2026'da tazelendi** (Flutter 3.44.9 / Dart 3.12.2
 > kuruldu, `dart run bin/evaluate.dart --hepsi` çalıştırıldı). Motorda
@@ -239,7 +237,8 @@ edersiniz. Model bir öneri kaynağıdır, bir otorite değildir.
 - İki modlu yerel yeniden yazıcı (öbek modu / yerinde mod), Türkçe
   morfoloji farkındalığıyla
 - Değerlendirme altyapısı: 336 etiketli örnek, beş dilim
-- 132 test geçiyor (122 çekirdek + 10 mobil), 0 analiz uyarısı
+- Topluluk sağlığı paneli: anonim sinyallerden üretilir, k-anonimlik uygular
+- 153 test geçiyor (136 çekirdek + 17 mobil), 0 analiz uyarısı
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) + sohbet mesaj kutusu
 - Devralınan 30 ekranlık Flutter arayüz kütüphanesi ve tasarım sistemi
 
@@ -302,7 +301,7 @@ Jüri karşısında zayıflık değil güç sayılan kısım; **gizleme.**
 
 | # | İş | Durum |
 |---|---|---|
-| 1 | **En az 1 takım arkadaşı** (şartname §3, aksi hâlde başvuru geçersiz) | 🔴 |
+| 1 | ~~En az 1 takım arkadaşı~~ | 🟢 12 Ağustos — KYS'ye eklenmesi kaldı |
 | 2 | Proje adı ve takım adı kesinleştir | ⬜ |
 | 3 | KYS'de takım oluştur, üyeleri ekle | ⬜ |
 | 4 | Google Groups'a en az 1 üye katılsın (zorunlu) | ⬜ |

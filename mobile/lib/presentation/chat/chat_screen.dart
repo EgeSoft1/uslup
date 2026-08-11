@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../core/community/community_health_store.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_avatar.dart';
@@ -77,6 +78,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// Kullanıcı "yine de gönder" dediyse aynı metin için bir daha sorulmaz.
   String? _overriddenText;
+
+  // ── Topluluk sağlığı sinyali için gereken en az durum ────────────────────
+  // Gönderim anındaki çözümleme, hikâyenin yalnızca sonunu anlatır: kullanıcı
+  // düzeltmişse metin artık temizdir ve "hiç uyarı olmamış" gibi görünür.
+  // Müdahalenin işe yarayıp yaramadığını ölçmek için yazım sırasında görülen
+  // EN YÜKSEK riskli çözümleme saklanır.
+  CivilityAnalysis? _peakAnalysis;
+
+  /// Kullanıcı bu kompozisyonda motorun önerisini uyguladı mı?
+  bool _appliedSuggestion = false;
 
   late final List<ChatMessage> _messages = _seedMessages();
 
@@ -135,6 +146,11 @@ class _ChatScreenState extends State<ChatScreen> {
       _isComposing = text.trim().isNotEmpty;
       if (text != _overriddenText) _overriddenText = null;
       _suggestion = null;
+
+      final peak = _peakAnalysis;
+      if (peak == null || analysis.toxicity > peak.toxicity) {
+        _peakAnalysis = analysis;
+      }
     });
 
     if (analysis.risk == RiskLevel.riskli || analysis.risk == RiskLevel.yuksek) {
@@ -171,6 +187,8 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     HapticFeedback.lightImpact();
+    _recordCommunitySignal();
+
     setState(() {
       // DÜZELTME: `insert(0, …)` yeni mesajı en eski konuma koyuyordu.
       _messages
@@ -179,6 +197,8 @@ class _ChatScreenState extends State<ChatScreen> {
       _analysis = null;
       _suggestion = null;
       _overriddenText = null;
+      _peakAnalysis = null;
+      _appliedSuggestion = false;
     });
     _textController.clear();
     _scrollToBottom();
@@ -258,8 +278,42 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  /// Gönderimi topluluk sağlığı paneline anonim sinyal olarak yazar.
+  ///
+  /// Metin buraya HİÇ girmez: `CommunitySignal.fromAnalysis` yalnızca risk,
+  /// kategori, sonuç ve puan dilimini okur.
+  void _recordCommunitySignal() {
+    final peak = _peakAnalysis;
+    final simdi = _analysis;
+
+    // Hiç riskli bir an yaşanmadıysa temiz gönderimdir.
+    if (peak == null || peak.risk == RiskLevel.temiz) {
+      if (simdi != null) {
+        CommunityHealthStore.instance
+            .record(simdi, SignalOutcome.temizGonderim);
+      }
+      return;
+    }
+
+    // Zirve riskliydi. Gönderim anında hâlâ riskliyse kullanıcı uyarıyı
+    // görmezden gelmiştir; temizlenmişse davranış değişmiştir.
+    final SignalOutcome sonuc;
+    if (simdi != null && simdi.risk != RiskLevel.temiz) {
+      sonuc = SignalOutcome.uyariyaRagmenGonderdi;
+    } else if (_appliedSuggestion) {
+      sonuc = SignalOutcome.oneriyiKabulEtti;
+    } else {
+      sonuc = SignalOutcome.kendiDuzeltti;
+    }
+
+    // Kategori zirveden okunur: düzeltilmiş metin artık kategori taşımaz ama
+    // panelin göstermesi gereken şey NE yakalandığıdır.
+    CommunityHealthStore.instance.record(peak, sonuc);
+  }
+
   void _applySuggestion(RewriteSuggestion suggestion) {
     HapticFeedback.selectionClick();
+    _appliedSuggestion = true;
     _textController.value = TextEditingValue(
       text: suggestion.text,
       selection: TextSelection.collapsed(offset: suggestion.text.length),

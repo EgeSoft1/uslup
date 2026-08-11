@@ -274,15 +274,42 @@ Aranacak başlıklar:
 |---|---|---|
 | 1 | Teknik rapor | 🟨 Bu belge |
 | 2 | Sunum dosyası | ⬜ |
-| 3 | Kullanıcı senaryoları | ⬜ |
-| 4 | Çalışan prototip | 🟩 |
+| 3 | Kullanıcı senaryoları | 🟩 `07_KULLANICI_AKISLARI.md` §3 |
+| 4 | Çalışan prototip | 🟩 + topluluk sağlığı paneli |
 | 5 | Kaynak kod | 🔴 Uzak depo yok |
 | 6 | Proje / demo videosu | ⬜ |
 | 7 | İş modeli | 🟨 Bir paragraf yeter (%0 ağırlık) |
 | 8 | Yapay zekâ mimarisi dokümanı | 🟩 |
 | 9 | Veri, model, etik ve performans | 🟩 |
-| 10 | UI/UX tasarımları | 🟩 30 ekran |
-| 11 | Kullanıcı akışları | ⬜ |
+| 10 | UI/UX tasarımları | 🟩 30 ekran + panel |
+| 11 | Kullanıcı akışları | 🟩 `07_KULLANICI_AKISLARI.md` §4 |
 | 12 | Kullanıcı araştırması özeti | ⬜ Gerçek kullanıcı gerekiyor |
 | 13 | Kullanılabilirlik testi sonuçları | ⬜ Gerçek kullanıcı gerekiyor |
-| 14 | Erişilebilirlik değerlendirmesi | ⬜ |
+| 14 | Erişilebilirlik değerlendirmesi | 🟨 `07` §5 kararları; tam değerlendirme kaldı |
+
+### Topluluk sağlığı paneli — rapordaki anlatı
+
+Şartnamenin "YZ destekli topluluk yönetimi" maddesi karşılandı, ama asıl
+rapor değeri **neyin YAPILMADIĞINDA**:
+
+> Alışıldık moderasyon panellerinin ana ekranı, ihlal eden içeriklerin
+> listesidir. Bu üründe öyle bir liste yoktur ve olamaz — metin cihazdan
+> çıkmadığı gibi panele de gelmez. Panel yalnızca davranıştan üretilmiş
+> sayıları gösterir.
+
+Üç savunulabilir tasarım kararı, üçü de testle korunuyor:
+
+1. **Sinyal sınıfı metin taşıyamaz.** Yorumla "koymayın" demek yetmez;
+   yapısal test (`dart:mirrors` ile alan denetimi) sınıfa bir String alan
+   eklenirse kırılır.
+2. **k-anonimlik (k=5).** Küçük bir toplulukta "nefret söylemi: 1" satırı
+   o tek kişiyi işaret eder. Eşik altındaki kategoriler açılmaz — ve
+   **gizlendikleri kullanıcıya yazılır**; sessiz gizleme, kara kutu
+   moderasyonun ta kendisidir.
+3. **"Dışarı ne gider" kartı.** Sunucuya gönderilmesi hâlinde giden veri,
+   panelde harfi harfine gösterilir. Kullanıcıya "veriniz güvende" demek
+   yerine veriyi göstermek, bu üründe tutarlı olan tek yaklaşım.
+
+Ölçülen şeyin **uyarı sayısı değil düzeltme oranı** olması da anlatılmalı:
+hiç yazmayan bir topluluk da az uyarı üretir; ürünün başarısı uyarı
+alındığında kaç kişinin cümlesini değiştirdiğidir.

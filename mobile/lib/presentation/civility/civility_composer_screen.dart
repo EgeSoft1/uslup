@@ -33,6 +33,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_surfaces.dart';
+import '../community/community_health_screen.dart';
 
 class CivilityComposerScreen extends StatefulWidget {
   const CivilityComposerScreen({super.key});
@@ -201,7 +202,19 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
+          const SizedBox(width: AppSpacing.sm),
+          // Topluluk sağlığı paneli buradan açılır: aynı motorun ürettiği
+          // anonim sinyallerin toplulaştırılmış hâli, ürünün devamı.
+          IconButton(
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const CommunityHealthScreen(),
+              ),
+            ),
+            icon: const Icon(Icons.insights_rounded),
+            color: p.textSecondary,
+            tooltip: 'Topluluk sağlığı',
+          ),
           _ScoreRing(score: score, color: color, label: risk.label),
         ],
       ),
