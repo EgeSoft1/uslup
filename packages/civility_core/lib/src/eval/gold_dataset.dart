@@ -82,8 +82,48 @@ abstract final class GoldDataset {
         text: 'bunların soyunu kurutmak lazım',
         group: GoldGroup.nefret,
         category: ToxicityCategory.nefret,
-        note: 'BİLİNEN SINIR: kimlik yuvası yok, yalnızca "bunlar". '
-            'Şu an KAÇIYOR — gönderge çözümlemesi gerekiyor.'),
+        note: 'BİLİNEN SINIR — ve artık İLKESEL bir sınır. Gönderge katmanı '
+            'eklendi ama bu cümlede öncül YOK: zamirin kime gönderdiği '
+            'metinden bilinemiyor. Zamirden kimlik uydurmak katmanın '
+            'kesinlik iddiasını çürütürdü, o yüzden kasıtlı olarak '
+            'kaçırılıyor. Etiket "müdahale" olarak bırakıldı ki maliyet '
+            'ölçümde görünsün.'),
+
+    // ── Gönderge (anafora) çözümlemesi ──
+    // ⚠ DÜRÜSTLÜK NOTU: bu örnekler gönderge örüntüleriyle AYNI oturumda
+    // yazılmıştır. Kümenin geri kalanıyla aynı bağımsızlık kusurunu taşırlar
+    // (`04_MODEL_DEGERLENDIRME.md` §5) ve genelleme kanıtı değildirler.
+    GoldCase.flag(
+        text: 'Suriyeliler her yeri doldurdu. Bunların soyunu kurutmak lazım',
+        group: GoldGroup.nefret,
+        category: ToxicityCategory.nefret,
+        note: 'Gönderge çözümlemesi: kimlik önceki cümlede, zamir ona '
+            'gönderiyor. Doğrudan örüntü 3 kelimelik boşluğu aşamaz.'),
+    GoldCase.flag(
+        text: 'Ermeniler hakkında uzun uzun konuştuk dün akşam. Onlar hayvandır',
+        group: GoldGroup.nefret,
+        category: ToxicityCategory.nefret,
+        note: 'Gönderge + insanlıktan çıkarma.'),
+    GoldCase.flag(
+        text: 'Şu Suriyeliler yine mahalleye doluştu. Bunlar defolsun',
+        group: GoldGroup.nefret,
+        category: ToxicityCategory.nefret,
+        note: 'Gönderge + dışlama.'),
+    GoldCase.clean(
+        text: 'Suriyeli arkadaşlarımla yemek yaptık. Bunlar çok pis oldu',
+        group: GoldGroup.nefret,
+        note: 'YAKIN-KAÇIŞ: zamir yemeğe gönderiyor. Toplu suçlama '
+            'sözvarlığı nesneler için olağan olduğundan gönderge sürümü '
+            'kasıtlı olarak yok.'),
+    GoldCase.clean(
+        text: 'Kürtler hakkında bir belgesel izledim. Bunlar çok bozuk kayıtlar',
+        group: GoldGroup.nefret,
+        note: 'YAKIN-KAÇIŞ: öncül var, zamir çoğul — ama değersizleştirme '
+            'sözvarlığı da nesneler için olağandır.'),
+    GoldCase.clean(
+        text: 'Suriyeliler hakkında bir haber okudum bugün. Bu yok edilmeli',
+        group: GoldGroup.nefret,
+        note: 'YAKIN-KAÇIŞ: "bu" tekildir, gönderge yuvası değildir.'),
 
     // ── Dışlama / sürgün ──
     GoldCase.flag(

@@ -121,6 +121,23 @@ abstract final class IdentityTerms {
 
   /// Örüntülerin içine gömülecek yuva: `(?:kimlik1|kimlik2|…)`.
   static final String slot = '(?:${all.join('|')})';
+
+  /// Metinde geçen kimlik terimlerini bulmak için derlenmiş biçim.
+  /// Gönderge çözümlemesinde ÖNCÜL (antecedent) araması bunu kullanır.
+  static final RegExp mention = RegExp('\\b$slot', caseSensitive: false);
+
+  // ── GÖNDERGE (ANAFORA) YUVASI ────────────────────────────────────────────
+  // Yalnızca ÇOĞUL işaret zamirleri alınır. "bu", "o", "şu" tekil biçimleri
+  // kasıtlı olarak dışarıdadır: tekil gönderge nesneleri de işaret eder
+  // ("bu karar", "o film") ve yanlış pozitif kaynağıdır.
+  //
+  // Çoğul biçim de tek başına yeterli değildir; bu yuvayı taşıyan her örüntü
+  // `requiresIdentityAntecedent: true` ile işaretlidir ve öncül olmadan
+  // hiçbir bulgu üretmez.
+  static const String anaphora =
+      r'(?:bunlar|onlar|sunlar|bunlari|onlari|sunlari|'
+      r'bunlarin|onlarin|sunlarin|bunlara|onlara|sunlara|'
+      r'bunlardan|onlardan|sunlardan)';
 }
 
 /// Nefret söylemi kuruluşları.
@@ -276,6 +293,60 @@ abstract final class HatePatterns {
       family: ImplicitFamily.kimlikAsagilama,
       category: ToxicityCategory.nefret,
       severity: 0.72,
+    ),
+
+    // ═══ GÖNDERGE (ANAFORA) ÇÖZÜMLEMESİ ══════════════════════════════════════
+    // Belgelenmiş en büyük kaçak buydu (`04_MODEL_DEGERLENDIRME.md` §6):
+    //
+    //   "Suriyeliler her yeri doldurdu. Bunların soyunu kurutmak lazım."
+    //                                    ▲
+    //                       kimlik yuvası BU cümlede yok — kaçıyordu
+    //
+    // Kimlik bir önceki cümlededir; ikinci cümle ona bir çoğul işaret
+    // zamiriyle gönderme yapar. Cümle cümle bakan bir katman bunu göremez.
+    //
+    // ── NEDEN YALNIZCA EN AĞIR ÜÇ SÖZVARLIĞI ────────────────────────────────
+    // Gönderge çözümlemesi bir ÇIKARIMDIR; zamirin gerçekten kimliğe işaret
+    // ettiğini kanıtlayamayız. "Suriyeli arkadaşlarımla yemek yaptık, bunlar
+    // çok kötü oldu" cümlesinde zamir yemeğe gönderir.
+    //
+    // Bu belirsizlik, yüklem sözvarlığı seçilerek kapatılır: varlık reddi,
+    // insanlıktan çıkarma ve dışlama sözvarlıkları nesneler hakkında iyi
+    // niyetle KULLANILMAZ. "Bunların soyunu kurutmak lazım" bir yemek için
+    // kurulmaz. Buna karşılık toplu suçlama (`hirsiz`, `pis`) ve
+    // değersizleştirme (`bozuk`, `kirli`) sözvarlıkları nesneler için
+    // gayet olağandır — bu yüzden gönderge sürümleri KASITLI olarak yoktur.
+    //
+    // Şiddetler doğrudan karşılıklarının altındadır: çıkarımın kendisi bir
+    // belirsizlik payı taşır ve bu paya sayısal karşılık verilir.
+    ImplicitPattern(
+      id: 'nefret.varlik_reddi_anafora',
+      pattern: _re('\\b${IdentityTerms.anaphora}${_gap(3)}'
+          r'(?:yok edil|temizlen|yasamamali|olmamali|kokunu kurut|'
+          r'soyunu kurut|gebertil|asilmali|yakilmali)\w*'),
+      family: ImplicitFamily.varlikReddi,
+      category: ToxicityCategory.nefret,
+      severity: 0.90,
+      requiresIdentityAntecedent: true,
+    ),
+    ImplicitPattern(
+      id: 'nefret.insanliktan_cikarma_anafora',
+      pattern: _re('\\b${IdentityTerms.anaphora}${_gap(3)}$_dehuman$_yuklem'),
+      family: ImplicitFamily.insanliktanCikarma,
+      category: ToxicityCategory.nefret,
+      severity: 0.84,
+      requiresIdentityAntecedent: true,
+    ),
+    ImplicitPattern(
+      id: 'nefret.dislama_anafora',
+      pattern: _re('\\b${IdentityTerms.anaphora}${_gap(3)}'
+          r'(?:defol\w*|gitsin\w*|gonderil\w*|kovul\w*|sinir disi|'
+          r'ulkesine don\w*|ulkelerine don\w*)'),
+      family: ImplicitFamily.dislama,
+      category: ToxicityCategory.nefret,
+      severity: 0.80,
+      requiresIdentityAntecedent: true,
+      neutralAlternative: 'göç politikası hakkında farklı düşünüyorum',
     ),
   ];
 }

@@ -11,6 +11,7 @@
 // motor karar verir. Böylece iki katman ayrı ayrı test edilebilir.
 // =============================================================================
 
+import 'hate_patterns.dart';
 import 'implicit_patterns.dart';
 
 /// Normalize metinde bulunan tek bir örüntü eşleşmesi.
@@ -36,6 +37,32 @@ class ImplicitDetector {
   ImplicitDetector({List<ImplicitPattern>? patterns})
       : patterns = patterns ?? ImplicitPatterns.all;
 
+  /// Bir göndergenin öncülüne uzanabileceği en fazla karakter mesafesi.
+  ///
+  /// Yaklaşık bir-iki cümle. Sınırsız olsaydı, uzun bir metnin başındaki
+  /// kimlik terimi sonundaki her zamiri "kimlik göndergesi" yapardı; oysa
+  /// gönderge yakınlıkla çalışır. Türkçe ortalama cümle uzunluğu göz önüne
+  /// alınarak seçilmiştir ve bir kesinlik mekanizmasıdır.
+  static const int _antecedentWindow = 160;
+
+  /// Metindeki kimlik terimlerinin başlangıç konumları (artan sırada).
+  List<int> _identityMentions(String normalized) {
+    final positions = <int>[];
+    for (final m in IdentityTerms.mention.allMatches(normalized)) {
+      positions.add(m.start);
+    }
+    return positions;
+  }
+
+  /// [matchStart] konumundan önce, pencere içinde bir kimlik terimi var mı?
+  bool _hasAntecedentBefore(List<int> antecedents, int matchStart) {
+    for (final position in antecedents) {
+      if (position >= matchStart) break; // liste sıralı: gerisi hep ileride
+      if (matchStart - position <= _antecedentWindow) return true;
+    }
+    return false;
+  }
+
   /// Normalize metinde tüm örüntüleri arar.
   ///
   /// Çakışan eşleşmelerde en yüksek şiddetli olan tutulur; motorun genel
@@ -47,15 +74,43 @@ class ImplicitDetector {
 
     final matches = <ImplicitMatch>[];
 
+    // Gönderge yuvalı eşleşmeler burada bekletilir. Öncül taraması ANCAK
+    // buraya bir şey düşerse yapılır.
+    //
+    // Sıcak yol maliyeti sıfır olmalıdır: kimlik söz varlığı ~45 terimlik
+    // bir almaşıktır ve her tuş vuruşunda metnin tamamını taramak, hiçbir
+    // zamir geçmeyen cümlelerin ezici çoğunluğu için saf israftır.
+    List<ImplicitMatch>? pendingAnaphoric;
+
     for (final pattern in patterns) {
       for (final match in pattern.pattern.allMatches(normalized)) {
         // Boş eşleşme üreten hatalı bir örüntü sonsuz bulgu üretmesin.
         if (match.end <= match.start) continue;
-        matches.add(ImplicitMatch(
+
+        final candidate = ImplicitMatch(
           pattern: pattern,
           start: match.start,
           end: match.end,
-        ));
+        );
+
+        if (pattern.requiresIdentityAntecedent) {
+          (pendingAnaphoric ??= <ImplicitMatch>[]).add(candidate);
+        } else {
+          matches.add(candidate);
+        }
+      }
+    }
+
+    // ── GÖNDERGE KAPISI ──────────────────────────────────────────────────────
+    // Zamir yuvalı örüntü, ancak eşleşmenin ÖNÜNDE ve erişim penceresi içinde
+    // gerçek bir kimlik terimi varsa geçer. Öncül yoksa cümle kimin hedef
+    // alındığını söylemiyor demektir; çıkarım için dayanak yoktur.
+    if (pendingAnaphoric != null) {
+      final antecedents = _identityMentions(normalized);
+      for (final candidate in pendingAnaphoric) {
+        if (_hasAntecedentBefore(antecedents, candidate.start)) {
+          matches.add(candidate);
+        }
       }
     }
 

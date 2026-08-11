@@ -168,6 +168,15 @@ class ImplicitPattern {
   /// Yeniden yazma önerisinde kullanılacak nötr karşılık.
   final String? neutralAlternative;
 
+  /// Örüntü, kimlik yuvasını bir GÖNDERGEYLE (anafora) doldurur; bu yüzden
+  /// tek başına anlamsızdır ve yalnızca metnin daha önceki bir yerinde
+  /// gerçek bir kimlik terimi geçtiyse bulgu üretmelidir.
+  ///
+  /// "Bunların soyunu kurutmak lazım" cümlesi tek başına kimin hedef
+  /// alındığını söylemez. Önceki cümlede "Suriyeliler" geçtiyse söyler.
+  /// Kapıyı `ImplicitDetector` uygular; örüntü yalnızca şartı beyan eder.
+  final bool requiresIdentityAntecedent;
+
   const ImplicitPattern({
     required this.id,
     required this.pattern,
@@ -175,6 +184,7 @@ class ImplicitPattern {
     required this.category,
     required this.severity,
     this.neutralAlternative,
+    this.requiresIdentityAntecedent = false,
   });
 }
 

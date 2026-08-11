@@ -165,7 +165,96 @@ void main() {
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
-  group('6. Performans — katman eklendi, bütçe korunuyor', () {
+  group('6. Gönderge (anafora) çözümlemesi', () {
+    /// Bulgunun nefret katmanından gelip gelmediği. `flags()` yetmez:
+    /// cümle başka bir katmandan da işaretlenmiş olabilir ve o zaman test
+    /// yanlış sebeple yeşil kalır.
+    bool flagsAsHate(String text) =>
+        analyze(text).findings.any((f) => f.term.startsWith('nefret.'));
+
+    // ⚠ Örnekler KASITLI olarak uzun ilk cümleyle kurulmuştur. Doğrudan
+    // kimlik örüntüleri araya en fazla 3 kelime alır (`_gap(3)`); kısa bir
+    // ilk cümlede o örüntü zaten erişir ve test gönderge katmanını değil
+    // eski davranışı ölçer. Buradaki her örnekte doğrudan örüntü ERİŞEMEZ.
+    test('öncül önceki cümledeyse gönderge çözülür', () {
+      expect(
+          flagsAsHate(
+              'Suriyeliler her yeri doldurdu. Bunların soyunu kurutmak lazım'),
+          isTrue,
+          reason: 'Kimlik önceki cümlede; zamir ona gönderme yapıyor. '
+              'Cümle cümle bakan bir katman bunu göremez.');
+      expect(
+          flagsAsHate(
+              'Ermeniler hakkında uzun uzun konuştuk dün akşam. Onlar hayvandır'),
+          isTrue);
+      expect(
+          flagsAsHate('Şu Suriyeliler yine mahalleye doluştu. Bunlar defolsun'),
+          isTrue);
+    });
+
+    test('ÖNCÜL YOKSA çözümleme yapılmaz — çıkarımın dayanağı olmaz', () {
+      expect(flagsAsHate('bunların soyunu kurutmak lazım'), isFalse,
+          reason: 'Kimin hedef alındığı bilinmiyor. Zamirden kimlik '
+              'uydurmak, katmanın tüm kesinlik iddiasını çürütürdü.');
+      expect(flagsAsHate('Onlar yok edilmeli'), isFalse);
+      expect(flagsAsHate('Bunlar defolsun'), isFalse);
+    });
+
+    test('öncül erişim penceresinin dışındaysa bağlanmaz', () {
+      final uzak = 'Suriyeliler hakkında bir habere denk geldim. '
+          '${'Sonra markete gittim ve alışveriş yaptım. ' * 4}'
+          'Bunların soyunu kurutmak lazım';
+      expect(flagsAsHate(uzak), isFalse,
+          reason: 'Gönderge yakınlıkla çalışır. Sınırsız erişim, metnin '
+              'başındaki her kimlik terimini sonundaki her zamire '
+              'bağlardı.');
+    });
+
+    test('nesneye gönderen zamir işaretlenmez — sözvarlığı seçimi bunu korur',
+        () {
+      expect(
+          flagsAsHate('Suriyeli arkadaşlarımla yemek yaptık. Bunlar çok pis oldu'),
+          isFalse,
+          reason: 'Zamir yemeğe gönderiyor. Toplu suçlama sözvarlığı '
+              '(pis, hırsız) nesneler için olağan olduğundan gönderge '
+              'sürümü KASITLI olarak yoktur.');
+      expect(
+          flagsAsHate(
+              'Kürtler hakkında bir belgesel izledim. Bunlar çok bozuk kayıtlar'),
+          isFalse,
+          reason: 'Öncül var ve zamir çoğul — ama değersizleştirme '
+              'sözvarlığı nesneler için de olağandır.');
+    });
+
+    test('tekil işaret zamiri gönderge yuvası DEĞİLDİR', () {
+      expect(
+          flagsAsHate(
+              'Suriyeliler hakkında bir haber okudum bugün. Bu yok edilmeli'),
+          isFalse,
+          reason: '"bu" tekildir ve nesneleri de işaret eder; yalnızca '
+              'çoğul biçimler yuva doldurur.');
+    });
+
+    test('çözülen gönderge yüksek risk üretir ve gerekçe taşır', () {
+      final analysis =
+          analyze('Suriyeliler her yeri doldurdu. Bunların soyunu kurutmak lazım');
+      expect(analysis.risk, RiskLevel.yuksek);
+      expect(analysis.dominantCategory, ToxicityCategory.nefret);
+      expect(analysis.findings.first.explanation, isNotEmpty);
+    });
+
+    test('gönderge şiddeti doğrudan karşılığının altındadır', () {
+      final dogrudan = analyze('Suriyelilerin soyunu kurutmak lazım');
+      final gonderge = analyze(
+          'Suriyeliler her yeri doldurdu. Bunların soyunu kurutmak lazım');
+      expect(gonderge.toxicity, lessThan(dogrudan.toxicity),
+          reason: 'Çıkarım bir belirsizlik payı taşır; bu paya sayısal '
+              'karşılık verilmelidir.');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('7. Performans — katman eklendi, bütçe korunuyor', () {
     test('nefret katmanıyla birlikte tek çözümleme 16 ms altında kalır', () {
       const samples = [
         'Bütün Suriyeliler hırsızdır',
