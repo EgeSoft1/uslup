@@ -220,15 +220,32 @@ tutma ve moderasyon maliyeti düşüşü üzerinden dolaylıdır.
 
 ## 4. Rapordan önce kapatılması gereken boşluklar
 
-| # | Boşluk | Neden rapora etki eder | Sorumlu |
+| # | Boşluk | Neden rapora etki eder | Durum |
 |---|---|---|---|
-| 1 | **Ölçüm yeniden çalıştırılmadı** — `dart` bu makinede PATH'te yok | Rapordaki her sayı 1 Ağustos tarihli; 3 Ağustos'taki yeniden yazıcı değişikliği (`185efab`) sonrası tazelenmedi | 🔴 |
-| 2 | **Uzak git deposu yok** | "Kaynak kod" teslimatı verilemez | 🔴 |
-| 3 | **Git kalıcı kurulu değil** — yalnızca bir runtime önbelleğinde | Önbellek temizlenirse depoya erişim kaybolur | 🔴 |
+| 1 | ~~Ölçüm yeniden çalıştırılmadı~~ | Araç zinciri kuruldu (Flutter 3.44.9 / Dart 3.12.2 → `D:\flutter`); tüm sayılar 12 Ağustos'ta tazelendi | 🟢 |
+| 2 | **Uzak git deposu yok** | "Kaynak kod" teslimatı verilemez; proje tek diskte tek kopya | 🔴 **Kalan tek engel** |
+| 3 | ~~Git kalıcı kurulu değil~~ | MinGit 2.55.0.4 → `D:\git`, PATH'e eklendi | 🟢 |
 | 4 | Mimari diyagramlar çizilmedi | Teknik Yeterlilik %35 — görselsiz anlatım zayıf | ⬜ |
 | 5 | Bağımsız etiketleyici / kappa yok | Metrik koşullu kalır (§3.3'teki paragraf bunu dürüstçe karşılıyor) | 🟡 |
 | 6 | Kaynakça toplanmadı | Akademik zemin eksik görünür | ⬜ |
-| 7 | Test sayısı doğrulanmadı | Statik sayım 97 çekirdek + 10 mobil; belgelerde 101 + 10 yazıyor. Fark döngüyle üretilen testlerden olabilir — `dart test` ile kesinleştir | 🟡 |
+| 7 | ~~Test sayısı doğrulanmadı~~ | Çalıştırıldı: **122 çekirdek + 10 mobil = 132**, `dart analyze` ve `flutter analyze` temiz | 🟢 |
+
+### 12 Ağustos'ta rapora giren yeni malzeme
+
+**Gönderge (anafora) çözümlemesi** — `04_MODEL_DEGERLENDIRME.md` §6'da
+"bilinen sınır" olarak kayıtlı en büyük kaçak kapatıldı. Rapor için değeri
+yalnızca bir özellik olması değil, **bir yöntem anlatısı** olmasıdır:
+
+1. Ölçüm bir sınır gösterdi (kaçan örnek kümede etiketliydi).
+2. Sınır bir katmanla kapatıldı — ama yalnızca çıkarımın dayanağı olduğu
+   yerde: öncül yoksa sistem bilerek sessiz kalır.
+3. Kapatmanın kesinlik maliyeti ölçüldü: **sıfır** (özgüllük %100'de kaldı,
+   üç yakın-kaçış örneğinin hiçbiri işaretlenmedi).
+4. Kapatmanın performans maliyeti ölçüldü ve **giderildi**: hevesli sürüm
+   440 µs, tembel sürüm 268 µs.
+
+Bu dört adım, "Teknik Yeterlilik ve Uygulanabilirlik" (%35) kriterinin
+istediği şeyin ta kendisidir ve raporda bu sırayla anlatılmalıdır.
 
 ---
 

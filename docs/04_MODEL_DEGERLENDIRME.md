@@ -1,6 +1,7 @@
 # Model Değerlendirme
 
-**Tarih:** 1 Ağustos 2026 · **Kod:** `packages/civility_core/`
+**Son ölçüm:** 12 Ağustos 2026 · **Kod:** `packages/civility_core/`
+**Ortam:** Dart 3.12.2 (Flutter 3.44.9), Windows 11
 **Yeniden üretmek için:** `dart run bin/evaluate.dart --hepsi`
 
 Bu belge teknik raporun "Doğrulama ve Metrikler" bölümüne kaynaklık eder.
@@ -36,7 +37,7 @@ F-ölçüsü). F1 de verilir ama tek başına yanıltıcıdır.
 
 | Küme | Örnek | Amaç |
 |---|---|---|
-| Geliştirme (`gold_dataset.dart`) | 250 | Geliştirme ve regresyon kalkanı |
+| Geliştirme (`gold_dataset.dart`) | 256 | Geliştirme ve regresyon kalkanı |
 | Ayrık (`holdout_dataset.dart`) | 80 | Genelleme ölçümü |
 
 Beş dilim:
@@ -45,9 +46,12 @@ Beş dilim:
 |---|---|---|
 | Açık saldırı | 55 | Sözlük katmanının kapsamı |
 | Örtük saldırı | 57 | Küfürsüz düşmanlık |
-| **Nefret söylemi** | **39** | **Kimlik hedefli düşmanlık — ve masum kimlik beyanını rahat bırakma** |
-| Masum / tuzak | 79 | **Kesinlik** — kümenin %32'si |
+| **Nefret söylemi** | **45** | **Kimlik hedefli düşmanlık — ve masum kimlik beyanını rahat bırakma** |
+| Masum / tuzak | 79 | **Kesinlik** — kümenin %31'i |
 | Bağlam | 20 | Mağduru cezalandırmama |
+
+Nefret dilimi 12 Ağustos'ta 39 → 45'e çıktı: gönderge (anafora) katmanının
+3 yakalama ve 3 yakın-kaçış örneği eklendi (§3b).
 
 ### Nefret dilimi neden çift yönlü
 
@@ -114,8 +118,13 @@ ama düşmanca olmayan cümlelerdir. Bu çiftler olmadan ölçülen kesinlik
 | **T1** + motor düzeltmeleri | 211 | 100,0 % | 49,6 % | 66,3 % | 83,1 % |
 | **T2** + örtük saldırı katmanı | 211 | 100,0 % | 100,0 % | 100,0 % | 100,0 % |
 | **T3** + nefret söylemi katmanı | **250** | **100,0 %** | **99,2 %** | **99,6 %** | **99,8 %** |
+| **T4** + gönderge katmanı | **256** | **100,0 %** | **99,3 %** | **99,6 %** | **99,8 %** |
 
 *(geliştirme kümesi — genelleme için §5'e bakınız)*
+
+T4'te küme 6 yeni örnekle büyüdü (3'ü yakalama, 3'ü yakın-kaçış) ve
+**kesinlik ile özgüllük %100'de kaldı**: üç yakın-kaçışın hiçbiri
+işaretlenmedi. Katmanın kabul koşulu buydu.
 
 T3'te duyarlılık 100'ün altına indi. Bu bir gerileme değil: küme 39 yeni ve
 daha zor örnekle büyüdü ve tek kaçan örnek, kümeye **bilinen sınır olarak
@@ -124,11 +133,11 @@ masum cümleyi bile işaretlemedi.
 
 ### 3.2 Dilim bazında
 
-| Dilim | T0 | T3 |
+| Dilim | T0 | T4 |
 |---|---|---|
 | Açık saldırı (duyarlılık) | 89,1 % | 100,0 % |
 | **Örtük saldırı (duyarlılık)** | **0,0 %** | **100,0 %** |
-| **Nefret söylemi (F1)** | — (kategori boştu) | **96,8 %** |
+| **Nefret söylemi (F1)** | — (kategori boştu) | **97,3 %** |
 | Masum / tuzak (özgüllük) | 100,0 % | 100,0 % |
 | Bağlam (F1) | 50,0 % | 100,0 % |
 
@@ -146,9 +155,10 @@ doğrudan bir maddesi karşılanmıyordu.
 | Metrik | Yalnız sözlük | + Örüntü katmanları | Değişim |
 |---|---|---|---|
 | Kesinlik | 100,0 % | 100,0 % | **0,0 puan** |
-| Duyarlılık | 45,0 % | 99,2 % | **+54,2 puan** |
+| Duyarlılık | 44,0 % | 99,3 % | **+55,2 puan** |
 | Özgüllük | 100,0 % | 100,0 % | **0,0 puan** |
-| F1 | 62,1 % | 99,6 % | +37,5 puan |
+| F1 | 61,1 % | 99,6 % | +38,5 puan |
+| F0.5 | 79,7 % | 99,8 % | +20,1 puan |
 
 Dilim bazında duyarlılık:
 
@@ -156,7 +166,7 @@ Dilim bazında duyarlılık:
 |---|---|---|---|
 | Açık saldırı | 98,2 % | 100,0 % | +1,8 puan |
 | **Örtük saldırı** | **1,8 %** | **100,0 %** | **+98,2 puan** |
-| **Nefret söylemi** | **12,5 %** | **93,8 %** | **+81,3 puan** |
+| **Nefret söylemi** | **10,5 %** | **94,7 %** | **+84,2 puan** |
 | Bağlam | 66,7 % | 100,0 % | +33,3 puan |
 
 **Kritik sonuç:** her iki örüntü katmanı da duyarlılığı büyük ölçüde
@@ -170,14 +180,32 @@ kimlik hedefli düşmanlığın yedide altısı tek bir hakaret sözcüğü içe
 
 ### 3.4 Performans
 
-| | Ortalama çözümleme |
-|---|---|
-| T0 (yalnız sözlük) | 188,6 µs |
-| T2 (sözlük + örtük) | 279,7 µs |
-| T3 (sözlük + örtük + nefret) | 322,7 µs |
+**12 Ağustos 2026 ölçümü** (Dart 3.12.2, 256 örnek, `--hepsi`):
 
-16 ms'lik 60 FPS bütçesinin **%2'si**. İki katman eklendi, bütçe korundu;
-gecikmeli tetikleme (debounce) hâlâ gerekmiyor.
+| Yapılandırma | Ortalama çözümleme | Koşul |
+|---|---|---|
+| Tam hat (sözlük + örtük + nefret + gönderge) | **268,4 µs** | süreçteki **ilk** çalıştırma |
+| Yalnız sözlük | 48,2 µs | ısınmış |
+| Sözlük + tüm örüntü katmanları | 103,9 µs | ısınmış |
+
+⚠ **Bu üç sayı birbiriyle doğrudan karşılaştırılamaz.** Üçü de aynı Dart
+sürecinde arka arkaya çalışır; ilki JIT ısınmasını da üstlenir. Aynı
+yapılandırma (tam hat) ısınmış hâlde 103,9 µs, soğuk hâlde 268,4 µs
+ölçülüyor — aradaki 2,6 kat fark katman maliyeti değil, ısınmadır.
+**Raporlanacak sayı, kullanıcının gerçekten yaşadığı en kötü hâl olan
+soğuk ölçümdür: 268,4 µs.**
+
+Önceki kayıt (1 Ağustos, T3): 322,7 µs. Aradaki düşüş bir iyileştirme
+iddiası olarak sunulmamalıdır — Dart sürümü ve makine durumu değişti.
+
+**Gönderge katmanının maliyeti ölçülerek sıfıra indirildi.** İlk sürümde
+kimlik söz varlığı (~45 terimlik almaşık) her çözümlemede taranıyordu ve
+ortalama **440,2 µs**'ye çıkmıştı. Tarama tembelleştirildi: öncül araması
+ancak bir gönderge örüntüsü gerçekten eşleştiyse çalışır — yani cümlelerin
+ezici çoğunluğunda hiç çalışmaz. Sonuç 268,4 µs.
+
+Her hâlükârda 16 ms'lik 60 FPS bütçesinin **%2'sinden azı**. Gecikmeli
+tetikleme (debounce) gerekmiyor.
 
 ---
 
@@ -319,7 +347,8 @@ Koşulsuz bir metrik, jüri tarafından haklı olarak sorgulanır.
 | Sınır | Durum |
 |---|---|
 | ~~Nefret söylemi kategorisi boş~~ | ✅ **Kapatıldı.** 5 kuruluş ailesi + 8 hakaret sözcüğü, 39 örneklik ölçüm dilimiyle. Dilim F1 %96,8, kesinlik %100. |
-| **Gönderge çözümlemesi yok** | Kimlik yuvası açıkça yazılmadığında kaçıyor: *"bunların soyunu kurutmak lazım"* — önceki cümlede hangi gruptan söz edildiği bilinmiyor. Kümeye **bilinen sınır** olarak kondu; cümleler arası gönderge takibi gerekiyor. |
+| ~~Gönderge çözümlemesi yok~~ | ✅ **Kapatıldı (12 Ağustos, `510a5ec`).** Kimlik önceki cümledeyse çoğul işaret zamiri ona bağlanıyor; 160 karakterlik erişim penceresi var. Kalan sınır **ilkeseldir**: öncülsüz zamir (*"bunların soyunu kurutmak lazım"* tek başına) kasıtlı olarak kaçırılır — hedefin kim olduğu metinden bilinemez. Küme etiketinde "müdahale" olarak bırakıldı ki bu kararın duyarlılık maliyeti ölçümde görünsün. |
+| **Gönderge yalnızca en ağır üç sözvarlığında** | Toplu suçlama (`hirsiz`, `pis`) ve değersizleştirme (`bozuk`, `kirli`) sözvarlıklarının gönderge sürümü yoktur: bu kelimeler nesneler için de olağandır ve *"bunlar çok pis oldu"* yemeğe gönderebilir. Kesinlik uğruna kabul edilmiş bir duyarlılık kaybıdır. |
 | **Nefret dilimi bağımsız değil** | Bu 39 örneği de örüntüleri de aynı kişi yazdı, üstelik örüntüler kümeyle **birlikte** yazıldı. §5'teki uyarı bu dilim için bir kat daha geçerlidir; ayrık bir kümede yeniden ölçülmelidir. |
 | **Kimlik söz varlığı eksik** | 40 kimlik terimi kapsanıyor. Türkçe'deki tüm etnik/inanç/yönelim adlandırmaları değil; özellikle bölgesel ve argo adlandırmalar eksik. |
 | Alaycılık kırılgan | Alay, alay parçacığı ("valla", "gerçekten") olmadan yakalanamıyor. "vay be" gibi tek başına belirsiz kalıplar yanlış pozitif ürettiği için çıkarıldı. |
@@ -355,5 +384,12 @@ dart run bin/evaluate.dart               # geliştirme kümesi
 dart run bin/evaluate.dart --ayrik       # ayrık küme
 dart run bin/evaluate.dart --karsilastir # katman katkısı (A/B)
 dart run bin/evaluate.dart --hepsi       # üçü birden
-dart test                                # 101 test
+dart test                                # 122 test
 ```
+
+Mobil taraf (`mobile/`): `flutter test` → 10 test, `flutter analyze` → temiz.
+**Toplam 132 test, 0 analiz uyarısı** (12 Ağustos 2026).
+
+Araç zinciri bu makinede `D:\flutter` (3.44.9 · Dart 3.12.2) ve `D:\git`
+(MinGit 2.55.0.4) altındadır; `PUB_CACHE=D:\pub-cache`. C: sürücüsünde yer
+kalmadığı için D:'ye kuruldu — ayrıntı `02_TEKNIK_BORC.md`.

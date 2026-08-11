@@ -9,10 +9,10 @@
 > Takım hâlâ tek kişi. İkinci üye bulunmadan 20 Ağustos'ta atılan başvuru
 > **geçersizdir** — aşağıdaki metnin kalitesi bunu değiştirmez.
 
-> ⚠️ Buradaki her sayı `04_MODEL_DEGERLENDIRME.md`'den alınmıştır ve en son
-> 1 Ağustos'ta üretilmiştir. **Başvurudan önce yeniden çalıştır:**
-> `cd packages/civility_core && dart run bin/evaluate.dart --hepsi`
-> Sayı değişirse önce bu belge, sonra başvuru güncellenir.
+> ✅ **Sayılar 12 Ağustos 2026'da tazelendi** (Flutter 3.44.9 / Dart 3.12.2
+> kuruldu, `dart run bin/evaluate.dart --hepsi` çalıştırıldı). Motorda
+> değişiklik yapılırsa yeniden çalıştır; sayı değişirse önce
+> `04_MODEL_DEGERLENDIRME.md`, sonra bu belge, sonra başvuru güncellenir.
 
 ---
 
@@ -235,9 +235,11 @@ edersiniz. Model bir öneri kaynağıdır, bir otorite değildir.
 - Türkçe normalizasyon (çift varyantlı, gizleme direnci)
 - Bağlam duyarlı toksisite motoru: sözlük + edimbilimsel örüntü katmanı
 - Nefret söylemi katmanı: 5 kuruluş ailesi, 40 kimlik terimi
+- Gönderge (anafora) katmanı: kimlik önceki cümledeyse zamir ona bağlanır
 - İki modlu yerel yeniden yazıcı (öbek modu / yerinde mod), Türkçe
   morfoloji farkındalığıyla
-- Değerlendirme altyapısı: 330 etiketli örnek, beş dilim
+- Değerlendirme altyapısı: 336 etiketli örnek, beş dilim
+- 132 test geçiyor (122 çekirdek + 10 mobil), 0 analiz uyarısı
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) + sohbet mesaj kutusu
 - Devralınan 30 ekranlık Flutter arayüz kütüphanesi ve tasarım sistemi
 
@@ -246,9 +248,9 @@ edersiniz. Model bir öneri kaynağıdır, bir otorite değildir.
 |----------------------------------------|------------------------------|
 | Genelleme (ayrık küme) F1              | %84,2                        |
 |   kesinlik / duyarlılık                | %88,9 / %80,0                |
-| Nefret söylemi dilimi F1               | %96,8 (kesinlik %100)        |
-| Örüntü katmanının duyarlılık katkısı   | +54,2 puan, kesinlik kaybı 0 |
-| Ortalama çözümleme süresi              | 323 µs (16 ms bütçenin %2'si)|
+| Nefret söylemi dilimi F1               | %97,3 (kesinlik %100)        |
+| Örüntü katmanının duyarlılık katkısı   | +55,2 puan, kesinlik kaybı 0 |
+| Ortalama çözümleme süresi              | 268 µs (16 ms bütçenin %2'si)|
 
 ÖLÇÜMÜN KOŞULLARI (raporda birlikte verilecektir): geliştirme kümesinde
 ölçülen F1 %99,6'dır, ancak bu bir genelleme kanıtı DEĞİLDİR — kümeyi de
@@ -304,7 +306,7 @@ Jüri karşısında zayıflık değil güç sayılan kısım; **gizleme.**
 | 2 | Proje adı ve takım adı kesinleştir | ⬜ |
 | 3 | KYS'de takım oluştur, üyeleri ekle | ⬜ |
 | 4 | Google Groups'a en az 1 üye katılsın (zorunlu) | ⬜ |
-| 5 | `dart run bin/evaluate.dart --hepsi` ile sayıları tazele | ⬜ |
-| 6 | Uzak git deposu + push (kaynak kod teslimatı) | 🔴 |
+| 5 | ~~Sayıları tazele~~ | 🟢 12 Ağustos |
+| 6 | Uzak git deposu + push (kaynak kod teslimatı) | 🔴 **Kalan tek teknik engel** |
 | 7 | Danışman (tavsiye) | ⬜ |
 | 8 | Yukarıdaki blokları KYS form alanlarına yerleştir | ⬜ |

@@ -221,11 +221,50 @@ sunulamaz**.
 
 ---
 
-## 6. ✅ Ortam borcu — çözüldü (3 Ağustos 2026)
+## 6. ✅ Ortam borcu — gerçekten çözüldü (12 Ağustos 2026)
 
-Git kurulduktan sonra aşağıdaki sorun ortadan kalktı. Doğrulama:
-`flutter --version` geçici çözüm ortam değişkeni **olmadan** çalışıyor
-(Flutter 3.44.8 · Dart 3.12.2). Aşağıdaki bölüm tarihsel kayıt olarak duruyor.
+> ⚠️ 3 Ağustos'taki "çözüldü" kaydı **doğru değildi.** 12 Ağustos'ta
+> denetlendiğinde `C:\flutter` diye bir dizin yoktu, `git` PATH'te değildi
+> ve çalışan tek git kopyası bir runtime önbelleğinin içindeydi. Ne
+> `dart test` ne `flutter analyze` çalıştırılabiliyordu — yani rapordaki
+> hiçbir sayı doğrulanabilir durumda değildi.
+
+### Kurulan araç zinciri
+
+| Bileşen | Sürüm | Konum | Neden D: |
+|---|---|---|---|
+| Flutter | 3.44.9 (stable, 6 Ağu 2026) | `D:\flutter` | C:'de 143 GB'ın yalnızca **0,23 GB'ı** boştu |
+| Dart | 3.12.2 | (Flutter içinde) | — |
+| Git | MinGit 2.55.0.4 | `D:\git` | Kurulum gerektirmez, taşınabilir |
+| pub önbelleği | — | `D:\pub-cache` | `PUB_CACHE` kullanıcı değişkeni |
+
+Kullanıcı PATH'ine `D:\flutter\bin` ve `D:\git\cmd` eklendi.
+
+İki ek adım gerekti:
+
+```powershell
+# Arşivden açılan dizinin sahibi farklı göründüğü için git reddediyordu
+git config --global --add safe.directory D:/flutter
+git config --global --add safe.directory C:/TurkiyeMesajlasma
+```
+
+### Disk alanı
+
+`mobile/build/` (2,9 GB, `.gitignore`'lu, tamamen yeniden üretilebilir
+Gradle/Flutter çıktısı) silindi; C: **0,23 GB → 3,09 GB** boşa çıktı.
+Android derlemesi ve Gradle önbelleği bunu yeniden doldurabilir — C:
+izlenmelidir.
+
+### Doğrulama
+
+```
+dart analyze     → No issues found!
+dart test        → 122 test geçti
+flutter analyze  → No issues found!
+flutter test     → 10 test geçti
+```
+
+Aşağıdaki bölüm tarihsel kayıt olarak duruyor.
 
 ---
 

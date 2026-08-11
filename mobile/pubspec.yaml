@@ -3,7 +3,10 @@
 # Dosya: mobile/pubspec.yaml
 # =============================================================================
 name: turkiye_mesajlasma
-description: "150M+ CCU, Zero-lag, Ultra Şifrelenmiş Kurumsal Mesajlaşma Platformu"
+# NOT: Devralınan açıklama ("150M+ CCU, Zero-lag, Ultra Şifrelenmiş...")
+# 12 Ağustos 2026'da silindi. Hiçbiri ölçülmemiş, hiçbiri doğru değildi ve
+# jürinin okuyacağı kaynak kodda duruyordu. Ürün artık bu değil.
+description: "NSosyal Nezaket Koçu — cihaz üstü Türkçe nezaket katmanı"
 publish_to: 'none'
 version: 1.0.0+1
 

@@ -130,6 +130,14 @@ Kullanıcı yazıyor (her tuş vuruşu)
 │                        susturur: "Ben Kürtüm" → temiz kalmalı.        │
 │                        5 kuruluş ailesi, 40 kimlik terimi             │
 │                                                                        │
+│  2d. GÖNDERGE KATMANI  Kimlik önceki cümledeyse zamiri ona bağlar     │
+│                        "Suriyeliler doldurdu. BUNLARIN soyunu         │
+│                         kurutmak lazım"        → yakalanır            │
+│                        "Bunların soyunu kurutmak lazım" (öncülsüz)    │
+│                                                → yakalanMAZ           │
+│                        Öncül yoksa hedefin kim olduğu bilinemez;      │
+│                        zamirden kimlik uydurulmaz.                    │
+│                                                                        │
 │  3. BAĞLAM ÇÖZÜMLEME   ← projenin teknik kalbi                        │
 │                        (her iki katman da buradan geçer)              │
 │                        "aptalsın"          → saldırı    ×1,25         │
@@ -152,15 +160,16 @@ Kullanıcı seçer → gönderir → anonim sinyal → topluluk sağlığı pane
         kaldırılmıştır — gerekçe: `03_LLM_SERVISI.md`.
 ```
 
-**Ölçülen performans:** ortalama **323 µs** / çözümleme (her iki örüntü
-katmanı dahil). 60 FPS kare bütçesinin (16 ms) **%2'si**. Bu yüzden gecikmeli
-tetikleme (debounce) gerekmiyor — geri bildirim gerçekten anlık.
+**Ölçülen performans:** ortalama **268 µs** / çözümleme (tüm katmanlar dahil,
+soğuk ölçüm — 12 Ağustos 2026). 60 FPS kare bütçesinin (16 ms) **%2'sinden
+azı**. Bu yüzden gecikmeli tetikleme (debounce) gerekmiyor — geri bildirim
+gerçekten anlık. Ölçüm koşulları: `04_MODEL_DEGERLENDIRME.md` §3.4.
 
 **Ölçülen doğruluk:** ayrık küme üzerinde **F1 = %84,2**
 (kesinlik %88,9 / duyarlılık %80,0). Koşullar ve sınırlar:
 `04_MODEL_DEGERLENDIRME.md` §5 — **bu koşullar rapora birlikte yazılmalıdır.**
 
-Geliştirme kümesinde (250 örnek) kesinlik **%100**, F1 **%99,6** — ancak bu
+Geliştirme kümesinde (256 örnek) kesinlik **%100**, F1 **%99,6** — ancak bu
 sayı bir genelleme kanıtı değildir, çünkü küme ve örüntüler aynı kişi
 tarafından yazılmıştır. Aynı belgenin §5'i bunu açıkça uyarır.
 
@@ -215,14 +224,17 @@ teslimatının çekirdeğidir.
   adları yasaklı kelime DEĞİL, yalnızca düşmanca kuruluşun içinde yuva
   doldurur. Dilim F1 %96,8, **kesinlik %100** (20 masum kimlik cümlesinin
   hiçbiri işaretlenmiyor)
-- **Ölçüm altyapısı**: 330 etiketli örnek, kesinlik/duyarlılık/F1/F0.5
+- **Gönderge (anafora) katmanı** — kimlik önceki cümledeyse çoğul işaret
+  zamiri ona bağlanır; öncülsüz zamirden kimlik uydurulmaz
+- **Ölçüm altyapısı**: 336 etiketli örnek, kesinlik/duyarlılık/F1/F0.5
 - ~~LLM yeniden yazma servisi~~ — yazıldı, ölçüldü, **kasıtlı olarak
   kaldırıldı** (3 Ağustos). Gerekçe: `03_LLM_SERVISI.md`
 - Yerel yeniden yazma önerisi — **iki mod** (öbek / yerinde), Türkçe
   morfoloji farkındalığıyla; ikame edilen kelime taşıdığı eki korur
 - Canlı yazım arayüzü (Nezaket Koçu ekranı) **+ sohbet mesaj kutusu**
-- **111 test geçiyor** (101 çekirdek + 10 mobil), 0 analiz uyarısı
-- Ölçülen performans: 323 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
+- **132 test geçiyor** (122 çekirdek + 10 mobil), 0 analiz uyarısı
+  — 12 Ağustos 2026'da `dart test` + `flutter test` ile doğrulandı
+- Ölçülen performans: 268 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
 
 ### Devralınan varlıklar (önceki mesajlaşma projesinden)
 - 30 ekranlık Flutter arayüz kütüphanesi ve tasarım sistemi
@@ -234,8 +246,11 @@ teslimatının çekirdeğidir.
   → *ölçüm altyapısı hazır; karşılaştırmalı değerlendirme yapılabilir*
 - **Bağımsız etiketlenmiş veri kümesi** — mevcut kümeleri tek kişi yazdı,
   hakem uyumu (kappa) ölçülmedi. Nefret dilimi için bu bir kat daha kritik.
-- **Cümleler arası gönderge çözümlemesi** — "bunların soyunu kurutmak lazım"
-  gibi kimliğin önceki cümlede geçtiği durumlar kaçıyor
+- ~~**Cümleler arası gönderge çözümlemesi**~~ — ✅ **eklendi (12 Ağustos,
+  `510a5ec`).** Kimlik önceki cümledeyse çoğul işaret zamiri ona bağlanır.
+  Kalan sınır ilkeseldir: öncülsüz zamir (*"bunların soyunu kurutmak lazım"*
+  tek başına) kasıtlı olarak kaçırılır — hedefin kim olduğu metinden
+  bilinemez ve zamirden kimlik uydurmak kesinlik iddiasını çürütür
 - ~~**Yerel yeniden yazıcının akıcılığı**~~ — ✅ büyük ölçüde kapatıldı
   (3 Ağustos, `185efab`): iki mod + Türkçe morfoloji farkındalığı.
   ⬜ **Kalan:** düzeltme sonrası akıcılık `bin/rewrite_audit.dart` ile
@@ -251,7 +266,9 @@ teslimatının çekirdeğidir.
 | Risk | Etki | Durum |
 |---|---|---|
 | **Takım tek kişi** | Başvuru geçersiz — şartname en az 2 kişi şartı koyuyor | 🔴 **20 Ağustos'a kadar çözülmeli** |
-| **Git kalıcı kurulu değil** | Depo `main` dalında çalışıyor (son commit `185efab`, 3 Ağustos) ama `git` PATH'te yok; çalışan tek kopya bir runtime **önbelleğinin** içinde (`~\.cache\codex-runtimes\...\native\git\cmd\git.exe`). Önbellek temizlenirse depo yönetilemez hâle gelir. | 🔴 **Kalıcı kurulum gerekli** |
+| ~~Git kalıcı kurulu değil~~ | ~~Çalışan tek kopya bir runtime önbelleğindeydi~~ | 🟢 **Çözüldü (12 Ağustos).** MinGit 2.55.0.4 → `D:\git`, kullanıcı PATH'ine eklendi |
+| ~~Dart/Flutter kurulu değil~~ | ~~Testler ve ölçüm çalıştırılamıyordu; rapordaki her sayı doğrulanamaz durumdaydı~~ | 🟢 **Çözüldü (12 Ağustos).** Flutter 3.44.9 / Dart 3.12.2 → `D:\flutter`, `PUB_CACHE=D:\pub-cache` |
+| **C: sürücüsü dolu** | 143 GB'ın yalnızca ~3 GB'ı boş (12 Ağustos'ta `mobile/build` temizlendikten sonra). Android derlemesi ve Gradle önbelleği bunu hızla yiyebilir. Araç zinciri bu yüzden D:'ye kuruldu. | 🟡 İzlenmeli |
 | **Uzak depo yok** | `git remote -v` boş. Şartnamenin "kaynak kod" teslimatı bugün verilemez; ayrıca tek kopya bu diskte — donanım arızası projeyi silip götürür. | 🔴 **Başvurudan önce** |
 | Rust backend derlenmiyor | Backend iddiaları kanıtlanamaz | 🟢 Kapsam dışı bırakıldı |
 | ~~Etiketli veri kümesi yok~~ | ~~Metrikler raporlanamaz~~ | 🟢 330 örnek + ölçüm altyapısı |

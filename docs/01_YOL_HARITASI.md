@@ -54,7 +54,9 @@ Başvuru formu kısa; asıl iş formu doldurmak değil, **rapora hazır olmak**.
 |---|---|
 | Proje adı ve marka kimliği kesinleştir | Şu an çalışma adı "Nezaket Koçu" |
 | Başvuru metnini yaz | `docs/00_URUN_TANIMI.md` §1–3'ten türetilir |
-| ~~Etiketli veri kümesi oluştur~~ | ✅ 330 örnek + ölçüm altyapısı — `04_MODEL_DEGERLENDIRME.md` |
+| ~~Etiketli veri kümesi oluştur~~ | ✅ 336 örnek + ölçüm altyapısı — `04_MODEL_DEGERLENDIRME.md` |
+| ~~Araç zincirini kur, sayıları tazele~~ | ✅ 12 Ağustos: Flutter 3.44.9 + MinGit → D:; 132 test geçiyor, ölçüm yeniden alındı |
+| ~~Gönderge çözümlemesi~~ | ✅ 12 Ağustos (`510a5ec`) — en büyük belgelenmiş kaçak kapatıldı |
 | **Bağımsız ikinci küme** (takım arkadaşı) | 🔴 Metriklerin bağımsız olması için şart |
 | Danışman ara (zorunlu değil, tavsiye ediliyor) | NLP/dilbilim alanından akademisyen |
 
