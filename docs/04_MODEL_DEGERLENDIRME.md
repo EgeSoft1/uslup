@@ -393,3 +393,72 @@ Mobil taraf (`mobile/`): `flutter test` → 17 test, `flutter analyze` → temiz
 Araç zinciri bu makinede `D:\flutter` (3.44.9 · Dart 3.12.2) ve `D:\git`
 (MinGit 2.55.0.4) altındadır; `PUB_CACHE=D:\pub-cache`. C: sürücüsünde yer
 kalmadığı için D:'ye kuruldu — ayrıntı `02_TEKNIK_BORC.md`.
+
+---
+
+## 7. ⚠️ 20 Ağustos 2026 doğrulaması — iki bulgu
+
+**Ortam:** Dart 3.13.1 (yeni kurulum, `C:/Users/egeme/dart-sdk`), Windows 11
+**Komut:** `dart test` → **136 test geçti** · `dart run bin/evaluate.dart --hepsi`
+
+### 7.1 🔴 Ayrık küme artık ayrık DEĞİL — genelleme sayımız yeniden üretilemiyor
+
+Bugünkü çalıştırmada ayrık küme **F1 = %99,0** veriyor (kesinlik %98,0,
+duyarlılık %100,0). Rapora yazdığımız sayı ise **%84,2**.
+
+İkisi de doğru; çelişki değil, **sıralama sorunu**:
+
+1. Ayrık küme kuruldu, ölçüm bir kez alındı → **F1 %84,2**. Geçerli genelleme.
+2. Ölçüm üç motor hatası gösterdi (§4, hata 6-7-8) ve **hatalar düzeltildi**.
+3. Düzeltmeden sonra aynı küme üzerinde ölçmek artık genelleme ölçmüyor —
+   küme, motorun görüp uyum sağladığı bir **geliştirme kümesine dönüştü**.
+
+`evaluate.dart` bunu kendisi uyarıyor:
+*"Bu küme artık gerçek anlamda AYRIK DEĞİLDİR."*
+
+**Rapor için sonuç:** Jüri kodu çalıştırırsa **%99,0** görecek, rapordaki
+**%84,2**'yi değil. Bu fark açıklanmazsa tutarsızlık gibi durur. İki seçenek:
+
+| Seçenek | Değerlendirme |
+|---|---|
+| **A. Yeni ve gerçekten ayrık küme üret** (24 Ağustos'a kadar) | ✅ Tercih edilen. Tek geçerli genelleme sayısını geri kazandırır. İkinci etiketleyici işiyle aynı iş. |
+| **B. Şeffaf anlatım** | %84,2'nin ilk ve tek geçerli ölçüm olduğu, sonrasında kümenin kirlendiği açıkça yazılır. Dürüst ama elde yeni sayı olmaz. |
+
+En kötü seçenek: bugünkü **%99,0**'ı genelleme başarımı diye raporlamak.
+Bu, veri sızıntısını gizlemek olur ve teknik jüri bunu sorar.
+
+### 7.2 🟡 Gecikme sayısı ölçüm biçimine göre 4,6 kat değişiyor
+
+| Çalıştırma biçimi | Tam hat | Yalnız sözlük |
+|---|---|---|
+| **JIT** (`dart run`, geliştirme) | 896,3 µs | 187,8 µs |
+| **AOT** (`dart compile exe`) | **193,3 µs** | **47,3 µs** |
+| 12 Ağustos kaydı (karışık) | 268,4 µs | 48,2 µs |
+
+**Raporlanacak sayı AOT'dir: ~193 µs.** Gerekçe: Flutter sürüm derlemesi
+cihazda **AOT** çalışır; JIT yalnızca geliştirme biçimidir. Sözlük katmanının
+AOT değeri (47,3 µs), 12 Ağustos kaydıyla (48,2 µs) neredeyse birebir örtüşüyor
+— yani eski ölçümün sözlük kısmı AOT, tam hat kısmı JIT etkisi taşıyordu.
+
+Başvuruda **268 µs** yazıldı. AOT değeri bundan **daha iyi** (193 µs), dolayısıyla
+aleyhte bir tutarsızlık yok; rapor ölçüm koşulunu açıkça yazmalıdır.
+
+Her hâlükârda 16 ms'lik 60 FPS bütçesinin **%1,2'si**. Gecikmeli tetikleme
+gerekmiyor iddiası korunuyor.
+
+### 7.3 ✅ Doğrulanan sayılar — değişiklik yok
+
+| Ölçüm | Belgedeki | 20 Ağustos | Durum |
+|---|---|---|---|
+| Çekirdek test sayısı | 136 | 136 | ✅ |
+| Geliştirme kümesi F1 | %99,6 | %99,6 | ✅ |
+| Geliştirme kesinlik / özgüllük | %100 | %100 | ✅ |
+| Nefret dilimi F1 | %97,3 | %97,3 | ✅ |
+| Küme boyutu | 336 (256+80) | 336 | ✅ |
+| Örüntü katkısı (duyarlılık) | +55,2 puan | +55,2 puan | ✅ |
+| Örüntü katkısı (kesinlik kaybı) | 0,0 puan | 0,0 puan | ✅ |
+| Örtük saldırı: sözlük → +örüntü | %1,8 → %100 | %1,8 → %100 | ✅ |
+| Nefret dilimi: sözlük → +örüntü | %10,5 → %94,7 | %10,5 → %94,7 | ✅ |
+| Bilinen tek yanlış negatif | öncülsüz zamir | öncülsüz zamir | ✅ |
+
+Metriklerin tamamı yeniden üretildi. Tek istisna §7.1'deki ayrık küme sorunudur.
