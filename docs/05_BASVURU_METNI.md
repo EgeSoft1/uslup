@@ -1,16 +1,22 @@
 # Başvuru Metni — KYS'ye kopyalanacak bloklar
 
-**Hazırlanma tarihi:** 12 Ağustos 2026 · **Son başvuru:** 20 Ağustos 2026 (8 gün)
-**Tema:** Sosyal Yapay Zekâ · **Kaynak:** `00_URUN_TANIMI.md` §1–3, `04_MODEL_DEGERLENDIRME.md`
+**Güncelleme:** 20 Ağustos 2026 — **son başvuru günü** · **Tema:** Sosyal Yapay Zekâ
+**Kaynak:** `00_URUN_TANIMI.md` §1–3, `04_MODEL_DEGERLENDIRME.md`
 
 > 🟢 **Takım şartı karşılandı (12 Ağustos):** 1 takım arkadaşı hazır → 2 kişi.
-> Şartname V2 §3'ün alt sınırı sağlandı. ⬜ **Kalan:** üyenin KYS'de takıma
+> Şartname V3 §3'ün alt sınırı sağlandı. ⬜ **Kalan:** üyenin KYS'de takıma
 > eklenmesi ve en az bir üyenin Google Groups'a katılması (zorunlu).
 
-> ✅ **Sayılar 12 Ağustos 2026'da tazelendi** (Flutter 3.44.9 / Dart 3.12.2
-> kuruldu, `dart run bin/evaluate.dart --hepsi` çalıştırıldı). Motorda
-> değişiklik yapılırsa yeniden çalıştır; sayı değişirse önce
-> `04_MODEL_DEGERLENDIRME.md`, sonra bu belge, sonra başvuru güncellenir.
+> ⚠️ **Sayılar 12 Ağustos 2026 ölçümüdür ve 20 Ağustos'ta yeniden
+> doğrulanamadı:** araç zinciri `D:lutter`'a kurulmuştu, D: sürücüsü artık
+> erişilebilir değil, `dart` PATH'te yok. Motorda o tarihten sonra değişiklik
+> yapılmadığı için sayılar geçerlidir; ancak teknik rapordan (24 Ağustos) önce
+> Dart yeniden kurulup `dart run bin/evaluate.dart --hepsi` çalıştırılmalıdır.
+
+> 📌 **Ön başvuru formu yalnızca iki alan istiyor:** PROJE BAŞLIĞI ve
+> PROJE AÇIKLAMASI (**250 kelime** üst sınırı — karakter değil, kelime).
+> Doğrudan kopyalanacak metin **§0b**'dedir. Aşağıdaki §2–§10 blokları
+> teknik rapor ve final sunumu içindir.
 
 ---
 
@@ -18,11 +24,60 @@
 
 | Alan | Durum |
 |---|---|
-| **Proje adı** | Çalışma adı **"Nezaket Koçu"**. Başvuruda kesinleşmeli — KYS'ye girilen ad rapor ve sunumda da kullanılır. |
+| **Proje adı** | 🟢 **Üslup** olarak kesinleşti (20 Ağustos). Ürün adı = Üslup; uygulama içindeki canlı yazım ekranının adı **Nezaket Koçu** olarak kalır. |
 | **Takım adı** | ⬜ Belirlenmedi |
 | **Takım kaptanı** | Tüm resmî bildirimler kaptana gider (şartname §3). |
 | **Danışman** | Zorunlu değil, tavsiye ediliyor. NLP/dilbilim akademisyeni. |
 | **Google Groups** | Her takımdan en az 1 kişinin katılması **zorunlu** (şartname §9). |
+
+---
+
+## 0b. ÖN BAŞVURU FORMU — doğrudan kopyalanacak (20 Ağustos 2026)
+
+> Form yalnızca iki alan istiyor: **PROJE BAŞLIĞI** ve **PROJE AÇIKLAMASI**
+> (250 **kelime** üst sınırı — karakter değil).
+
+> ⚠️ **Kural:** Bu metinde yalnızca bugün çalışan şeyler "var" diye yazılır.
+> Yapılmamış işler **son paragrafta yol haritası olarak** geçer. Final
+> aşamasında canlı demo istendiği için, olmayan bir özelliği var göstermek
+> hem şartname §3'e göre eleme sebebi hem de demoda çöker.
+
+### PROJE BAŞLIĞI
+
+```
+Üslup: Gönderilmeden Önce Müdahale Eden, Cihaz Üzerinde Çalışan Türkçe Sosyal Yapay Zekâ Katmanı
+```
+
+Alan kısa başlık istiyorsa:
+
+```
+Üslup: Cihaz Üzerinde Çalışan Türkçe Nezaket Katmanı
+```
+
+### PROJE AÇIKLAMASI  (242 kelime / 250)
+
+```
+Sosyal medyada nefret söylemi ve hakaret bugün yayın sonrasında yönetiliyor: içerik yayınlanır, şikâyet edilir, moderatör inceler, silinir. Ama zarar çoktan oluşmuştur; silmek, hedef kişinin o içeriği görmüş olmasını geri almaz. Üstelik mevcut filtreler sıklıkla mağduru cezalandırır: tacize uğradığını anlatan kullanıcı, kendi mesajı işaretlendiği için susturulur. Küresel modeller de Türkçe'nin eklemeli yapısında, argosunda ve bağlamında zayıf kalır.
+
+Üslup, müdahaleyi yayın öncesine taşıyan, tamamen cihaz üzerinde çalışan, Türkçe'ye özel bir sosyal yapay zekâ katmanıdır. Kullanıcı cümleyi yazarken metni çözümler ve daha yapıcı bir alternatif önerir. Beş katmandan oluşur: gizleme hilelerini geri çeviren normalizasyon, Türkçe eklemeli yapıya duyarlı kök eşleştirme, saldırganlığı kelimelerde değil kelimelerin dizilişinde arayan edimbilimsel örüntü katmanı, kimlik hedefli düşmanlığı yakalayan nefret söylemi katmanı ve bulguları saldırı, iltifat, şikâyet ve öz-ifade ekseninde yeniden ağırlıklandıran bağlam çözümleme katmanı.
+
+Özgün yönleri: Metin cihazdan hiç çıkmaz; bu bir gizlilik politikası maddesi değil, mimarinin kendisidir. Kimlik adları hiçbir zaman yasaklı kelime değildir; yalnızca düşmanca bir kuruluşun içindeki yuvayı doldururlar, böylece "Ben Kürtüm" gibi cümleler işaretlenmez ve bu davranış yapısal bir testle korunur. Sistem hiçbir metni engellemez; öneri sunar, kararı kullanıcıya bırakır ve her uyarıda hangi kelimenin neden işaretlendiğini açıklar.
+
+Çalışan prototip, 6.000 satırı aşan bağımsız Türkçe NLP motoru ve 336 etiketli örnekten oluşan ölçüm altyapısı mevcuttur. Ayrık küme üzerinde F1 %84,2 (kesinlik %88,9); ortalama çözümleme süresi 268 mikrosaniyedir.
+
+Yol haritamız: bağımsız ikinci etiketleyiciyle hakem uyumu ölçümü, BERTurk tabanlı sinir ağı modelinin ONNX ile cihaza taşınarak mevcut motorla karşılaştırılması, kimlik söz varlığının genişletilmesi ve kullanılabilirlik ile erişilebilirlik testleri.
+```
+
+### Metindeki her iddianın dayanağı
+
+| İddia | Dayanak |
+|---|---|
+| 6.000 satırı aşan motor | `packages/civility_core/lib` = 6.293 satır |
+| 336 etiketli örnek | `gold_dataset.dart` 256 + `holdout_dataset.dart` 80 |
+| Ayrık kümede F1 %84,2 | `04_MODEL_DEGERLENDIRME.md` §5 |
+| 268 mikrosaniye | `04_MODEL_DEGERLENDIRME.md` §3.4 (soğuk ölçüm) |
+| Kimlik adı sözlükte yok, testle korunur | `hate_layer_test.dart` yapısal test |
+| Son paragraf | Hepsi **yol haritası** olarak yazıldı — yapılmış gibi değil |
 
 ---
 
@@ -46,13 +101,13 @@ Formda dar bir karakter sınırı varsa bunu kullan.
 ```
 Sosyal medyada nefret ve hakaret bugün oluştuktan sonra yönetiliyor: içerik
 yayınlanır, şikâyet edilir, silinir. Ama silmek, hedef kişinin onu görmüş
-olmasını geri almaz. Nezaket Koçu zararı oluşmadan engeller: kullanıcı
+olmasını geri almaz. Üslup zararı oluşmadan engeller: kullanıcı
 cümleyi yazarken, tamamen cihaz üzerinde çalışan Türkçe'ye özel bir yapay
 zekâ katmanı metni çözümler, saldırganlığı yalnızca yasaklı kelimelerde
 değil kelimelerin dizilişinde de tespit eder ve daha yapıcı bir alternatif
 önerir. Metin cihazdan hiç çıkmaz. Sistem engellemez, önerir; kararı
 kullanıcı verir. Ölçülen doğruluk: ayrık kümede F1 %84,2; ölçülen gecikme:
-çözümleme başına 323 mikrosaniye.
+çözümleme başına 268 mikrosaniye.
 ```
 
 ## 3. Proje özeti — uzun sürüm (**2.148 karakter**)
@@ -74,7 +129,7 @@ eklemeli yapı, argo ve bağlam yeterince modellenmemiştir. Dahası mevcut
 filtreler sıklıkla mağduru cezalandırır: tacize uğradığını anlatan kullanıcı
 ("bana 'şerefsiz' dedi") kendi mesajı işaretlendiği için susturulur.
 
-Nezaket Koçu, müdahaleyi yayın sonrasından yayın öncesine taşır. Kullanıcı
+Üslup, müdahaleyi yayın sonrasından yayın öncesine taşır. Kullanıcı
 cümleyi yazarken, tamamen cihaz üzerinde çalışan Türkçe'ye özel bir katman
 metni çözümler ve daha yapıcı bir alternatif önerir. Hat beş adımdan oluşur:
 gizleme hilelerini geri çeviren normalizasyon ("$3r3fsiz" → "serefsiz"),
@@ -92,10 +147,10 @@ hiçbir metni kendiliğinden engellemez veya değiştirmez; öneri sunar, karar�
 kullanıcıya bırakır, her uyarıda hangi kelimenin neden işaretlendiğini
 açıklar.
 
-Doğrulama, 330 etiketli örnekten oluşan beş dilimli bir küme ve
+Doğrulama, 336 etiketli örnekten oluşan beş dilimli bir küme ve
 kesinlik/duyarlılık/F1/F0.5 ölçen bir değerlendirme altyapısıyla
 yapılmıştır. Ayrık küme üzerinde ölçülen genelleme başarımı F1 %84,2
-(kesinlik %88,9, duyarlılık %80,0). Ortalama çözümleme süresi 323
+(kesinlik %88,9, duyarlılık %80,0). Ortalama çözümleme süresi 268
 mikrosaniyedir — 60 FPS kare bütçesinin %2'si — bu nedenle geri bildirim
 gecikmesizdir.
 ```
@@ -125,7 +180,7 @@ bir duraksamadır — ve dijital ortamda o duraksama kaybolmuştur.
 ## 5. Çözüm (form: "Çözüm / Yöntem")
 
 ```
-Nezaket Koçu, kaybolan o duraksamayı geri koyar. Kullanıcı yazarken, her tuş
+Üslup, kaybolan o duraksamayı geri koyar. Kullanıcı yazarken, her tuş
 vuruşunda, cihaz üzerinde çalışan bir katman metni çözümler:
 
 1. NORMALİZASYON — gizleme hilelerini geri çevirir:
@@ -157,7 +212,7 @@ Hattın tamamı cihazda biter. Sunucu adımı yoktur.
 ## 6. Yenilikçi yön (form: "Özgün Değer / İnovatif Yönü")
 
 ```
-| Mevcut çözümler                     | Nezaket Koçu                        |
+| Mevcut çözümler                     | Üslup                               |
 |-------------------------------------|-------------------------------------|
 | Yayın SONRASI moderasyon            | Yayın ÖNCESİ önleme                 |
 | Metin sunucuya gider, orada taranır | Metin cihazdan hiç çıkmaz           |
@@ -202,7 +257,7 @@ korunmaktadır: sözlüğe kimlik adı sızarsa test kırılır. Ölçüm doğru
 - civility_core — projeye özel, bağımlılıksız Türkçe nezaket motoru:
   normalizasyon, morfoloji, sözlük, edimbilimsel örüntüler, nefret söylemi
   örüntüleri, bağlam çözümleyici, yeniden yazma önerici
-- Değerlendirme altyapısı — 330 etiketli örnek, beş dilim,
+- Değerlendirme altyapısı — 336 etiketli örnek, beş dilim,
   kesinlik/duyarlılık/F1/F0.5, katman izolasyonu için A/B karşılaştırma
 - Cihaz üstü çalışma — ağ bağımlılığı, API anahtarı veya bulut kotası yok
 
@@ -287,8 +342,11 @@ Jüri karşısında zayıflık değil güç sayılan kısım; **gizleme.**
 - Metrikler henüz bağımsız değildir. Kümeleri ve örüntüleri aynı kişi
   yazmıştır; hakemler arası uyum (Cohen's kappa) ölçülmemiştir. İkinci
   etiketleyiciyle bağımsız küme üretimi planlanmıştır.
-- Cümleler arası gönderge çözümlemesi yoktur: "bunların soyunu kurutmak
-  lazım" gibi kimliğin önceki cümlede geçtiği durumlar kaçmaktadır.
+- Öncülsüz gönderge kasıtlı olarak kaçırılır. Cümleler arası gönderge
+  katmanı eklendi (12 Ağustos): kimlik önceki cümlede geçiyorsa zamir ona
+  bağlanır. Ama tek başına "bunların soyunu kurutmak lazım" işaretlenmez —
+  hedefin kim olduğu metinden bilinemez ve zamirden kimlik uydurmak
+  kesinlik iddiasını çürütür.
 - Kimlik söz varlığı 40 terimle sınırlıdır; kapsanmayan bir grup hedef
   alındığında sistem sessiz kalır.
 - Tüm veri sentetiktir; hiçbir örnek gerçek kullanıcıdan gelmemiştir.
@@ -297,15 +355,24 @@ Jüri karşısında zayıflık değil güç sayılan kısım; **gizleme.**
 
 ---
 
-## 11. Başvuru öncesi kontrol listesi
+## 11. Başvuru öncesi kontrol listesi — 20 Ağustos 2026
 
 | # | İş | Durum |
 |---|---|---|
-| 1 | ~~En az 1 takım arkadaşı~~ | 🟢 12 Ağustos — KYS'ye eklenmesi kaldı |
-| 2 | Proje adı ve takım adı kesinleştir | ⬜ |
-| 3 | KYS'de takım oluştur, üyeleri ekle | ⬜ |
-| 4 | Google Groups'a en az 1 üye katılsın (zorunlu) | ⬜ |
-| 5 | ~~Sayıları tazele~~ | 🟢 12 Ağustos |
-| 6 | Uzak git deposu + push (kaynak kod teslimatı) | 🔴 **Kalan tek teknik engel** |
-| 7 | Danışman (tavsiye) | ⬜ |
-| 8 | Yukarıdaki blokları KYS form alanlarına yerleştir | ⬜ |
+| 1 | ~~En az 1 takım arkadaşı~~ | 🟢 12 Ağustos |
+| 2 | ~~Proje adı kesinleştir~~ | 🟢 **Üslup** |
+| 3 | Takım adı kesinleştir | ⬜ |
+| 4 | KYS'de takım oluştur, üyeyi ekle, kaptanı belirle | 🔴 **BUGÜN** |
+| 5 | Ön başvuru formunu doldur (§0b blokları) | 🔴 **BUGÜN** |
+| 6 | Google Groups'a en az 1 üye katılsın (zorunlu) | 🔴 **BUGÜN** |
+| 7 | Danışman (tavsiye, zorunlu değil) | ⬜ |
+
+### Başvurudan sonra — teknik rapora kadar (24 Ağustos 17.00)
+
+| # | İş | Durum |
+|---|---|---|
+| 8 | Uzak git deposu + push — "kaynak kod" teslimatı ve tek-kopya riski | 🔴 **Kritik** |
+| 9 | Dart/Flutter yeniden kur, `evaluate.dart --hepsi` çalıştır, sayıları doğrula | 🔴 Araç zinciri kayıp (D: yok) |
+| 10 | TEKNOFEST teknik rapor şablonuna geçir (yanlış şablon = eleme) | ⬜ |
+| 11 | İkinci etiketleyici ile bağımsız küme (kappa) | 🟡 En büyük rapor kazancı |
+| 12 | ~~`00_URUN_TANIMI.md` §7'deki nefret dilimi F1'i %96,8 → %97,3~~ | 🟢 20 Ağustos |

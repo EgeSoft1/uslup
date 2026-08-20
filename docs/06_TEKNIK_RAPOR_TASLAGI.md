@@ -61,12 +61,12 @@ web sayfasındaki tablo düzensiz aktarılmış):
 
 | Kriter | Ağırlık | Raporun hangi bölümü kazandırır |
 |---|---|---|
-| **Teknik Yeterlilik ve Uygulanabilirlik** | **%35** | Yöntem + Doğrulama + Mimari — raporun en uzun ve en somut kısmı buraya gitmeli |
+| **Teknik Yeterlilik ve Uygulanabilirlik** | **%30** | Yöntem + Doğrulama + Mimari — raporun en uzun ve en somut kısmı buraya gitmeli |
 | Yenilikçilik ve Özgünlük | %20 | Yenilikçi Yön — özellikle küfürsüz düşmanlık ve kimlik-yuvası tasarımı |
 | Problemi Çözme Başarısı | %20 | Problem + ölçülmüş öncesi/sonrası karşılaştırma (T0→T3) |
 | Kullanıcı Deneyimi (UI/UX) | %10 | Ekran görüntüleri, kullanıcı akışları |
 | Sunum ve Prototip Kalitesi | %15 | Demo videosu, çalışan prototip |
-| İş Modeli ve Sürdürülebilirlik | %0 | **Kısa tut.** Bu dikeyde puan getirmiyor. |
+| İş Modeli ve Sürdürülebilirlik | **%5** | ⚠️ **%0 sanılıyordu — yanlış.** Rapor rubriğinde 6.1+6.2 = 10 puan. Ayrı bölüm yazılmalı. |
 
 **Sonuç:** rapor hacminin yaklaşık yarısı Yöntem + Doğrulama bölümlerine
 ayrılmalı. Gelir modeli bir paragrafı geçmemeli.
@@ -225,7 +225,7 @@ tutma ve moderasyon maliyeti düşüşü üzerinden dolaylıdır.
 | 1 | ~~Ölçüm yeniden çalıştırılmadı~~ | Araç zinciri kuruldu (Flutter 3.44.9 / Dart 3.12.2 → `D:\flutter`); tüm sayılar 12 Ağustos'ta tazelendi | 🟢 |
 | 2 | **Uzak git deposu yok** | "Kaynak kod" teslimatı verilemez; proje tek diskte tek kopya | 🔴 **Kalan tek engel** |
 | 3 | ~~Git kalıcı kurulu değil~~ | MinGit 2.55.0.4 → `D:\git`, PATH'e eklendi | 🟢 |
-| 4 | Mimari diyagramlar çizilmedi | Teknik Yeterlilik %35 — görselsiz anlatım zayıf | ⬜ |
+| 4 | Mimari diyagramlar çizilmedi | Teknik Yeterlilik %30 — görselsiz anlatım zayıf | ⬜ |
 | 5 | Bağımsız etiketleyici / kappa yok | Metrik koşullu kalır (§3.3'teki paragraf bunu dürüstçe karşılıyor) | 🟡 |
 | 6 | Kaynakça toplanmadı | Akademik zemin eksik görünür | ⬜ |
 | 7 | ~~Test sayısı doğrulanmadı~~ | Çalıştırıldı: **122 çekirdek + 10 mobil = 132**, `dart analyze` ve `flutter analyze` temiz | 🟢 |
@@ -244,7 +244,7 @@ yalnızca bir özellik olması değil, **bir yöntem anlatısı** olmasıdır:
 4. Kapatmanın performans maliyeti ölçüldü ve **giderildi**: hevesli sürüm
    440 µs, tembel sürüm 268 µs.
 
-Bu dört adım, "Teknik Yeterlilik ve Uygulanabilirlik" (%35) kriterinin
+Bu dört adım, "Teknik Yeterlilik ve Uygulanabilirlik" (%30) kriterinin
 istediği şeyin ta kendisidir ve raporda bu sırayla anlatılmalıdır.
 
 ---

@@ -190,7 +190,7 @@ Tek ürün, üç tema maddesi — dağınık özellik listesi değil, tek akış
 | YZ tabanlı arama | — | ❌ Kapsam dışı |
 
 **Kapsam dışı bırakılanlar kasıtlıdır.** Değerlendirmede "Problemi Çözme
-Başarısı" %20 ve "Teknik Yeterlilik" %35 ağırlıkta. Bir problemi derinlemesine
+Başarısı" %20 ve "Teknik Yeterlilik" %30 ağırlıkta. Bir problemi derinlemesine
 çözmek, altısına yüzeysel dokunmaktan daha yüksek puan getirir.
 
 ---
@@ -222,7 +222,7 @@ teslimatının çekirdeğidir.
 - Bağlam duyarlı toksisite motoru — sözlük + **edimbilimsel örüntü katmanı**
 - **Nefret söylemi katmanı** — kimlik hedefli 5 kuruluş ailesi; kimlik
   adları yasaklı kelime DEĞİL, yalnızca düşmanca kuruluşun içinde yuva
-  doldurur. Dilim F1 %96,8, **kesinlik %100** (20 masum kimlik cümlesinin
+  doldurur. Dilim F1 %97,3, **kesinlik %100** (20 masum kimlik cümlesinin
   hiçbiri işaretlenmiyor)
 - **Gönderge (anafora) katmanı** — kimlik önceki cümledeyse çoğul işaret
   zamiri ona bağlanır; öncülsüz zamirden kimlik uydurulmaz
