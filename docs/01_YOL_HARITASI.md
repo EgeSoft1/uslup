@@ -169,7 +169,7 @@ durulmaz. Öncelik sırası:
 | 4 | Çalışan prototip | 🟩 Nezaket Koçu ekranı + sohbet kutusu + topluluk paneli, tamamen cihaz üstü |
 | 5 | Kaynak kod | 🔴 Git deposu yerel hazır; **uzak depoya push kaldı** |
 | 6 | Proje / demo videosu | ⬜ |
-| 7 | İş modeli ve gelir modeli | ⬜ (bu temada ağırlık %0 — kısa tutulabilir) |
+| 7 | İş modeli ve gelir modeli | 🔴 **Ağırlık %0 DEĞİL, %5** (rapor şablonu 20 Ağustos). Rapor rubriğinde 6.1+6.2 = 10 puan. Bkz. `08_RAPOR_BOSLUK_ANALIZI.md` §1 |
 | 8 | Yapay zekâ mimarisi dokümanı | 🟩 `00_URUN_TANIMI.md` §4 + `03_LLM_SERVISI.md` |
 | 9 | Veri, model, etik ve performans | 🟩 `04_MODEL_DEGERLENDIRME.md` — 336 etiketli örnek, F1 ölçüldü |
 | 10 | UI/UX tasarımları | 🟩 30 ekran + topluluk sağlığı paneli |
