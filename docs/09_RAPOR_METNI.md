@@ -9,7 +9,7 @@ boşluğu) Word'de yapılacaktır.
 
 > ⚠️ Kalan tek yer tutucu `[DEPO BAĞLANTISI]`'dır; depo açıldığında iki yerde
 > (§3.1 tablosu ve §3.1 metni) doldurulacaktır.
-> Metin içi atıflar `[1]`–`[13]` biçimindedir ve §9'daki kaynakçaya karşılık
+> Metin içi atıflar `[1]`–`[14]` biçimindedir ve §9'daki kaynakçaya karşılık
 > gelir; bunlar yer tutucu **değildir**, olduğu gibi kalacaktır.
 
 ---
@@ -199,7 +199,7 @@ bir oranında maruziyet ve yaklaşık her beş gönderiden biri saldırgan içer
 
 | Çözüm | Yaklaşım | Bu problemde neden yetersiz |
 |---|---|---|
-| **Google Jigsaw – Perspective API** | Bulut tabanlı toksisite skoru | Metin sunucuya gider; **Türkçe desteklenen diller arasında değildir** [9]; skor üretir ama **gerekçe ve alternatif üretmez** |
+| **Google Jigsaw – Perspective API** | Bulut tabanlı toksisite skoru | Metin sunucuya gider; **Türkçe desteklenen diller arasında değildir** [9]; skor üretir ama **gerekçe ve alternatif üretmez**; **31 Aralık 2026'da hizmete kapanmaktadır** [14] |
 | **OpenAI Moderation API** [12] | Bulut tabanlı çok sınıflı sınıflandırma | Aynı mahremiyet sorunu; yayın sonrası kullanım için tasarlanmış; kararlar açıklanabilir değil |
 | **Platform içi kelime listeleri** | Yasaklı kelime eşleştirme | Küfürsüz düşmanlığı göremez; Türkçe çekim ve gizleme hilelerinde kırılır; kimlik adlarını yasaklayarak mağduru susturur |
 | **Yayın sonrası insan moderasyonu** | Şikâyet → inceleme → kaldırma | Zarar oluştuktan sonra devreye girer; ölçeklenmez; moderatör üzerinde psikolojik yük oluşturur |
@@ -207,6 +207,20 @@ bir oranında maruziyet ve yaklaşık her beş gönderiden biri saldırgan içer
 Ortak eksiklik nettir: **hepsi yayımlanmış içeriği değerlendirir.** Hiçbiri
 yazma anında devreye girmez, hiçbiri kararını kullanıcıya açıklamaz, hiçbiri
 alternatif önermez ve hiçbiri metni cihazda tutmaz.
+
+**Maliyet bir ayrışma noktası değildir; süreklilik ve mahremiyet öyledir.**
+Bu iki servisin ikisi de bugün ücretsizdir: OpenAI'ın moderasyon uç noktası
+resmî dokümantasyonunda "free to use" olarak tanımlanmaktadır [12] ve
+Perspective API hiçbir zaman çağrı başına ücretlendirilmemiştir [14]. Rapor bu
+nedenle bir maliyet üstünlüğü iddiasında bulunmamaktadır. Buna karşılık iki
+yapısal risk ölçülebilir durumdadır. Birincisi süreklilik: Perspective API
+kendi duyurusuna göre **31 Aralık 2026'da hizmete kapanmaktadır**; kota artışı
+talepleri Şubat 2026'da sona ermiştir ve doğrudan göç desteği verilmeyecektir
+[14]. Bir moderasyon yeteneğini üçüncü tarafın ürün yol haritasına bağlamanın
+maliyeti, çağrı ücreti değil, servisin kapanmasıdır. İkincisi mahremiyet: her
+iki serviste de değerlendirilecek metin kullanıcının cihazından çıkıp üçüncü
+taraf sunucusuna gitmek zorundadır. Cihaz üstü çözümlemede bu iki riskin ikisi
+de yapısal olarak bulunmamaktadır.
 
 **Çok dilli bulut modellerinin dil önyargısı.** Bu tablodaki ilk iki çözümün
 Türkçe için taşıdığı risk, yalnızca kapsam eksikliği değildir. Perspective
@@ -714,6 +728,23 @@ ekranı budur; ürünün tezi tam olarak bunun reddidir.
 | Renk paleti WCAG AA kontrastını sağlar | Koyu zeminde okunmayan marka kırmızısı bu nedenle değiştirildi |
 | Onay diyaloğunda yıkıcı eylem varsayılan değildir | "Yine de gönder" ikincil konumdadır |
 
+Kararlar, WCAG 2.1 başarı ölçütlerine aşağıdaki gibi eşlenmektedir:
+
+| WCAG 2.1 ölçütü | Seviye | Üründeki karşılığı |
+|---|---|---|
+| 1.4.1 Rengin Kullanımı | A | Risk seviyesi yalnızca kenarlık rengiyle değil, metin gerekçesiyle de anlatılır |
+| 1.1.1 Metin Olmayan İçerik | A | Panel grafiklerinin tamamı `Semantics` etiketi taşır; çubuk yüksekliği tek başına bilgi taşımaz |
+| 1.4.3 Kontrast (Asgari) | AA | Metin/zemin kontrastı 4.5:1 eşiğinin altına inmez; marka kırmızısı bu nedenle değiştirilmiştir |
+| 1.4.11 Metin Olmayan Kontrast | AA | Kenarlık ve durum göstergeleri 3:1 eşiğini sağlar |
+| 2.5.5 Hedef Boyutu | AAA | Dokunma hedefleri 48 × 48 px altına inmez |
+| 3.3.1 Hata Tanımlama | A | Uyarı, hangi ifadenin neden işaretlendiğini metin olarak bildirir |
+| 3.3.3 Hata Önerisi | AA | Her uyarı, uygulanabilir bir yeniden yazma önerisiyle birlikte gelir |
+
+Bu eşleme bir **tasarım denetimi**dir; ölçüm aletiyle yapılmış bir uygunluk
+testi değildir. Kontrast oranlarının araçla ölçülmesi ve ekran okuyucuyla
+uçtan uca denetim İP-16'da planlanmıştır. Rapor, tasarım kararı ile ölçülmüş
+uygunluk arasındaki farkı kapatmamaktadır.
+
 **Kullanılabilirlik testi.** `[TEST SONUCU]` Görev tabanlı bir kullanılabilirlik
 oturumu, beş katılımcıyla ve sesli düşünme yöntemiyle yürütülmüştür; görevler
 raporun bu bölümünde tanımlı A1–A4 akışlarına birebir karşılık gelecek biçimde
@@ -745,11 +776,42 @@ bir kısmı hiç gönderilmez. Kaldırılan her içerik için harcanan moderatö
 zamanı, şikâyet eden kullanıcının maruz kaldığı zarar ve platformun itibar
 maliyeti, o içerik hiç yayımlanmadığında tümüyle ortadan kalkar.
 
-**Sıfır çıkarım maliyeti.** Bulut tabanlı moderasyon çözümleri çağrı başına
-ücretlendirilir; günde milyonlarca gönderi işleyen bir platformda bu, doğrudan
-işletme maliyetidir. Üslup'ta çözümleme kullanıcının cihazında yapıldığından
-platformun **marjinal çıkarım maliyeti sıfırdır** ve kullanıcı sayısıyla
-birlikte artmaz. Ölçeklenme maliyeti, sunucu kapasitesinden bağımsızdır.
+**Sıfır çıkarım maliyeti.** Bu başlık, hazır bulut servislerine karşı bir
+fiyat iddiası **değildir**: §2.1'de belirtildiği gibi Perspective API ve OpenAI
+moderasyon uç noktası bugün ücretsizdir [12][14]. İddia, platformun kendi
+moderasyon yeteneğini işlettiği durumu kapsar. Bir platform, kapanan veya kota
+sınırlı bir dış servise bağlı kalmak istemediğinde önündeki seçenek kendi
+çıkarım altyapısını kurmaktır ve bu altyapının maliyeti işlenen gönderi
+hacmiyle doğru orantılı büyür. Üslup'ta çözümleme kullanıcının cihazında
+yapıldığından platformun **marjinal çıkarım maliyeti sıfırdır** ve kullanıcı
+sayısıyla artmaz; ölçeklenme maliyeti sunucu kapasitesinden bağımsızdır.
+
+**Moderasyon yükündeki azalmanın büyüklüğü.** Aşağıdaki model, varsayımları
+açıkça yazılmış bir duyarlılık hesabıdır; ölçülmüş bir saha sonucu değildir ve
+öyle sunulmamaktadır. İki girdisi kaynaklıdır, üçüncüsü ürünün ölçeceği
+bilinmeyendir:
+
+- Türkçe sosyal medya içeriğinde saldırgan dil oranı: **%19** [4]
+- Motorun ayrık kümede ölçülen duyarlılığı: **%80,0** (raporun her yerinde
+  kullanılan dürüst genelleme sayısı)
+- Uyarı gören kullanıcının metnini düzeltme oranı: **r** — bilinmemektedir
+
+Yayımlanmayan saldırgan içeriğin, toplam saldırgan içeriğe oranı `0,80 × r`
+olur. Bir milyon gönderilik hacim için:
+
+| Düzeltme oranı r | Yayımlanmayan saldırgan içerik | 1 milyon gönderide adet |
+|---|---|---|
+| %10 | %8,0 | 15.200 |
+| %20 | %16,0 | 30.400 |
+| %30 | %24,0 | 45.600 |
+| %50 | %40,0 | 76.000 |
+
+Modelin değeri tahmininde değil, **r'nin ürünün kendisi tarafından
+ölçülebilir olmasındadır.** Topluluk sağlığı katmanının birincil göstergesi
+olan düzeltme oranı tam olarak bu r'dir; yani bu tablo, ürün sahaya çıktığı
+anda varsayım olmaktan çıkıp ölçüme dönüşen bir hesaptır. Moderasyon
+kuyruğuna hiç girmeyen her gönderi, hem moderatör zamanı hem de hedef kişinin
+maruz kalmadığı zarar anlamına gelir.
 
 **Gecikme bütçesi.** 193 µs'lik çözümleme süresi, 60 FPS kare bütçesinin
 %1,2'sidir. Bu, geri bildirimin gecikmeli tetikleme olmadan, her tuş vuruşunda
@@ -932,19 +994,24 @@ bir, 18-32 yaş grubunda üçte birdir [3].
 | 4 | **Kamu ve yerel yönetim** | Şikâyet/ihbar hatları, vatandaş geri bildirim kanalları | Proje bazlı entegrasyon + bakım |
 
 **Sektöre ve ülke ekonomisine katma değer.** Bugün Türkçe içerik moderasyonu
-ihtiyacı büyük ölçüde yabancı bulut servisleriyle karşılanmaktadır; bu hem
-döviz cinsinden dışa bağımlılık hem de Türkçe verinin yurt dışına çıkması
-anlamına gelir. Üslup, çıkarımı cihaza taşıyarak bu bağımlılığın ikisini birden
-ortadan kaldırır. Bunun üç somut karşılığı vardır: (i) platformlar için çağrı
-başına ödenen moderasyon maliyetinin sıfırlanması, (ii) Türkçe metnin yurt
-dışındaki sunuculara gönderilmemesi sayesinde veri egemenliği ve KVKK uyumunun
-kolaylaşması, (iii) Türkçe doğal dil işleme alanında ülke içinde kalan bir
-bilgi birikimi ve yeniden kullanılabilir bir değerlendirme kümesi.
+ihtiyacı büyük ölçüde yabancı bulut servisleriyle karşılanmaktadır; bu, Türkçe
+verinin yurt dışına çıkması ve moderasyon yeteneğinin üçüncü tarafın ürün yol
+haritasına bağlanması anlamına gelir. İkinci riskin somut örneği bu raporun
+yazıldığı sırada gerçekleşmektedir: alanın en yaygın servisi olan Perspective
+API **31 Aralık 2026'da kapanmaktadır** [14]. Üslup, çıkarımı cihaza taşıyarak
+her iki bağımlılığı da ortadan kaldırır. Bunun üç somut karşılığı vardır:
+(i) moderasyon yeteneğinin kapanabilir bir dış servise değil, platformun kendi
+dağıttığı istemciye ait olması, (ii) Türkçe metnin yurt dışındaki sunuculara
+gönderilmemesi sayesinde veri egemenliği ve KVKK uyumunun kolaylaşması,
+(iii) Türkçe doğal dil işleme alanında ülke içinde kalan bir bilgi birikimi ve
+yeniden kullanılabilir bir değerlendirme kümesi.
 
-Maliyet yapısı da ayrışmaktadır: bulut tabanlı rakiplerde birim maliyet kullanım
-hacmiyle doğru orantılı artarken, cihaz üstü mimaride **marjinal maliyet
-sıfırdır**. Bu, ölçek büyüdükçe genişleyen bir kâr marjı anlamına gelir ve
-fiyatlandırmada rekabet üstünlüğü sağlar.
+Maliyet yapısı da ayrışmaktadır. Ücretsiz hazır servislerle kıyaslandığında
+bir fiyat üstünlüğü iddia edilmemektedir; ancak platform kendi çıkarım
+altyapısını işlettiğinde birim maliyet hacimle doğru orantılı artarken, cihaz
+üstü mimaride **marjinal maliyet sıfırdır**. Ürünün lisans modeli de bu yapının
+üzerine kurulur: gelir aktif kullanıcı bandına göre alınırken hizmet maliyeti
+sabit kaldığı için, ölçek büyüdükçe marj genişler.
 
 **Stratejik iş ortaklıkları.** Kısa vadede yerli sosyal medya ve mesajlaşma
 platformları ile entegrasyon; orta vadede klavye uygulamaları ve mobil işletim
@@ -1034,7 +1101,7 @@ kapalı olmadığını gösterir.
 |---|---|---|
 | **20 Ağu 2026** | Ön başvuru | KYS başvurusu tamamlandı |
 | **20 Ağu 2026** | İP-12 · Ölçüm doğrulaması | Bütün metriklerin AOT derlenmiş ikili üzerinde yeniden ölçülmesi; 136 test |
-| **23 Ağu 2026** | İP-13 · Literatür ve kaynak doğrulaması | Kaynakçadaki 13 künyenin yayıncı sayfasından teyidi; problem büyüklüğü istatistiklerinin resmî kaynaklara bağlanması |
+| **23 Ağu 2026** | İP-13 · Literatür ve kaynak doğrulaması | Kaynakçadaki 14 künyenin yayıncı sayfasından teyidi; problem büyüklüğü istatistiklerinin resmî kaynaklara bağlanması |
 | **23 Ağu 2026** | İP-14 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, sesli düşünme yöntemi |
 | **24 Ağu 2026, 17.00** | **Teknik rapor teslimi** | KYS yüklemesi |
 | 2 Eyl 2026 | Rapor sonuçları | — |
@@ -1044,6 +1111,25 @@ kapalı olmadığını gösterir.
 | **8–13 Eyl 2026** | İP-18 · Sunum ve demo videosu | Final teslimatı hazırlığı |
 | **14 Eyl 2026, 17.00** | Final sunumu teslimi | KYS yüklemesi |
 | **20 Eyl 2026** | Jüriye canlı sunum | Canlı demo |
+
+**Görsel zaman çizelgesi.** Dolu hücre çalışmanın sürdüğü dönemi, ◆ yarışma
+teslim tarihini, ◇ duyuru tarihini gösterir.
+
+| İş paketi | ≤20 Ağu | 23 Ağu | 24 Ağu | 2 Eyl | 2–7 Eyl | 8–13 Eyl | 14 Eyl | 20 Eyl |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| İP-1…İP-10 · Motor, ölçüm, arayüz | ███ | | | | | | | |
+| İP-11 · Denetimli taban çizgisi | ███ | | | | | | | |
+| İP-12 · Ölçüm doğrulaması | ███ | | | | | | | |
+| İP-13 · Literatür ve kaynak doğrulaması | | ███ | | | | | | |
+| İP-14 · Kullanılabilirlik testi | | ███ | | | | | | |
+| **Teknik rapor teslimi** | | | **◆** | | | | | |
+| Rapor sonuçlarının duyurulması | | | | ◇ | | | | |
+| İP-15 · Bağımsız genelleme doğrulaması | | | | | ███ | | | |
+| İP-16 · Erişilebilirlik değerlendirmesi | | | | | ███ | | | |
+| İP-17 · Kimlik söz varlığının genişletilmesi | | | | | ███ | | | |
+| İP-18 · Sunum ve demo videosu | | | | | | ███ | | |
+| **Final sunumu teslimi** | | | | | | | **◆** | |
+| **Jüriye canlı sunum** | | | | | | | | **◆** |
 
 **Planlamanın gerçekçiliği üzerine not.** Yukarıdaki takvim yarışma takvimiyle
 (24 Ağustos teslim · 2–7 Eylül mentörlük · 14 Eylül final teslimi · 20 Eylül
@@ -1156,9 +1242,14 @@ Toxic*, arXiv:2312.12651, DOI: 10.48550/arXiv.2312.12651
 International Journal of Uncertainty, Fuzziness and Knowledge-Based Systems,
 Cilt 10, Sayı 5, s. 557–570
 
-**[12]** OpenAI, *Moderation — API Documentation (omni-moderation-latest)*,
-Erişim Tarihi: 23 Ağustos 2026,
-https://platform.openai.com/docs/guides/moderation
+**[12]** OpenAI, *Moderation — API Documentation (omni-moderation-latest)*
+("The moderation endpoint is free to use"), Erişim Tarihi: 23 Ağustos 2026,
+https://developers.openai.com/api/docs/guides/moderation
+
+**[14]** Google Jigsaw, *Perspective API — Sunset Announcement*
+("Perspective API is sunsetting and service is officially ending after 2026";
+"The service will remain active until December 31, 2026"),
+Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 
 **[13]** T.C. Resmî Gazete, *5237 sayılı Türk Ceza Kanunu, madde 216 — Halkı kin
 ve düşmanlığa tahrik veya aşağılama*, 12 Ekim 2004, Sayı 25611,
@@ -1171,19 +1262,23 @@ https://www.mevzuat.gov.tr/mevzuatmetin/1.5.5237.pdf
 
 | # | İş | Durum |
 |---|---|---|
-| 1 | Problem büyüklüğü istatistikleri (2.1, 4.2) resmî kaynaklarla | ✅ Tamam — [1][2][3][4] |
-| 2 | Kaynakça: 13 künye, yayıncı sayfasından teyitli, şablon formatında | ✅ Tamam |
-| 3 | Metin içi köşeli parantez atıflar | ✅ Tamam |
-| 4 | Perspective API Türkçe iddiasının birincil kaynakla düzeltilmesi | ✅ Tamam — [9] |
-| 5 | Literatürle kıyas (Türkçe külliyat F1 %77,3) ve kıyaslanabilirlik uyarısı | ✅ Tamam — [4] |
-| 6 | Takım rol tablosu (2 kişi + 1 danışman) | ✅ Tamam |
-| 7 | İş paketleri takviminin yarışma takvimiyle hizalanması | ✅ Tamam |
-| 8 | Gecikme sayısının AOT değerine (193 µs) çekilmesi | ✅ Tamam |
-| 9 | `[DEPO BAĞLANTISI]` — GitHub deposu açılıp push edilecek | ⏳ `gh auth login` bekleniyor |
-| 10 | Kullanılabilirlik testi sonuçlarının 3.3'e işlenmesi | ⏳ Test bugün yapılacak (`docs/10_KULLANILABILIRLIK_TESTI.md`) |
-| 11 | Yeni bağımsız ayrık küme + kappa | 🗓 İP-15, mentörlük penceresi (2–7 Eylül) |
-| 12 | Mimari diyagramların görsel hâli | İsteğe bağlı |
-| 13 | Şablona aktarım: Arial 12 / Arial Black 14, 1.15, iki yana yaslı, 2.5 cm | Sende |
-| 14 | Kapak: Proje Adı, Takım Adı, Takım ID, Başvuru ID, Tematik Alan | Sende |
-| 15 | 30 sayfa sınırı kontrolü | Sende |
-| 16 | Şablonun açıklama paragraflarının silindiği doğrulanacak | Sende |
+| 1 | Problem büyüklüğü istatistikleri (2.1, 4.2) resmî kaynaklarla | ✅ [1][2][3][4] |
+| 2 | Kaynakça: 14 künye, yayıncı sayfasından teyitli, şablon formatında | ✅ |
+| 3 | Metin içi köşeli parantez atıflar — 14 künyenin tamamı gövdede kullanılıyor | ✅ |
+| 4 | Perspective API Türkçe iddiasının birincil kaynakla düzeltilmesi | ✅ [9] |
+| 5 | Perspective API'nin 31 Aralık 2026 kapanışı | ✅ [14] |
+| 6 | Yanlış "çağrı başına ücret" iddiasının düzeltilmesi (iki servis de ücretsiz) | ✅ [12][14] |
+| 7 | Denetimli model eğitimi, ayrık ölçüm ve kural motoruyla kıyas (3.2) | ✅ `ml/` |
+| 8 | Literatürle kıyas (Türkçe külliyat F1 %77,3) + kıyaslanabilirlik uyarısı | ✅ [4] |
+| 9 | 4.1 verimlilik artışının duyarlılık modeliyle sayısallaştırılması | ✅ |
+| 10 | 3.3 WCAG 2.1 başarı ölçütü eşlemesi | ✅ |
+| 11 | 7.1 görsel zaman çizelgesi | ✅ |
+| 12 | Takım rol tablosu (2 kişi + 1 danışman) | ✅ |
+| 13 | Gecikme sayısının AOT değerine (193 µs) çekilmesi | ✅ |
+| 14 | `[DEPO BAĞLANTISI]` — GitHub deposu açılıp push edilecek | ⏳ `gh auth login` |
+| 15 | `[TEST SONUCU]` — kullanılabilirlik testi sonuçları 3.3'e | ⏳ `docs/10` |
+| 16 | Yeni bağımsız ayrık küme + kappa | 🗓 İP-15 (2–7 Eylül) |
+| 17 | Kapak: `[TAKIM ID]` ve `[BAŞVURU ID]` | Sende — KYS'den |
+| 18 | Şablona aktarım: Arial 12 / Arial Black 14, 1.15, iki yana yaslı, 2,5 cm | Sende |
+| 19 | 30 sayfa sınırı (tahmin ~23) | Sende — Word'de doğrula |
+| 20 | Şablonun açıklama paragraflarının silindiği doğrulanacak | Sende |
