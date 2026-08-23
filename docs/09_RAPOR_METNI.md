@@ -7,8 +7,9 @@ girer. Şablonun açıklama paragrafları ("…ifade edilir", "…detaylandırı
 başlık Arial Black 14, satır aralığı 1.15, iki yana yaslı, 2,5 cm kenar
 boşluğu) Word'de yapılacaktır.
 
-> ⚠️ Kalan tek yer tutucu `[DEPO BAĞLANTISI]`'dır; depo açıldığında iki yerde
-> (§3.1 tablosu ve §3.1 metni) doldurulacaktır.
+> ⚠️ Kalan yer tutucular: `[DEPO BAĞLANTISI]` (depo açıldığında §3.1 tablosu ve
+> §3.1 metni olmak üzere iki yerde), `[TAKIM ID]` ve `[BAŞVURU ID]` (kapakta,
+> KYS'den alınacak).
 > Metin içi atıflar `[1]`–`[14]` biçimindedir ve §9'daki kaynakçaya karşılık
 > gelir; bunlar yer tutucu **değildir**, olduğu gibi kalacaktır.
 
@@ -404,8 +405,9 @@ yüzeydir.
 
 **Kod reposu ve sürüm kontrolü.**
 
-> ⛔ `[DEPO BAĞLANTISI]` — Depo bugün oluşturulacaktır. Rubrik bu maddeye
-> 1 puan, commit geçmişiyle takip edilebilirliğe 1 puan vermektedir.
+> ⛔ İÇ NOT — RAPORA GİRMEYECEK. `[DEPO BAĞLANTISI]` alanı, depo açıldıktan
+> sonra §3.1 tablosunda ve aşağıdaki paragrafta gerçek URL ile değiştirilecek;
+> bu uyarı kutusu Word'e **kopyalanmayacaktır**.
 
 Geliştirme süreci Git ile, aşamalı ve gerekçeli commit'lerle yürütülmüştür.
 Commit geçmişi yalnızca "ne yapıldığını" değil, **kararların neden
@@ -745,17 +747,36 @@ testi değildir. Kontrast oranlarının araçla ölçülmesi ve ekran okuyucuyla
 uçtan uca denetim İP-16'da planlanmıştır. Rapor, tasarım kararı ile ölçülmüş
 uygunluk arasındaki farkı kapatmamaktadır.
 
-**Kullanılabilirlik testi.** `[TEST SONUCU]` Görev tabanlı bir kullanılabilirlik
-oturumu, beş katılımcıyla ve sesli düşünme yöntemiyle yürütülmüştür; görevler
-raporun bu bölümünde tanımlı A1–A4 akışlarına birebir karşılık gelecek biçimde
-kurgulanmıştır. Katılımcı sayısının istatistiksel genelleme sağlamadığı, küçük
-örneklemin kullanılabilirlik sorunlarını **bulmak** için yeterli olduğu ancak
-oran iddiasında bulunmak için yeterli olmadığı burada açıkça belirtilir.
-Katılımcıların yazdığı metinler kaydedilmemiş, yalnızca davranış notu ve görev
-zorluk puanı tutulmuştur; bu, ürünün mahremiyet duruşunun test yönteminde de
-uygulanmasıdır. Tam erişilebilirlik değerlendirmesi (ekran okuyucu denetimi,
-kontrast ölçümü, dokunma hedefi denetimi) mentörlük penceresinde (2–7 Eylül,
-İP-16) planlanmıştır.
+**Kullanılabilirlik testi protokolü.** Görev tabanlı bir kullanılabilirlik
+testi, sesli düşünme (think-aloud) yöntemiyle ve beş katılımcıyla yürütülmek
+üzere tanımlanmıştır. Protokolün tamamı — görev metinleri, ölçüm aracı ve kayıt
+formu — depoda `docs/10_KULLANILABILIRLIK_TESTI.md` dosyasındadır. Beş görev,
+bu bölümde tanımlı A1–A4 akışlarına birebir karşılık gelecek biçimde
+kurgulanmıştır:
+
+| # | Görev | Ölçtüğü akış | Kabul ölçütü |
+|---|---|---|---|
+| G1 | Kızdıran bir gönderiye cevap yaz ve gönder | A1 — müdahale merdiveni | Uyarı fark edilir, gönderim engellenmez |
+| G2 | Sana hakaret edildiğini arkadaşına anlat | A3 — mağdur akışı | **Hiçbir uyarı çıkmamalı** |
+| G3 | Kendi kimliğinden söz eden bir cümle yaz | Kimlik adı tetikleyici değil | **Hiçbir uyarı çıkmamalı** |
+| G4 | Topluluk panelini aç, ne bildiğini anlat | A4 — mahremiyet iletişimi | "Mesajlarımı okumuyor" diyebilmeli |
+| G5 | Uyarı aldığın mesajı yine de göndermeyi dene | A1 — engellenmezlik | Gönderebildiğini keşfeder |
+
+Ölçüm aracı, her görev sonrası sorulan tek soruluk SEQ (Single Ease Question,
+1–7) ölçeği ile görev tamamlama durumudur. Yöntemin iki kuralı vardır:
+katılımcıya ürünün ne yaptığı **anlatılmaz** (yönlendirilmiş bir test, hiç test
+yapmamaktan kötüdür) ve katılımcının yazdığı metin **kaydedilmez**; yalnızca
+davranış notu ve puan tutulur — ürünün mahremiyet duruşu test yönteminde de
+geçerlidir. G2 ve G3 kritik kabul ölçütleridir: bu ikisinde uyarı çıkarsa
+ürünün en ayırt edici iddiası gerçek kullanıcıda kırılmış demektir ve sonuç
+**olduğu gibi raporlanacaktır**.
+
+Beş katılımcının istatistiksel genelleme sağlamadığı burada açıkça belirtilir;
+küçük örneklem kullanılabilirlik sorunlarını **bulmak** için yeterlidir, oran
+iddiasında bulunmak için değildir. Oturumun uygulanması ve tam erişilebilirlik
+değerlendirmesi (ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi
+denetimi) mentörlük penceresine (2–7 Eylül, İP-16) planlanmıştır; bu raporda
+**henüz uygulanmamıştır** ve sonuç bildirilmemektedir.
 
 **Henüz tasarlanmamış akışlar (dürüstlük beyanı).** İlk kullanım
 (onboarding), özelliği kapatma akışı ve yanlış pozitif bildirimi henüz
@@ -1102,10 +1123,10 @@ kapalı olmadığını gösterir.
 | **20 Ağu 2026** | Ön başvuru | KYS başvurusu tamamlandı |
 | **20 Ağu 2026** | İP-12 · Ölçüm doğrulaması | Bütün metriklerin AOT derlenmiş ikili üzerinde yeniden ölçülmesi; 136 test |
 | **23 Ağu 2026** | İP-13 · Literatür ve kaynak doğrulaması | Kaynakçadaki 14 künyenin yayıncı sayfasından teyidi; problem büyüklüğü istatistiklerinin resmî kaynaklara bağlanması |
-| **23 Ağu 2026** | İP-14 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, sesli düşünme yöntemi |
 | **24 Ağu 2026, 17.00** | **Teknik rapor teslimi** | KYS yüklemesi |
 | 2 Eyl 2026 | Rapor sonuçları | — |
 | **2–7 Eyl 2026** | İP-15 · Bağımsız genelleme doğrulaması | İkinci etiketleyici ile yeni ayrık küme; hakemler arası uyum (Cohen's kappa) ölçümü |
+| **2–7 Eyl 2026** | İP-14 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, SEQ ölçeği, sesli düşünme (protokol hazır: `docs/10`) |
 | **2–7 Eyl 2026** | İP-16 · Tam erişilebilirlik değerlendirmesi | Ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi denetimi |
 | **2–7 Eyl 2026** | İP-17 · Kimlik söz varlığının genişletilmesi | Kapsanmayan grupların eklenmesi, kesinlik regresyon kontrolü |
 | **8–13 Eyl 2026** | İP-18 · Sunum ve demo videosu | Final teslimatı hazırlığı |
@@ -1121,7 +1142,7 @@ teslim tarihini, ◇ duyuru tarihini gösterir.
 | İP-11 · Denetimli taban çizgisi | ███ | | | | | | | |
 | İP-12 · Ölçüm doğrulaması | ███ | | | | | | | |
 | İP-13 · Literatür ve kaynak doğrulaması | | ███ | | | | | | |
-| İP-14 · Kullanılabilirlik testi | | ███ | | | | | | |
+| İP-14 · Kullanılabilirlik testi | | | | | ███ | | | |
 | **Teknik rapor teslimi** | | | **◆** | | | | | |
 | Rapor sonuçlarının duyurulması | | | | ◇ | | | | |
 | İP-15 · Bağımsız genelleme doğrulaması | | | | | ███ | | | |
@@ -1246,39 +1267,60 @@ Cilt 10, Sayı 5, s. 557–570
 ("The moderation endpoint is free to use"), Erişim Tarihi: 23 Ağustos 2026,
 https://developers.openai.com/api/docs/guides/moderation
 
-**[14]** Google Jigsaw, *Perspective API — Sunset Announcement*
-("Perspective API is sunsetting and service is officially ending after 2026";
-"The service will remain active until December 31, 2026"),
-Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
-
 **[13]** T.C. Resmî Gazete, *5237 sayılı Türk Ceza Kanunu, madde 216 — Halkı kin
 ve düşmanlığa tahrik veya aşağılama*, 12 Ekim 2004, Sayı 25611,
 Erişim Tarihi: 23 Ağustos 2026,
 https://www.mevzuat.gov.tr/mevzuatmetin/1.5.5237.pdf
 
+**[14]** Google Jigsaw, *Perspective API — Sunset Announcement*
+("Perspective API is sunsetting and service is officially ending after 2026";
+"The service will remain active until December 31, 2026"),
+Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
+
 ---
 
-## Rapor öncesi son kontrol
+## Rapor öncesi son kontrol — 24 Ağustos 2026
+
+> Bu bölüm iç kontrol listesidir; **Word'e kopyalanmayacaktır.**
+
+### Tamamlanan
 
 | # | İş | Durum |
 |---|---|---|
 | 1 | Problem büyüklüğü istatistikleri (2.1, 4.2) resmî kaynaklarla | ✅ [1][2][3][4] |
 | 2 | Kaynakça: 14 künye, yayıncı sayfasından teyitli, şablon formatında | ✅ |
 | 3 | Metin içi köşeli parantez atıflar — 14 künyenin tamamı gövdede kullanılıyor | ✅ |
-| 4 | Perspective API Türkçe iddiasının birincil kaynakla düzeltilmesi | ✅ [9] |
-| 5 | Perspective API'nin 31 Aralık 2026 kapanışı | ✅ [14] |
-| 6 | Yanlış "çağrı başına ücret" iddiasının düzeltilmesi (iki servis de ücretsiz) | ✅ [12][14] |
+| 4 | Kaynakça numara sırası ([13] → [14]) düzeltildi | ✅ |
+| 5 | Perspective API Türkçe iddiası + 31 Aralık 2026 kapanışı | ✅ [9][14] |
+| 6 | Yanlış "çağrı başına ücret" iddiasının düzeltilmesi | ✅ [12][14] |
 | 7 | Denetimli model eğitimi, ayrık ölçüm ve kural motoruyla kıyas (3.2) | ✅ `ml/` |
-| 8 | Literatürle kıyas (Türkçe külliyat F1 %77,3) + kıyaslanabilirlik uyarısı | ✅ [4] |
+| 8 | Literatürle kıyas + kıyaslanabilirlik uyarısı | ✅ [4] |
 | 9 | 4.1 verimlilik artışının duyarlılık modeliyle sayısallaştırılması | ✅ |
 | 10 | 3.3 WCAG 2.1 başarı ölçütü eşlemesi | ✅ |
 | 11 | 7.1 görsel zaman çizelgesi | ✅ |
-| 12 | Takım rol tablosu (2 kişi + 1 danışman) | ✅ |
+| 12 | Takım rol tablosu (2 kişi + 1 danışman), isim/fotoğraf yok | ✅ |
 | 13 | Gecikme sayısının AOT değerine (193 µs) çekilmesi | ✅ |
-| 14 | `[DEPO BAĞLANTISI]` — GitHub deposu açılıp push edilecek | ⏳ `gh auth login` |
-| 15 | `[TEST SONUCU]` — kullanılabilirlik testi sonuçları 3.3'e | ⏳ `docs/10` |
-| 16 | Yeni bağımsız ayrık küme + kappa | 🗓 İP-15 (2–7 Eylül) |
-| 17 | Kapak: `[TAKIM ID]` ve `[BAŞVURU ID]` | Sende — KYS'den |
-| 18 | Şablona aktarım: Arial 12 / Arial Black 14, 1.15, iki yana yaslı, 2,5 cm | Sende |
-| 19 | 30 sayfa sınırı (tahmin ~23) | Sende — Word'de doğrula |
-| 20 | Şablonun açıklama paragraflarının silindiği doğrulanacak | Sende |
+| 14 | **Kullanılabilirlik testi**: yapılmamış testin "yürütülmüştür" iddiası kaldırıldı; protokol tablosu eklendi, sonuç bildirilmiyor | ✅ |
+| 15 | İP-14 kilometre taşı ve Gantt satırı 2–7 Eylül'e taşındı | ✅ |
+| 16 | Görsel yerleşim planı (8 şekil, alt yazılar, kara liste) | ✅ `docs/11` |
+
+### Bugün yapılacak — sıraya göre
+
+| Sıra | İş | Puan etkisi | Süre |
+|---|---|---|---|
+| **1** | **GitHub deposu aç + push** → `[DEPO BAĞLANTISI]` iki yerde doldurulacak (§3.1 tablosu ve §3.1 metni) | **2 puan** + tüm teknik iddiaların doğrulanabilirliği | 15 dk |
+| **2** | Şablonun **son iki sayfasını sil** ("PUANLAMA VE DEĞERLENDİRME ESASLARI" ve "RAPOR ŞABLONU İLE İLGİLİ NOT") — ikisinde de "Bu sayfaya raporlarda yer verilmeyecektir" yazıyor | Eleme riski | 2 dk |
+| **3** | Şablonun **talimat paragraflarını sil** ("…net bir dille ifade edilir" tarzı) — onlar talimat, içerik değil | Eleme riski | 10 dk |
+| **4** | Bu dosyadaki **⛔ ve ⚠️ kutularını, başlık bloğunu ve bu kontrol listesini kopyalama** | Kritik | — |
+| **5** | Kapak: `[TAKIM ID]` + `[BAŞVURU ID]` KYS'den | Format | 5 dk |
+| **6** | 8 şekli yerleştir (`docs/11_GORSEL_PLANI.md`) — telefon numarası sansürü, mesajlaşma ekranları hariç | **3–4 puan** (3.3) | 60 dk |
+| **7** | Biçim: Arial 12 / başlık Arial Black 14 / 1.15 / iki yana yaslı / 2,5 cm | Eleme riski | 15 dk |
+| **8** | İçindekiler sayfa numaralarını güncelle (Word: Başvurular → İçindekiler tablosunu güncelle) | Format | 5 dk |
+| **9** | **Sayfa sayısını kontrol et — sınır 30.** Metin ~22–25 sayfa + 8 şekil ≈ 27–28 | Eleme riski | 5 dk |
+| **10** | PDF/DOCX olarak KYS'ye yükle — **son saati bekleme** | — | 10 dk |
+
+### Yapılırsa artı puan (opsiyonel, süre varsa)
+
+| İş | Puan | Süre |
+|---|---|---|
+| Kullanılabilirlik testini bugün gerçekten uygula (5 kişi × 15 dk), sonucu §3.3'e yaz | **+1 puan** ve jüri sunumunda güçlü malzeme | ~90 dk |
