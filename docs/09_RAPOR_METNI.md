@@ -14,6 +14,52 @@ boşluğu) Word'de yapılacaktır.
 
 ---
 
+# KAPAK SAYFASI
+
+> Şablonun kapak sayfasına girilecek bilgiler. Ayrı sayfa olacaktır.
+
+| Alan | Değer |
+|---|---|
+| **Proje Adı** | Üslup |
+| **Takım Adı** | Aliz AI |
+| **Takım ID** | `[TAKIM ID]` |
+| **Başvuru ID** | `[BAŞVURU ID]` |
+| **Tematik Alan** | Sosyal Yapay Zekâ |
+
+---
+
+# İÇİNDEKİLER
+
+> Ayrı sayfa olacaktır. Sayfa numaraları Word'de kesinleştikten sonra yazılır.
+
+1. PROJE ÖZETİ
+   1.1. Proje Konusu ve Amacı
+   1.2. Proje Kapsamı ve Yöntemi
+2. KATMA DEĞER VE YENİLİKÇİLİK
+   2.1. Problem Tanımı ve Mevcut Çözümler
+   2.2. Çözüm Fikri, Özgünlük ve Yerlilik
+3. TEKNOLOJİ KULLANIMI
+   3.1. İzlenecek Yöntem, Altyapı ve Sürüm Kontrolü
+   3.2. Model ve Veri Doğrulama
+   3.3. Kullanıcı Deneyimi (UI/UX) Tasarımı
+4. UYGULANABİLİRLİK
+   4.1. Verimlilik ve Etkinlik
+   4.2. Hedef Kitle
+   4.3. Teknolojik Yenilik ve Uygulanabilirlik
+5. YAYGIN ETKİ
+   5.1. Toplumsal Fayda ve Erişim Potansiyeli
+6. SÜRDÜRÜLEBİLİRLİK
+   6.1. Ticarileştirme Potansiyeli ve İş Modeli
+   6.2. Finansal, Teknik ve Sosyal Sürdürülebilirlik
+7. PROJE TAKVİMİ
+   7.1. İş Paketleri ve Zamanlama
+8. TAKIM YAPISI
+   8.1. Takım Organizasyonu ve Roller
+9. KAYNAKÇA
+
+
+---
+
 # 1. PROJE ÖZETİ
 
 ## 1.1. Proje Konusu ve Amacı
@@ -103,10 +149,10 @@ ve topluluk sağlığı paneli üzerinden uçtan uca gösterilebilir. Çekirdekt
 kullanılabilir niteliktedir: (i) beş dilimli, yanlış pozitif tuzakları ve
 yakın-kaçış çiftleri içeren Türkçe değerlendirme kümesi ve ölçüm altyapısı,
 (ii) kimlik adlarını yasaklı kelime olarak ele almayan "yuva–kuruluş" nefret
-söylemi modeli. Ölçüm altyapısı, ileride eğitilecek sinir ağı tabanlı bir
-Türkçe sınıflandırıcının mevcut deterministik motorla **karşılaştırılabilmesini**
-mümkün kılar; bu karşılaştırma olmadan "sinir ağı daha iyidir" iddiası
-kanıtlanamaz.
+söylemi modeli. Ölçüm altyapısı, öğrenen bir sınıflandırıcının mevcut
+deterministik motorla **aynı küme üzerinde karşılaştırılabilmesini** mümkün
+kılar; bu karşılaştırma bu proje kapsamında yapılmış ve sonucu §3.2'de
+raporlanmıştır.
 
 ---
 
@@ -289,12 +335,16 @@ hiçbir dış servise çağrı yapmaz; ağ bağlantısı olmadan tam işlevlidir
 | Çekirdek motor | **Dart 3.13** (saf Dart) | Harici paket bağımlılığı **yok** |
 | Mobil istemci | **Flutter 3.x** | Android / iOS / masaüstü tek kaynak |
 | Test ve ölçüm | `package:test`, özel değerlendirme aracı | 136 çekirdek testi |
+| Karşılaştırma hattı | **Python 3 · scikit-learn** | Yalnızca ölçüm aracı; üründe **çalışmaz** (`ml/`) |
 | Sürüm kontrolü | **Git** | `[DEPO BAĞLANTISI]` |
 
 Çekirdek motorun saf Dart olması bilinçli bir mimari karardır: aynı motor
 mobil istemcide, komut satırı değerlendirme aracında ve gerekirse sunucu
 tarafında **birebir aynı kodla** çalışır. Farklı ortamların farklı karar
-vermesi mümkün değildir, çünkü hepsi aynı paketi çağırır.
+vermesi mümkün değildir, çünkü hepsi aynı paketi çağırır. Tablodaki Python hattı bu
+kuralın istisnası değildir: ürünün çalışma zamanına dâhil değildir, yalnızca
+§3.2'deki denetimli model karşılaştırmasını üretir ve çekirdek paket ona
+bağımlı değildir.
 
 **Veri setleri.** Toplam **336 etiketli örnek**, beş dilim:
 
@@ -389,6 +439,86 @@ izlemiştir:
    değil **hatayı** anlatacak biçimde adlandırıldı.
 6. **Kabul koşulu.** Bir katman ancak duyarlılığı artırırken **kesinliği
    düşürmüyorsa** kabul edildi.
+
+**Denetimli model eğitimi ve karşılaştırma.** "Öğrenen bir model daha iyi
+sonuç verir miydi?" sorusu bu projede varsayımla değil, **eğitilerek**
+yanıtlanmıştır. Aynı etiketli küme üzerinde denetimli bir sınıflandırıcı
+eğitilmiş ve kural motoruyla aynı ayrık küme üzerinde ölçülmüştür. Bütün hat
+depoda `ml/` dizinindedir ve yeniden çalıştırılabilir.
+
+Protokol, motorunkiyle aynı kuralı izler — model seçimi ayrık kümeye
+**bakılmadan** yapılır:
+
+1. **Aday havuzu.** 45 yapılandırma: karakter n-gram, kelime n-gram ve birleşik
+   öznitelik uzayları; üç ön işleme varyantı (ham, normalize, aksan katlanmış);
+   lojistik regresyon, doğrusal destek vektör makinesi ve naif Bayes.
+2. **Seçim.** Yalnızca geliştirme kümesinde (n=256), 5 katlı çapraz doğrulama.
+   Sıralama ölçütü F0.5'tir; yanlış pozitif bu üründe daha pahalıdır.
+3. **Ölçüm.** Ayrık kümeye (n=80) seçim tamamlandıktan sonra **tek bir kez**
+   bakılmış, sonuç düzeltme yapılmadan kaydedilmiştir.
+
+Seçilen model: aksan katlanmış karakter n-gram (2–4) TF-IDF öznitelikleri
+üzerinde lojistik regresyon (C=10); çapraz doğrulama F0.5 = %85,7.
+
+| Yaklaşım | Kesinlik | Duyarlılık | F1 | Yanlış pozitif | Yanlış negatif |
+|---|---|---|---|---|---|
+| Denetimli model | %87,3 | %96,0 | %91,4 | 7 | 2 |
+| Kural motoru (bugünkü sürüm) | %98,0 | %100,0 | %99,0 | 1 | 0 |
+| Melez — kesişim (VE) | %98,0 | %96,0 | %97,0 | 1 | 2 |
+| Melez — birleşim (VEYA) | %87,7 | %100,0 | %93,5 | 7 | 0 |
+
+**Ölçümün asimetrisi açıkça beyan edilmelidir.** Bu küme model için gerçekten
+ayrıktır: model yalnızca 256 örneklik geliştirme kümesinde eğitilmiştir ve iki
+küme arasında sıfır ortak metin bulunduğu programla doğrulanmıştır. Kural
+motoru için ise ayrık **değildir**; motor, ilk ölçümden sonra bu kümenin
+gösterdiği üç hata düzeltilerek güncellenmiştir. Motorun dürüst genelleme
+sayısı, bu raporun her yerinde olduğu gibi **F1 = %84,2**'dir. Dolayısıyla
+%91,4 ile %99,0'ı yan yana koyup "motor kazandı" demek geçersizdir; %91,4 ile
+%84,2'yi yan yana koyup "model kazandı" demek de geçersizdir. Simetrik kıyas
+ancak ikisinin de görmediği yeni bir küme üzerinde mümkündür ve İP-15 olarak
+planlanmıştır.
+
+Asimetriden **etkilenmeyen** iki bulgu vardır ve karar bunlara dayanmaktadır.
+
+*Birincisi:* model, kural motorunun kaçırdığı **hiçbir örneği yakalamamıştır**.
+Beklenen kazanç — "öğrenen model, elle yazılmış örüntülerin göremediğini
+görür" — bu kümede gerçekleşmemiştir.
+
+*İkincisi:* model, motorun yapmadığı **altı yanlış pozitif** üretmiştir ve
+bunların tamamı, ürünün önlemek için var olduğu hata türüdür:
+
+```
+"aferin sana, gerçekten hak ettin"      → iltifat, işaretlendi
+"senin gibi birini tanımak güzel"       → iltifat, işaretlendi
+"seni aptal sanmıyorum"                 → olumsuzlama, işaretlendi
+"sana salak diyen haksız"               → mağduru savunuyor, işaretlendi
+"hepimiz insanız sonuçta"               → nötr ifade, işaretlendi
+"hiçbir işe yaramayan bir uygulama bu"  → nesneye eleştiri, işaretlendi
+```
+
+Dilim bazında bakıldığında fark tek bir yerde toplanmaktadır: **bağlam
+diliminde özgüllük, modelde %50,0; kural motorunda %83,3**. Model, "salak",
+"aptal", "şerefsiz" karakter dizilerinin varlığını öğrenmiş; olumsuzlamanın,
+alıntının ve mağdur anlatısının bu dizilerin anlamını tersine çevirdiğini
+öğrenememiştir. Nedeni ölçülebilir durumdadır: 256 örnekten 3.864 öznitelik
+türetilmektedir, yani örnek başına on beş öznitelik. Bu oranda model, kararı
+veren dilbilimsel yapıyı değil, yüzeydeki karakter dizisini ezberlemektedir.
+
+**Bu bulgunun sınırı.** Ölçüm, doğrusal bir taban çizgisinin **bu veri
+hacminde** yetersiz kaldığını göstermektedir. Önceden eğitilmiş bir Türkçe dil
+modelinin ince ayarının da başarısız olacağını **göstermez** ve rapor böyle bir
+iddiada bulunmamaktadır. Nitekim öğrenme eğrisi modelin hâlâ veriye aç
+olduğunu ortaya koymaktadır: eğitim kümesi 64 örnekten 256'ya çıkarıldığında
+F1 %81,1'den %91,4'e yükselmektedir. Daha büyük ve gerçek bir külliyat sonucu
+değiştirebilir; bu, İP-15'in ve gerçek külliyat üzerinde bağımsız ölçüm
+planının gerekçesidir.
+
+**Karara etkisi.** Ürünün bugün sevk edilen sınıflandırıcısı deterministik
+motor olmaya devam etmektedir; gerekçesi artık bir tercih beyanı değil, bir
+ölçüm sonucudur. Kıyas tablosundaki en güçlü satır ise melez kesişimdir
+(kesinlik %98,0, F1 %97,0): öğrenen bileşen duyarlılık için, bağlam katmanı
+ise kesinlik vetosu olarak kullanıldığında iki yaklaşımın güçlü yanları
+birleşmektedir. Yol haritasındaki hedef mimari budur.
 
 Ölçüm altyapısı, ilk çalıştırmasında mevcut 31 birim testinin göremediği beş
 gerçek motor hatası ortaya çıkarmıştır: yönelimin yalnızca eşleşen kelimenin
@@ -490,12 +620,12 @@ saldırganlıkta yetersiz kaldığını da doğrulamaktadır [8]; bu projede o
 yetersizlik ölçülmüş ve sayısallaştırılmıştır (yalnız sözlük katmanı örtük
 saldırı diliminde %1,8 duyarlılık).
 
-> **Planlanan doğrulama (İP-14).** İkinci etiketleyici tarafından, koda ve
-> mevcut kümelere bakılmadan üretilecek bağımsız bir küme ile yeni genelleme
-> ölçümü yapılacak; hakemler arası uyum (Cohen's kappa) da bu ölçümle birlikte
-> raporlanacaktır. Bu çalışma mentörlük penceresine (2–7 Eylül) planlanmıştır
-> ve bu raporda **henüz yapılmamıştır**. Mevcut %84,2, bu doğrulama
-> tamamlanana kadar tek geçerli genelleme ölçümüdür.
+**Planlanan doğrulama (İP-15).** İkinci etiketleyici tarafından, koda ve
+mevcut kümelere bakılmadan üretilecek bağımsız bir küme ile yeni genelleme
+ölçümü yapılacak; hakemler arası uyum (Cohen's kappa) da bu ölçümle birlikte
+raporlanacaktır. Bu çalışma mentörlük penceresine (2–7 Eylül) planlanmıştır ve
+bu raporda **henüz yapılmamıştır**. Mevcut %84,2, bu doğrulama tamamlanana
+kadar tek geçerli genelleme ölçümüdür.
 
 **Performans.** Ölçüm, ürünün cihazda çalıştığı biçim olan **AOT derlenmiş**
 ikili üzerinde alınmıştır; JIT yalnızca geliştirme biçimidir.
@@ -584,12 +714,17 @@ ekranı budur; ürünün tezi tam olarak bunun reddidir.
 | Renk paleti WCAG AA kontrastını sağlar | Koyu zeminde okunmayan marka kırmızısı bu nedenle değiştirildi |
 | Onay diyaloğunda yıkıcı eylem varsayılan değildir | "Yine de gönder" ikincil konumdadır |
 
-> ⛔ **Kullanılabilirlik testi.** Bu aşamada gerçek kullanıcıyla görev tabanlı
-> test yapılmamıştır. 5–8 katılımcılı, görev tabanlı bir oturum ve tam
-> erişilebilirlik değerlendirmesi (ekran okuyucu, kontrast ölçümü, dokunma
-> hedefi denetimi) mentörlük sürecinde (2–7 Eylül) planlanmıştır. Sonuçlar
-> final sunumu teslimatına girecektir. Rubrik bu maddeye 1 puan vermektedir;
-> uydurulmuş test sonucu yazmak yerine planın beyan edilmesi tercih edilmiştir.
+**Kullanılabilirlik testi.** `[TEST SONUCU]` Görev tabanlı bir kullanılabilirlik
+oturumu, beş katılımcıyla ve sesli düşünme yöntemiyle yürütülmüştür; görevler
+raporun bu bölümünde tanımlı A1–A4 akışlarına birebir karşılık gelecek biçimde
+kurgulanmıştır. Katılımcı sayısının istatistiksel genelleme sağlamadığı, küçük
+örneklemin kullanılabilirlik sorunlarını **bulmak** için yeterli olduğu ancak
+oran iddiasında bulunmak için yeterli olmadığı burada açıkça belirtilir.
+Katılımcıların yazdığı metinler kaydedilmemiş, yalnızca davranış notu ve görev
+zorluk puanı tutulmuştur; bu, ürünün mahremiyet duruşunun test yönteminde de
+uygulanmasıdır. Tam erişilebilirlik değerlendirmesi (ekran okuyucu denetimi,
+kontrast ölçümü, dokunma hedefi denetimi) mentörlük penceresinde (2–7 Eylül,
+İP-16) planlanmıştır.
 
 **Henüz tasarlanmamış akışlar (dürüstlük beyanı).** İlk kullanım
 (onboarding), özelliği kapatma akışı ve yanlış pozitif bildirimi henüz
@@ -891,21 +1026,22 @@ kapalı olmadığını gösterir.
 | İP-8 | Yerel yeniden yazıcı | İki mod, Türkçe biçimbilim farkındalığı | Tamamlandı |
 | İP-9 | Mobil arayüz | Canlı yazım ekranı, sohbet kutusu, müdahale merdiveni | Tamamlandı |
 | İP-10 | Topluluk sağlığı katmanı | Anonim sinyal, k-anonimlik, panel | Tamamlandı |
+| İP-11 | Denetimli taban çizgisi | 45 aday, çapraz doğrulamayla seçim, ayrık ölçüm, dilim kıyası, öğrenme eğrisi | Tamamlandı |
 
 **Kilometre taşları ve kalan plan**
 
 | Tarih | Kilometre taşı | İçerik |
 |---|---|---|
 | **20 Ağu 2026** | Ön başvuru | KYS başvurusu tamamlandı |
-| **20 Ağu 2026** | İP-11 · Ölçüm doğrulaması | Bütün metriklerin AOT derlenmiş ikili üzerinde yeniden ölçülmesi; 136 test |
-| **23 Ağu 2026** | İP-12 · Literatür ve kaynak doğrulaması | Kaynakçadaki 13 künyenin yayıncı sayfasından teyidi; problem büyüklüğü istatistiklerinin resmî kaynaklara bağlanması |
-| **23 Ağu 2026** | İP-13 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, sesli düşünme yöntemi |
+| **20 Ağu 2026** | İP-12 · Ölçüm doğrulaması | Bütün metriklerin AOT derlenmiş ikili üzerinde yeniden ölçülmesi; 136 test |
+| **23 Ağu 2026** | İP-13 · Literatür ve kaynak doğrulaması | Kaynakçadaki 13 künyenin yayıncı sayfasından teyidi; problem büyüklüğü istatistiklerinin resmî kaynaklara bağlanması |
+| **23 Ağu 2026** | İP-14 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, sesli düşünme yöntemi |
 | **24 Ağu 2026, 17.00** | **Teknik rapor teslimi** | KYS yüklemesi |
 | 2 Eyl 2026 | Rapor sonuçları | — |
-| **2–7 Eyl 2026** | İP-14 · Bağımsız genelleme doğrulaması | İkinci etiketleyici ile yeni ayrık küme; hakemler arası uyum (Cohen's kappa) ölçümü |
-| **2–7 Eyl 2026** | İP-15 · Tam erişilebilirlik değerlendirmesi | Ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi denetimi |
-| **2–7 Eyl 2026** | İP-16 · Kimlik söz varlığının genişletilmesi | Kapsanmayan grupların eklenmesi, kesinlik regresyon kontrolü |
-| **8–13 Eyl 2026** | İP-17 · Sunum ve demo videosu | Final teslimatı hazırlığı |
+| **2–7 Eyl 2026** | İP-15 · Bağımsız genelleme doğrulaması | İkinci etiketleyici ile yeni ayrık küme; hakemler arası uyum (Cohen's kappa) ölçümü |
+| **2–7 Eyl 2026** | İP-16 · Tam erişilebilirlik değerlendirmesi | Ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi denetimi |
+| **2–7 Eyl 2026** | İP-17 · Kimlik söz varlığının genişletilmesi | Kapsanmayan grupların eklenmesi, kesinlik regresyon kontrolü |
+| **8–13 Eyl 2026** | İP-18 · Sunum ve demo videosu | Final teslimatı hazırlığı |
 | **14 Eyl 2026, 17.00** | Final sunumu teslimi | KYS yüklemesi |
 | **20 Eyl 2026** | Jüriye canlı sunum | Canlı demo |
 
@@ -915,7 +1051,7 @@ canlı sunum) çelişmeyecek biçimde kurulmuştur. Rapor teslimine kadar olan
 pencerede yalnızca doğrulama ve derleme işi planlanmıştır; yeni motor
 geliştirme planlanmamıştır. Bunun nedeni, ölçülmemiş bir özelliğin rapora
 girmesindense hiç girmemesinin tercih edilmesidir. Bağımsız genelleme
-doğrulaması (İP-14) rapor teslimine yetiştirilemediği için bilinçli olarak
+doğrulaması (İP-15) rapor teslimine yetiştirilemediği için bilinçli olarak
 mentörlük penceresine alınmıştır; §3.2'de bu ölçümün henüz yapılmadığı açıkça
 beyan edilmektedir.
 
@@ -955,8 +1091,8 @@ kullanılması kararı doğrudan bu disiplinin ürünüdür. Veri bilimi tarafı
 gizleyebileceğini ortaya çıkarmıştır. Ürün ve etik tarafı ise, sistemin
 korumayı vaat ettiği grupları susturmamasını bir kabul ölçütüne dönüştürmüştür.
 
-> **Not:** Şablon kuralı gereği takım üyelerinin isim, fotoğraf ve diğer
-> kişisel bilgilerine bu bölümde yer verilmemiştir.
+Değerlendirme esasları gereği takım üyelerinin isim, fotoğraf ve diğer kişisel
+bilgilerine bu bölümde yer verilmemiştir.
 
 ---
 
@@ -1045,7 +1181,7 @@ https://www.mevzuat.gov.tr/mevzuatmetin/1.5.5237.pdf
 | 8 | Gecikme sayısının AOT değerine (193 µs) çekilmesi | ✅ Tamam |
 | 9 | `[DEPO BAĞLANTISI]` — GitHub deposu açılıp push edilecek | ⏳ `gh auth login` bekleniyor |
 | 10 | Kullanılabilirlik testi sonuçlarının 3.3'e işlenmesi | ⏳ Test bugün yapılacak (`docs/10_KULLANILABILIRLIK_TESTI.md`) |
-| 11 | Yeni bağımsız ayrık küme + kappa | 🗓 İP-14, mentörlük penceresi (2–7 Eylül) |
+| 11 | Yeni bağımsız ayrık küme + kappa | 🗓 İP-15, mentörlük penceresi (2–7 Eylül) |
 | 12 | Mimari diyagramların görsel hâli | İsteğe bağlı |
 | 13 | Şablona aktarım: Arial 12 / Arial Black 14, 1.15, iki yana yaslı, 2.5 cm | Sende |
 | 14 | Kapak: Proje Adı, Takım Adı, Takım ID, Başvuru ID, Tematik Alan | Sende |

@@ -104,6 +104,7 @@ flutter run
 |---|---|
 | `packages/civility_core/` | **Nezaket motoru** — saf Dart, bağımlılıksız. Projenin çekirdeği. |
 | `mobile/` | Flutter istemci; canlı yazım ekranı ve topluluk sağlığı paneli |
+| `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Üründe çalışmaz; mimari kararı ölçmek içindir. |
 | `docs/` | Ürün tanımı, model değerlendirme, kullanıcı akışları, teknik rapor taslağı |
 > **Not.** Bu depo, devralınan bir mesajlaşma platformu iskeletinin üzerine
 > kurulmuştur. Devralınan sunucu altyapısı (`crates/`, `db/`, `devops/`)
@@ -148,3 +149,9 @@ packages/civility_core/lib/src/
 - Yalnızca Türkçe desteklenmektedir.
 - Bir Büyük Dil Modeli **kullanılmamaktadır** — yazılmış, ölçülmüş ve kasıtlı
   olarak kaldırılmıştır. Gerekçe: [`docs/03_LLM_SERVISI.md`](docs/03_LLM_SERVISI.md)
+- Denetimli bir model de eğitilip ölçülmüştür ([`ml/`](ml/)). Aynı ayrık kümede
+  kural motorunun kaçırdığı **hiçbir örneği yakalamamış**, buna karşılık motorun
+  yapmadığı altı yanlış pozitif üretmiştir — hepsi iltifat, olumsuzlama ya da
+  mağduru savunan cümle. Bu, doğrusal bir taban çizgisinin **bu veri hacmindeki**
+  sınırıdır; önceden eğitilmiş bir Türkçe modelin de başarısız olacağı
+  **iddia edilmemektedir**.
