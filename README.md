@@ -67,7 +67,7 @@ kimlik adı sızarsa test kırılır.
 | Genelleme (ayrık küme) F1 | **%84,2** (kesinlik %88,9 / duyarlılık %80,0) |
 | Nefret söylemi dilimi F1 | %97,3 (kesinlik %100) |
 | Örüntü katmanının duyarlılık katkısı | +55,2 puan, **kesinlik kaybı 0** |
-| Ortalama çözümleme süresi | 193 µs (AOT; 16 ms kare bütçesinin %1,2'si) |
+| Ortalama çözümleme süresi | 87–193 µs (AOT; üst sınırı bile 16 ms kare bütçesinin %1,2'si) |
 
 **Dürüstlük notu.** Geliştirme kümesinde F1 %99,6'dır ve bu bir genelleme kanıtı
 **değildir** — kümeyi de örüntüleri de aynı kişi yazmıştır. Raporlanan sayı, tek
