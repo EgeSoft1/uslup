@@ -9,6 +9,10 @@ boşluğu) Word'de yapılacaktır.
 
 > ⚠️ Kalan yer tutucular: `[TAKIM ID]` ve `[BAŞVURU ID]` (kapakta, KYS'den
 > alınacak). Depo bağlantısı §3.1'de dolduruldu.
+> **`[ŞEKİL N BURAYA — …]`** satırları görselin yerleşeceği noktadır: görseli
+> oraya yerleştirip o satırı **sil**. Hemen altındaki italik *Şekil N. …*
+> alt yazısı belgede **kalacaktır** (Arial 10–11, italik, ortalanmış).
+> Görsellerin seçimi, kara listesi ve biçim kuralları: `docs/11_GORSEL_PLANI.md`.
 > Metin içi atıflar `[1]`–`[14]` biçimindedir ve §9'daki kaynakçaya karşılık
 > gelir; bunlar yer tutucu **değildir**, olduğu gibi kalacaktır.
 
@@ -121,7 +125,8 @@ yazılmış ve çalışır durumdaki bulut tabanlı yeniden yazma servisinin
 **İzlenecek teknik yöntem.** Çözümleme, ardışık ve birbirinden bağımsız
 ölçülebilir katmanlardan oluşan bir hat olarak kurgulanmıştır: normalizasyon →
 kök eşleştirme → edimbilimsel örüntü → nefret söylemi örüntüsü → gönderge
-çözümlemesi → bağlam ağırlıklandırma → skor birleştirme → öneri üretimi.
+çözümlemesi → bağlam ağırlıklandırma → skor birleştirme → öneri üretimi
+(Şekil 1).
 Katmanlar bağımsız olarak açılıp kapatılabilir ve her birinin katkısı aynı
 veri kümesi üzerinde A/B karşılaştırmasıyla ayrı ayrı ölçülür.
 
@@ -153,6 +158,10 @@ söylemi modeli. Ölçüm altyapısı, öğrenen bir sınıflandırıcının mev
 deterministik motorla **aynı küme üzerinde karşılaştırılabilmesini** mümkün
 kılar; bu karşılaştırma bu proje kapsamında yapılmış ve sonucu §3.2'de
 raporlanmıştır.
+
+**[ŞEKİL 1 BURAYA — mimari çizimi, ekran görüntüsü değil]**
+
+*Şekil 1. Üslup'un cihaz üstü çözümleme hattı. Hattın hiçbir adımında ağ çağrısı bulunmaz; çözümleme kullanıcının cihazında başlar ve biter.*
 
 ---
 
@@ -242,7 +251,7 @@ yapıcı bir alternatif önerir. Sistem hiçbir metni kendiliğinden değiştirm
 veya engellemez.
 
 **Müdahale merdiveni.** Ürünün tek davranış kuralı, müdahale şiddetinin riskle
-orantılı olması ve hiçbir seviyede gönderimin engellenmemesidir:
+orantılı olması ve hiçbir seviyede gönderimin engellenmemesidir (Şekil 2):
 
 | Toksisite | Seviye | Kullanıcı ne görür | Kesinti |
 |---|---|---|---|
@@ -250,6 +259,10 @@ orantılı olması ve hiçbir seviyede gönderimin engellenmemesidir:
 | 0,15 – 0,40 | Dikkat | Yalnızca kenarlık rengi değişir | Yok |
 | 0,40 – 0,70 | Riskli | Gerekçe + yeniden yazma önerisi | Yok |
 | ≥ 0,70 | Yüksek | Gönderim öncesi onay diyaloğu | Bir dokunuş |
+
+**[ŞEKİL 2 BURAYA — dört ekran görüntüsü yan yana: (a) temiz · (b) dikkat · (c) riskli · (d) yüksek]**
+
+*Şekil 2. Müdahale merdiveni. (a) temiz metinde hiçbir kesinti yoktur; (b) dikkat seviyesinde yalnızca kenarlık rengi değişir; (c) riskli seviyede gerekçe ve alternatif sunulur; (d) yüksek riskte onay istenir — ancak hiçbir seviyede gönderim engellenmez.*
 
 Kullanıcıyı her seferinde uyarmak, uyarıyı görünmez kılar. "Dikkat"
 seviyesinde hiçbir kesinti olmaması bir eksiklik değil, uyarının anlamını
@@ -266,7 +279,7 @@ koruma kararıdır.
 | Küfürsüz düşmanlık | Kısmi | Kısmi | **Yok** | **Var (8 aile, 50 örüntü)** |
 | Kimlik adı muamelesi | Model belirler | Model belirler | Yasaklı kelime | **Hiçbir zaman tetikleyici değil** |
 | Mağduru ayırt etme | Sınırlı | Sınırlı | Yok | **Alıntı/şikâyet/öz-ifade ayrımı** |
-| Marjinal maliyet | Çağrı başına | Çağrı başına | Düşük | **Sıfır** |
+| Servis sürekliliği | **31 Ara 2026'da kapanıyor** [14] | Sağlayıcının yol haritasına bağlı | Platforma ait | **Dış servise bağlı değil** |
 | Ağ bağımlılığı | Var | Var | Değişken | **Yok** |
 
 **Özgün yön 1 — Küfürsüz düşmanlığın tespiti.** Sosyal medyadaki saldırganlığın
@@ -309,7 +322,12 @@ değilsin" iltifat (×0,15), "bana aptal dedi" şikâyet (×0,20), "kendimi
 aptal hissettim" öz-ifade (×0,20). "aptal değil misin" ise retorik
 olumsuzlama olarak saldırı sayılır. Yumuşatmanın yalnızca çarpan değil aynı
 zamanda **tavan** olması, tacize uğrayan kullanıcının uyarı almasını yapısal
-olarak engeller.
+olarak engeller (Şekil 6).
+
+**[ŞEKİL 6 BURAYA — aynı kelimenin dört bağlamdaki sonucunu gösteren test/demo ekranı]**
+
+*Şekil 6. Bağlam ağırlıklandırma. Aynı sözcük, saldırı / iltifat / şikâyet / öz-ifade bağlamlarında farklı ağırlık alır; yumuşatma yalnızca çarpan değil aynı zamanda tavandır.*
+
 
 **Özgün mimari kararı — bulut kademesinin kaldırılması.** Sunucu tarafında
 çalışan, kullanıcı onaylı bir dil modeli yeniden yazma servisi yazılmış, 50
@@ -388,6 +406,8 @@ ayrıştırılmış sonuçlar; ve katman izolasyonu için A/B karşılaştırmas
 birlikte listelenir.
 
 ```
+git clone https://github.com/EgeSoft1/uslup
+cd uslup/packages/civility_core && dart pub get
 dart test                                  # 136 test
 dart run bin/evaluate.dart --hepsi         # tüm metrikler
 dart run bin/evaluate.dart --karsilastir   # katman katkısı A/B
@@ -403,13 +423,12 @@ mimari karşılığıdır: gizlilik politikası maddesi değil, çıkarılmış 
 yüzeydir.
 
 **Kod reposu ve sürüm kontrolü.** Projenin kaynak kodu, etiketli değerlendirme
-kümesi ve ölçüm araçlarının tamamı açık erişimlidir:
+kümesi ve ölçüm araçlarının tamamı **MIT lisansı** altında açık erişimlidir:
 **https://github.com/EgeSoft1/uslup**
 
-Raporda verilen bütün sayısal sonuçlar depodan yeniden üretilebilir:
-`packages/civility_core` dizininde `dart run bin/evaluate.dart --hepsi`
-komutu, §4'teki tabloların kaynağı olan çıktıyı üretir. Ölçüm için Flutter
-kurulumu gerekmez; çekirdek motor saf Dart olduğundan Dart SDK yeterlidir.
+Raporun bütün sayısal sonuçları, yukarıda listelenen komut dizisiyle sıfırdan
+yeniden üretilebilir. Ölçümler **Dart SDK 3.13.1** ile alınmıştır; çekirdek
+motor saf Dart olduğu için Flutter kurulumu gerekmez.
 
 Geliştirme süreci Git ile, aşamalı ve gerekçeli commit'lerle yürütülmüştür.
 Commit geçmişi yalnızca "ne yapıldığını" değil, **kararların neden
@@ -648,12 +667,19 @@ kadar tek geçerli genelleme ölçümüdür.
 **Performans.** Ölçüm, ürünün cihazda çalıştığı biçim olan **AOT derlenmiş**
 ikili üzerinde alınmıştır; JIT yalnızca geliştirme biçimidir.
 
-| Yapılandırma | Ortalama çözümleme |
+| Yapılandırma | Ortalama çözümleme (AOT) |
 |---|---|
-| Tam hat (sözlük + örüntü + nefret + gönderge) | **193,3 µs** |
-| Yalnız sözlük | 47,3 µs |
+| Tam hat (sözlük + örüntü + nefret + gönderge) | **87 – 193 µs** |
+| Yalnız sözlük | 20 – 47 µs |
 
-193 µs, 60 FPS kare bütçesinin (16 ms) **%1,2'sidir**. Bu nedenle gecikmeli
+Değer tek bir ölçüm olarak değil, tekrarlı çalıştırmalarda gözlenen **bant**
+olarak verilmektedir; süre makineye ve anlık sistem yüküne göre değişir ve tek
+ondalıklı bir sayı bildirmek yanıltıcı olurdu. Aynı hat JIT'te yaklaşık üç kat
+yavaş ölçülür (~330 µs); `dart test` çıktısında görülen sayı budur ve AOT
+değeriyle karıştırılmamalıdır.
+
+Bandın **üst sınırı olan 193 µs bile**, 60 FPS kare bütçesinin (16 ms)
+**%1,2'sidir**. Bu nedenle gecikmeli
 tetikleme (debounce) gerekmemekte, geri bildirim gerçekten anlık olmaktadır.
 Gönderge katmanının maliyeti ölçülerek sıfıra indirilmiştir: kimlik söz
 varlığı taraması tembelleştirilmiş, öncül araması ancak bir gönderge örüntüsü
@@ -681,8 +707,8 @@ cezalandırır; burada ikisi de birer kabul ölçütüdür ve testlerle korunur.
 
 **Kullanıcı akışları.**
 
-*A1 — Ana akış.* Kullanıcı yazar → cihaz üstü çözümleme (~193 µs, debounce
-yok) → risk seviyesine göre üç yol: temiz ise hiçbir şey; dikkat ise yalnızca
+*A1 — Ana akış.* Kullanıcı yazar → cihaz üstü çözümleme (AOT'de 87–193 µs,
+debounce yok) → risk seviyesine göre üç yol: temiz ise hiçbir şey; dikkat ise yalnızca
 kenarlık rengi; riskli/yüksek ise kenarlık + gerekçe + yeniden yazma önerisi.
 Kullanıcı öneriyi uygulayabilir, kendi düzeltebilir veya görmezden gelebilir.
 Risk yüksekse gönderim öncesi onay diyaloğu açılır; "Vazgeç" ve "Yine de
@@ -699,7 +725,12 @@ müdahale hiç olmamış gibi görünürdü. Dört sonuç ayırt edilir: `temizG
 *A3 — Mağdur akışı.* "Bana 'şerefsiz' dedi, çok üzüldüm" cümlesinde 0,88
 taban şiddetli bir terim geçmesine rağmen hiçbir şey olmaz: bağlam katmanı bunu
 aktarım olarak tanır (×0,20) ve yumuşatma tavanı devreye girerek sonucu eşiğin
-altına indirir.
+altına indirir (Şekil 4).
+
+**[ŞEKİL 4 BURAYA — cümlenin yazıldığı ve HİÇBİR uyarı çıkmadığı ekran görüntüsü]**
+
+*Şekil 4. Mağdur akışı. Cümlede 0,88 taban şiddetinde bir terim geçmesine rağmen uyarı üretilmez; bağlam katmanı ifadeyi aktarım olarak tanır (×0,20) ve yumuşatma tavanı sonucu eşiğin altında tutar.*
+
 
 *A4 — Topluluk paneli akışı.* Panel açıldığında, herhangi bir sayıdan önce
 "Bu paneldeki hiçbir sayı mesaj içeriğinden üretilmez" ifadesi görünür.
@@ -720,6 +751,12 @@ ekranı budur; ürünün tezi tam olarak bunun reddidir.
 | Öneri dayatılmaz, seçim kullanıcıda | Ürünün tezi: yaptırım değil, duraksama davranışı değiştirir |
 | Yüksek riskte onay diyaloğu, engel değil | Sorulan soru ve kaydedilen tereddüt, engellemekten çok şey değiştirir |
 | Panelde mesaj listesi yok | "Metin cihazdan çıkmaz" iddiasıyla tutarlılık |
+
+Tablodaki "hangi kelime ve neden" kararının üründeki karşılığı Şekil 3'tedir.
+
+**[ŞEKİL 3 BURAYA — gerekçe kartının yakın plan (crop) ekran görüntüsü]**
+
+*Şekil 3. Açıklanabilirlik. Her uyarı, hangi ifadenin neden işaretlendiğini metin olarak bildirir; kullanıcı kararın gerekçesini görmeden bir öneriyle karşılaşmaz.*
 
 **Erişilebilirlik yaklaşımı.**
 
@@ -836,8 +873,8 @@ anda varsayım olmaktan çıkıp ölçüme dönüşen bir hesaptır. Moderasyon
 kuyruğuna hiç girmeyen her gönderi, hem moderatör zamanı hem de hedef kişinin
 maruz kalmadığı zarar anlamına gelir.
 
-**Gecikme bütçesi.** 193 µs'lik çözümleme süresi, 60 FPS kare bütçesinin
-%1,2'sidir. Bu, geri bildirimin gecikmeli tetikleme olmadan, her tuş vuruşunda
+**Gecikme bütçesi.** En kötü ölçülen 193 µs'lik çözümleme süresi, 60 FPS kare
+bütçesinin %1,2'sidir. Bu, geri bildirimin gecikmeli tetikleme olmadan, her tuş vuruşunda
 verilebilmesini sağlar — kullanıcı deneyimi açısından belirleyici olan budur.
 
 **Ölçülebilir etkinlik.** Ürünün başarısı, ürettiği uyarı sayısıyla değil,
@@ -933,6 +970,10 @@ ikinci bir uygulama olarak eklenebilir ve mevcut altyapıyla karşılaştırıla
 
 ## 5.1. Toplumsal Fayda ve Erişim Potansiyeli
 
+**[ŞEKİL 8 BURAYA — NSosyal gönderi kutusu ekranı — mümkünse büyük bas]**
+
+*Şekil 8. Katman platforma bağlı değildir; Türkçe metin girişi yapılan herhangi bir yüzeye — burada NSosyal gönderi kutusuna — kütüphane bağımlılığı olarak eklenebilir.*
+
 **Geniş kullanıcı kitlelerine ulaşma potansiyeli.** Çözüm tek bir platforma
 bağlı değildir. Cihaz üstü bir Türkçe katman olarak, Türkçe metin girişi
 yapılan herhangi bir yüzeye taşınabilir: sosyal medya uygulamaları, mesajlaşma
@@ -969,7 +1010,12 @@ işlemesinin ön koşuludur.
 konferansına katıldım" gibi cümleler, kimlik adlarını yasaklayan sistemlerde
 filtrelenir ve sonuç, korunmak istenen grubun susturulması olur. Üslup'ta
 kimlik adı hiçbir zaman tek başına bulgu üretmez; bu davranış yapısal bir
-testle korunur ve 20 masum kimlik cümlesinin hiçbiri işaretlenmez.
+testle korunur ve 20 masum kimlik cümlesinin hiçbiri işaretlenmez (Şekil 5).
+
+**[ŞEKİL 5 BURAYA — kimlik cümlesinin uyarısız geçtiği ekran görüntüsü]**
+
+*Şekil 5. Kimlik adı hiçbir zaman tek başına tetikleyici değildir. Sözlükte kimlik adı bulunmaz; bu davranış yapısal bir testle korunur.*
+
 
 *Örnek 3 — Yasal riskin kullanıcıya hatırlatılması.* Bir grubun varlık hakkını
 reddeden ifadelerde kullanıcıya gösterilen gerekçe, ifadenin Türk Ceza Kanunu
@@ -987,7 +1033,13 @@ vatandaşlık eğitiminin doğal bir uzantısı hâline gelir.
 paneli, bir topluluğun iletişim iklimini metin okumadan görünür kılar. Panel
 davranıştan beslenir, sinyal sınıfı yapısal olarak metin taşıyamaz ve 5
 gözlemin altındaki kategoriler k-anonimlik [11] gereği açılmaz. Böylece topluluk
-yönetimi ile bireysel mahremiyet arasındaki geleneksel ödünleşim ortadan kalkar.
+yönetimi ile bireysel mahremiyet arasındaki geleneksel ödünleşim ortadan kalkar
+(Şekil 7).
+
+**[ŞEKİL 7 BURAYA — iki panel: (a) panelin üstü + mahremiyet ifadesi · (b) "Dışarı ne gider" kartı]**
+
+*Şekil 7. Mahremiyetten ödün vermeyen topluluk yönetimi. Panel davranıştan beslenir, mesaj listesi içermez; 5 gözlemin altındaki kategoriler k-anonimlik gereği açılmaz ve "Dışarı ne gider" kartı platforma gidecek veriyi harfi harfine gösterir.*
+
 
 **Dijital yaşam kalitesine etkisi.** Ürünün hedeflediği değişim, kaldırılan
 içerik sayısı değil, hiç yazılmayan hakaretlerdir. İnsanlar bu cümleleri yüz
@@ -1263,7 +1315,7 @@ Toxic*, arXiv:2312.12651, DOI: 10.48550/arXiv.2312.12651
 
 **[11]** Sweeney, L., (2002) *k-anonymity: A Model for Protecting Privacy*,
 International Journal of Uncertainty, Fuzziness and Knowledge-Based Systems,
-Cilt 10, Sayı 5, s. 557–570
+Cilt 10, Sayı 5, s. 557–570, DOI: 10.1142/S0218488502001648
 
 **[12]** OpenAI, *Moderation — API Documentation (omni-moderation-latest)*
 ("The moderation endpoint is free to use"), Erişim Tarihi: 23 Ağustos 2026,
@@ -1301,7 +1353,7 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 | 10 | 3.3 WCAG 2.1 başarı ölçütü eşlemesi | ✅ |
 | 11 | 7.1 görsel zaman çizelgesi | ✅ |
 | 12 | Takım rol tablosu (2 kişi + 1 danışman), isim/fotoğraf yok | ✅ |
-| 13 | Gecikme sayısının AOT değerine (193 µs) çekilmesi | ✅ |
+| 13 | Gecikme sayısının AOT bandına (87–193 µs) çekilmesi ve JIT/AOT farkının beyanı | ✅ |
 | 14 | **Kullanılabilirlik testi**: yapılmamış testin "yürütülmüştür" iddiası kaldırıldı; protokol tablosu eklendi, sonuç bildirilmiyor | ✅ |
 | 15 | İP-14 kilometre taşı ve Gantt satırı 2–7 Eylül'e taşındı | ✅ |
 | 16 | Görsel yerleşim planı (8 şekil, alt yazılar, kara liste) | ✅ `docs/11` |
@@ -1315,7 +1367,7 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 | **3** | Şablonun **talimat paragraflarını sil** ("…net bir dille ifade edilir" tarzı) — onlar talimat, içerik değil | Eleme riski | 10 dk |
 | **4** | Bu dosyadaki **⛔ ve ⚠️ kutularını, başlık bloğunu ve bu kontrol listesini kopyalama** | Kritik | — |
 | **5** | Kapak: `[TAKIM ID]` + `[BAŞVURU ID]` KYS'den | Format | 5 dk |
-| **6** | 8 şekli yerleştir (`docs/11_GORSEL_PLANI.md`) — telefon numarası sansürü, mesajlaşma ekranları hariç | **3–4 puan** (3.3) | 60 dk |
+| **6** | 8 şekli yerleştir — **çapalar ve alt yazılar metinde hazır**, yalnızca `[ŞEKİL N BURAYA]` satırlarının yerine görseli koy. Kara liste ve sansür kuralları: `docs/11_GORSEL_PLANI.md` | **3–4 puan** (3.3) | 45 dk |
 | **7** | Biçim: Arial 12 / başlık Arial Black 14 / 1.15 / iki yana yaslı / 2,5 cm | Eleme riski | 15 dk |
 | **8** | İçindekiler sayfa numaralarını güncelle (Word: Başvurular → İçindekiler tablosunu güncelle) | Format | 5 dk |
 | **9** | **Sayfa sayısını kontrol et — sınır 30.** Metin ~22–25 sayfa + 8 şekil ≈ 27–28 | Eleme riski | 5 dk |

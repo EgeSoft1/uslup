@@ -85,6 +85,12 @@ Jüri bunu yakalarsa §2.2, §3.1 ve §6.1'in tamamı şüpheye düşer.
 
 ## 3. Şekil yerleşim planı — 8 görsel
 
+> **Çapalar rapora yerleştirilmiştir.** `docs/09_RAPOR_METNI.md` içinde her
+> şeklin geleceği noktada `**[ŞEKİL N BURAYA — …]**` satırı, hemen altında da
+> italik *Şekil N. …* alt yazısı hazır durumdadır ve gövde metninden
+> "(Şekil N)" atıfları yapılmıştır. Word'de yapılacak iş: görseli çapanın
+> yerine koymak ve **yalnızca köşeli parantezli satırı silmek**.
+
 Sayfa bütçesi uygun: metin ~23 sayfa, sınır **30**. 8 görsel ≈ 3–4 sayfa;
 toplam ~27 sayfada kalırsın.
 
@@ -172,7 +178,10 @@ Sözlükte kimlik adı bulunmaz; bu davranış yapısal bir testle korunur.*
 
 ---
 
-### Şekil 6 — Bağlam testleri ekranı → **§3.2, bağlam ağırlıklandırma anlatımının altına**
+### Şekil 6 — Bağlam testleri ekranı → **§2.2, "Özgün yön 3 — Mağdurun korunması" paragrafının altına**
+
+> Plan başlangıçta §3.2'yi işaret ediyordu; bağlam ağırlıklandırmasının
+> anlatıldığı yer §2.2 olduğu için çapa oraya konuldu.
 
 Aynı kelimenin dört bağlamda farklı sonuç verdiğini gösteren test/demo ekranı
 ("aptalsın" ×1,25 · "aptal değilsin" ×0,15 · "bana aptal dedi" ×0,20 ·
