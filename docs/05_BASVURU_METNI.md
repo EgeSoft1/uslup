@@ -304,7 +304,7 @@ edersiniz. Model bir öneri kaynağıdır, bir otorite değildir.
 |   kesinlik / duyarlılık                | %88,9 / %80,0                |
 | Nefret söylemi dilimi F1               | %97,3 (kesinlik %100)        |
 | Örüntü katmanının duyarlılık katkısı   | +55,2 puan, kesinlik kaybı 0 |
-| Ortalama çözümleme süresi              | 268 µs (16 ms bütçenin %2'si)|
+| Ortalama çözümleme süresi              | 193 µs (AOT; bütçenin %1,2'si)|
 
 ÖLÇÜMÜN KOŞULLARI (raporda birlikte verilecektir): geliştirme kümesinde
 ölçülen F1 %99,6'dır, ancak bu bir genelleme kanıtı DEĞİLDİR — kümeyi de

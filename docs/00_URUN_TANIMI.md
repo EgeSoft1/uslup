@@ -160,7 +160,7 @@ Kullanıcı seçer → gönderir → anonim sinyal → topluluk sağlığı pane
         kaldırılmıştır — gerekçe: `03_LLM_SERVISI.md`.
 ```
 
-**Ölçülen performans:** ortalama **268 µs** / çözümleme (tüm katmanlar dahil,
+**Ölçülen performans:** ortalama **193 µs** / çözümleme (AOT derlenmiş) (tüm katmanlar dahil,
 soğuk ölçüm — 12 Ağustos 2026). 60 FPS kare bütçesinin (16 ms) **%2'sinden
 azı**. Bu yüzden gecikmeli tetikleme (debounce) gerekmiyor — geri bildirim
 gerçekten anlık. Ölçüm koşulları: `04_MODEL_DEGERLENDIRME.md` §3.4.
@@ -237,7 +237,7 @@ teslimatının çekirdeğidir.
   kategoriler k-anonimlik gereği açılmaz
 - **153 test geçiyor** (136 çekirdek + 17 mobil), 0 analiz uyarısı
   — 12 Ağustos 2026'da `dart test` + `flutter test` ile doğrulandı
-- Ölçülen performans: 268 µs / çözümleme · doğruluk: F1 %84,2 (ayrık küme)
+- Ölçülen performans: 193 µs / çözümleme (AOT) · doğruluk: F1 %84,2 (ayrık küme)
 
 ### Devralınan varlıklar (önceki mesajlaşma projesinden)
 - 30 ekranlık Flutter arayüz kütüphanesi ve tasarım sistemi
