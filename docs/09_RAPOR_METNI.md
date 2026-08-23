@@ -7,9 +7,8 @@ girer. Şablonun açıklama paragrafları ("…ifade edilir", "…detaylandırı
 başlık Arial Black 14, satır aralığı 1.15, iki yana yaslı, 2,5 cm kenar
 boşluğu) Word'de yapılacaktır.
 
-> ⚠️ Kalan yer tutucular: `[DEPO BAĞLANTISI]` (depo açıldığında §3.1 tablosu ve
-> §3.1 metni olmak üzere iki yerde), `[TAKIM ID]` ve `[BAŞVURU ID]` (kapakta,
-> KYS'den alınacak).
+> ⚠️ Kalan yer tutucular: `[TAKIM ID]` ve `[BAŞVURU ID]` (kapakta, KYS'den
+> alınacak). Depo bağlantısı §3.1'de dolduruldu.
 > Metin içi atıflar `[1]`–`[14]` biçimindedir ve §9'daki kaynakçaya karşılık
 > gelir; bunlar yer tutucu **değildir**, olduğu gibi kalacaktır.
 
@@ -351,7 +350,7 @@ hiçbir dış servise çağrı yapmaz; ağ bağlantısı olmadan tam işlevlidir
 | Mobil istemci | **Flutter 3.x** | Android / iOS / masaüstü tek kaynak |
 | Test ve ölçüm | `package:test`, özel değerlendirme aracı | 136 çekirdek testi |
 | Karşılaştırma hattı | **Python 3 · scikit-learn** | Yalnızca ölçüm aracı; üründe **çalışmaz** (`ml/`) |
-| Sürüm kontrolü | **Git** | `[DEPO BAĞLANTISI]` |
+| Sürüm kontrolü | **Git** | `github.com/EgeSoft1/uslup` (açık erişim) |
 
 Çekirdek motorun saf Dart olması bilinçli bir mimari karardır: aynı motor
 mobil istemcide, komut satırı değerlendirme aracında ve gerekirse sunucu
@@ -403,11 +402,14 @@ yalnızca k-anonimlik uygulanmış sayılardır. Bu, ürünün mahremiyet iddias
 mimari karşılığıdır: gizlilik politikası maddesi değil, çıkarılmış bir
 yüzeydir.
 
-**Kod reposu ve sürüm kontrolü.**
+**Kod reposu ve sürüm kontrolü.** Projenin kaynak kodu, etiketli değerlendirme
+kümesi ve ölçüm araçlarının tamamı açık erişimlidir:
+**https://github.com/EgeSoft1/uslup**
 
-> ⛔ İÇ NOT — RAPORA GİRMEYECEK. `[DEPO BAĞLANTISI]` alanı, depo açıldıktan
-> sonra §3.1 tablosunda ve aşağıdaki paragrafta gerçek URL ile değiştirilecek;
-> bu uyarı kutusu Word'e **kopyalanmayacaktır**.
+Raporda verilen bütün sayısal sonuçlar depodan yeniden üretilebilir:
+`packages/civility_core` dizininde `dart run bin/evaluate.dart --hepsi`
+komutu, §4'teki tabloların kaynağı olan çıktıyı üretir. Ölçüm için Flutter
+kurulumu gerekmez; çekirdek motor saf Dart olduğundan Dart SDK yeterlidir.
 
 Geliştirme süreci Git ile, aşamalı ve gerekçeli commit'lerle yürütülmüştür.
 Commit geçmişi yalnızca "ne yapıldığını" değil, **kararların neden
@@ -1308,7 +1310,7 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 
 | Sıra | İş | Puan etkisi | Süre |
 |---|---|---|---|
-| **1** | **GitHub deposu aç + push** → `[DEPO BAĞLANTISI]` iki yerde doldurulacak (§3.1 tablosu ve §3.1 metni) | **2 puan** + tüm teknik iddiaların doğrulanabilirliği | 15 dk |
+| ~~1~~ | ~~GitHub deposu aç + push~~ → **tamamlandı** ✅ `github.com/EgeSoft1/uslup`; §3.1'de tablo ve metin dolduruldu | **2 puan** alındı | — |
 | **2** | Şablonun **son iki sayfasını sil** ("PUANLAMA VE DEĞERLENDİRME ESASLARI" ve "RAPOR ŞABLONU İLE İLGİLİ NOT") — ikisinde de "Bu sayfaya raporlarda yer verilmeyecektir" yazıyor | Eleme riski | 2 dk |
 | **3** | Şablonun **talimat paragraflarını sil** ("…net bir dille ifade edilir" tarzı) — onlar talimat, içerik değil | Eleme riski | 10 dk |
 | **4** | Bu dosyadaki **⛔ ve ⚠️ kutularını, başlık bloğunu ve bu kontrol listesini kopyalama** | Kritik | — |
