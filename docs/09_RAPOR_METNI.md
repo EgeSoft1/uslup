@@ -1,12 +1,16 @@
 # Üslup — Proje Teknik Raporu (metin)
 
-**Hazırlanma:** 20 Ağustos 2026 · **Teslim:** 24 Ağustos 2026, 17.00 (TSİ)
+**Hazırlanma:** 20–23 Ağustos 2026 · **Teslim:** 24 Ağustos 2026, 17.00 (TSİ)
 **Kullanım:** Aşağıdaki metinler `.docx` şablonundaki ilgili başlığın altına
 girer. Şablonun açıklama paragrafları ("…ifade edilir", "…detaylandırılır")
-**silinecektir**; onlar talimattır, içerik değildir.
+**silinecektir**; onlar talimattır, içerik değildir. Biçimlendirme (Arial 12,
+başlık Arial Black 14, satır aralığı 1.15, iki yana yaslı, 2,5 cm kenar
+boşluğu) Word'de yapılacaktır.
 
-> ⚠️ `[KÖŞELİ PARANTEZ]` içindeki her yer doldurulmak zorundadır.
-> ⛔ işaretli maddeler bugün yazılamaz; gerekçesi yanında belirtilmiştir.
+> ⚠️ Kalan tek yer tutucu `[DEPO BAĞLANTISI]`'dır; depo açıldığında iki yerde
+> (§3.1 tablosu ve §3.1 metni) doldurulacaktır.
+> Metin içi atıflar `[1]`–`[13]` biçimindedir ve §9'daki kaynakçaya karşılık
+> gelir; bunlar yer tutucu **değildir**, olduğu gibi kalacaktır.
 
 ---
 
@@ -150,7 +154,7 @@ bir oranında maruziyet ve yaklaşık her beş gönderiden biri saldırgan içer
 | Çözüm | Yaklaşım | Bu problemde neden yetersiz |
 |---|---|---|
 | **Google Jigsaw – Perspective API** | Bulut tabanlı toksisite skoru | Metin sunucuya gider; **Türkçe desteklenen diller arasında değildir** [9]; skor üretir ama **gerekçe ve alternatif üretmez** |
-| **OpenAI Moderation API** | Bulut tabanlı çok sınıflı sınıflandırma | Aynı mahremiyet sorunu; yayın sonrası kullanım için tasarlanmış; kararlar açıklanabilir değil |
+| **OpenAI Moderation API** [12] | Bulut tabanlı çok sınıflı sınıflandırma | Aynı mahremiyet sorunu; yayın sonrası kullanım için tasarlanmış; kararlar açıklanabilir değil |
 | **Platform içi kelime listeleri** | Yasaklı kelime eşleştirme | Küfürsüz düşmanlığı göremez; Türkçe çekim ve gizleme hilelerinde kırılır; kimlik adlarını yasaklayarak mağduru susturur |
 | **Yayın sonrası insan moderasyonu** | Şikâyet → inceleme → kaldırma | Zarar oluştuktan sonra devreye girer; ölçeklenmez; moderatör üzerinde psikolojik yük oluşturur |
 
@@ -486,10 +490,12 @@ saldırganlıkta yetersiz kaldığını da doğrulamaktadır [8]; bu projede o
 yetersizlik ölçülmüş ve sayısallaştırılmıştır (yalnız sözlük katmanı örtük
 saldırı diliminde %1,8 duyarlılık).
 
-> `[GÜNCELLENECEK — YENİ AYRIK KÜME]` İkinci etiketleyici tarafından, koda ve
-> mevcut kümelere bakılmadan üretilecek bağımsız küme ile yeni genelleme
-> ölçümü buraya girecektir. Hakemler arası uyum (Cohen's kappa) da bu ölçümle
-> birlikte raporlanacaktır.
+> **Planlanan doğrulama (İP-14).** İkinci etiketleyici tarafından, koda ve
+> mevcut kümelere bakılmadan üretilecek bağımsız bir küme ile yeni genelleme
+> ölçümü yapılacak; hakemler arası uyum (Cohen's kappa) da bu ölçümle birlikte
+> raporlanacaktır. Bu çalışma mentörlük penceresine (2–7 Eylül) planlanmıştır
+> ve bu raporda **henüz yapılmamıştır**. Mevcut %84,2, bu doğrulama
+> tamamlanana kadar tek geçerli genelleme ölçümüdür.
 
 **Performans.** Ölçüm, ürünün cihazda çalıştığı biçim olan **AOT derlenmiş**
 ikili üzerinde alınmıştır; JIT yalnızca geliştirme biçimidir.
@@ -747,7 +753,7 @@ testle korunur ve 20 masum kimlik cümlesinin hiçbiri işaretlenmez.
 
 *Örnek 3 — Yasal riskin kullanıcıya hatırlatılması.* Bir grubun varlık hakkını
 reddeden ifadelerde kullanıcıya gösterilen gerekçe, ifadenin Türk Ceza Kanunu
-216. madde kapsamına girebileceğini belirtir. Bu, cezalandırma değil
+216. madde kapsamına girebileceğini belirtir [13]. Bu, cezalandırma değil
 bilgilendirmedir ve kullanıcıyı farkında olmadan suç oluşturabilecek bir
 paylaşımdan koruma işlevi görür.
 
@@ -760,7 +766,7 @@ vatandaşlık eğitiminin doğal bir uzantısı hâline gelir.
 *Örnek 5 — Mahremiyetten ödün vermeyen topluluk yönetimi.* Topluluk sağlığı
 paneli, bir topluluğun iletişim iklimini metin okumadan görünür kılar. Panel
 davranıştan beslenir, sinyal sınıfı yapısal olarak metin taşıyamaz ve 5
-gözlemin altındaki kategoriler k-anonimlik gereği açılmaz. Böylece topluluk
+gözlemin altındaki kategoriler k-anonimlik [11] gereği açılmaz. Böylece topluluk
 yönetimi ile bireysel mahremiyet arasındaki geleneksel ödünleşim ortadan kalkar.
 
 **Dijital yaşam kalitesine etkisi.** Ürünün hedeflediği değişim, kaldırılan
@@ -770,7 +776,9 @@ yüzeyken kurmaz; ekran arkasında kurar. Kaybolan duraksamanın geri konması,
 tanımının doğrudan karşılığıdır. Bunun bireysel karşılığı, kullanıcının
 gönderdikten sonra pişman olacağı bir mesajı hiç göndermemesi; toplumsal
 karşılığı ise tartışma ortamının, katılmak isteyen ama hedef olmaktan çekinen
-kullanıcılar için yaşanabilir kalmasıdır.
+kullanıcılar için yaşanabilir kalmasıdır. Bu kitlenin büyüklüğü ölçülüdür:
+dijital şiddete maruz kaldığını beyan edenlerin oranı Türkiye genelinde beşte
+bir, 18-32 yaş grubunda üçte birdir [3].
 
 ---
 
@@ -889,22 +897,27 @@ kapalı olmadığını gösterir.
 | Tarih | Kilometre taşı | İçerik |
 |---|---|---|
 | **20 Ağu 2026** | Ön başvuru | KYS başvurusu tamamlandı |
-| **21–23 Ağu 2026** | İP-11 · Bağımsız doğrulama | İkinci etiketleyici ile yeni ayrık küme; hakemler arası uyum (kappa) ölçümü |
-| **21–23 Ağu 2026** | İP-12 · Rapor derlemesi | Şablona aktarım, mimari diyagramlar, kaynakça |
+| **20 Ağu 2026** | İP-11 · Ölçüm doğrulaması | Bütün metriklerin AOT derlenmiş ikili üzerinde yeniden ölçülmesi; 136 test |
+| **23 Ağu 2026** | İP-12 · Literatür ve kaynak doğrulaması | Kaynakçadaki 13 künyenin yayıncı sayfasından teyidi; problem büyüklüğü istatistiklerinin resmî kaynaklara bağlanması |
+| **23 Ağu 2026** | İP-13 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, sesli düşünme yöntemi |
 | **24 Ağu 2026, 17.00** | **Teknik rapor teslimi** | KYS yüklemesi |
 | 2 Eyl 2026 | Rapor sonuçları | — |
-| **2–7 Eyl 2026** | İP-13 · Mentörlük ve kullanıcı doğrulama | 5–8 katılımcılı görev tabanlı kullanılabilirlik testi; tam erişilebilirlik değerlendirmesi (ekran okuyucu, kontrast, dokunma hedefi) |
-| **2–7 Eyl 2026** | İP-14 · Kimlik söz varlığının genişletilmesi | Kapsanmayan grupların eklenmesi, kesinlik regresyon kontrolü |
-| **8–13 Eyl 2026** | İP-15 · Sunum ve demo videosu | Final teslimatı hazırlığı |
-| **14 Eyl 2026, 17.00** | **Final sunumu teslimi** | KYS yüklemesi |
-| 20 Eyl 2026 | Jüriye canlı sunum | Canlı demo |
-| 30 Eyl – 4 Eki 2026 | TEKNOFEST Şanlıurfa | — |
+| **2–7 Eyl 2026** | İP-14 · Bağımsız genelleme doğrulaması | İkinci etiketleyici ile yeni ayrık küme; hakemler arası uyum (Cohen's kappa) ölçümü |
+| **2–7 Eyl 2026** | İP-15 · Tam erişilebilirlik değerlendirmesi | Ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi denetimi |
+| **2–7 Eyl 2026** | İP-16 · Kimlik söz varlığının genişletilmesi | Kapsanmayan grupların eklenmesi, kesinlik regresyon kontrolü |
+| **8–13 Eyl 2026** | İP-17 · Sunum ve demo videosu | Final teslimatı hazırlığı |
+| **14 Eyl 2026, 17.00** | Final sunumu teslimi | KYS yüklemesi |
+| **20 Eyl 2026** | Jüriye canlı sunum | Canlı demo |
 
-**Rapor sonrası teknik yol haritası (final aşamasına paralel).**
-BERTurk tabanlı sinir ağı sınıflandırıcısının ONNX ile cihaza taşınması ve
-mevcut deterministik motorla aynı küme üzerinde karşılaştırılması; deterministik
-katmanın kesinlik kalkanı olarak korunması; yerel yeniden yazıcının akıcılık
-ölçümünün (`bin/rewrite_audit.dart`) sayısallaştırılması.
+**Planlamanın gerçekçiliği üzerine not.** Yukarıdaki takvim yarışma takvimiyle
+(24 Ağustos teslim · 2–7 Eylül mentörlük · 14 Eylül final teslimi · 20 Eylül
+canlı sunum) çelişmeyecek biçimde kurulmuştur. Rapor teslimine kadar olan
+pencerede yalnızca doğrulama ve derleme işi planlanmıştır; yeni motor
+geliştirme planlanmamıştır. Bunun nedeni, ölçülmemiş bir özelliğin rapora
+girmesindense hiç girmemesinin tercih edilmesidir. Bağımsız genelleme
+doğrulaması (İP-14) rapor teslimine yetiştirilemediği için bilinçli olarak
+mentörlük penceresine alınmıştır; §3.2'de bu ölçümün henüz yapılmadığı açıkça
+beyan edilmektedir.
 
 ---
 
@@ -1022,13 +1035,19 @@ https://www.mevzuat.gov.tr/mevzuatmetin/1.5.5237.pdf
 
 | # | İş | Durum |
 |---|---|---|
-| 1 | `[DEPO BAĞLANTISI]` — GitHub deposu açılıp push edilecek | Bekliyor |
-| 2 | `[İSTATİSTİK]` — 2.1 ve 4.2 sayıları kaynakla birlikte | Bekliyor |
-| 3 | Kaynakça künyelerinin tamamı doğrulanacak | Bekliyor |
-| 4 | `[TAKIM ÜYE SAYISI]` ve rol tablosu netleştirilecek | Bekliyor |
-| 5 | Yeni bağımsız ayrık küme + kappa (mümkünse) | İsteğe bağlı |
-| 6 | Mimari diyagramların görsel hâli | İsteğe bağlı |
-| 7 | Şablona aktarım: Arial 12 / Arial Black 14, 1.15, iki yana yaslı, 2.5 cm | Bekliyor |
-| 8 | Kapak: Proje Adı, Takım Adı, Takım ID, Başvuru ID, Tematik Alan | Bekliyor |
-| 9 | 30 sayfa sınırı kontrolü | Bekliyor |
-| 10 | Şablonun açıklama paragraflarının silindiği doğrulanacak | Bekliyor |
+| 1 | Problem büyüklüğü istatistikleri (2.1, 4.2) resmî kaynaklarla | ✅ Tamam — [1][2][3][4] |
+| 2 | Kaynakça: 13 künye, yayıncı sayfasından teyitli, şablon formatında | ✅ Tamam |
+| 3 | Metin içi köşeli parantez atıflar | ✅ Tamam |
+| 4 | Perspective API Türkçe iddiasının birincil kaynakla düzeltilmesi | ✅ Tamam — [9] |
+| 5 | Literatürle kıyas (Türkçe külliyat F1 %77,3) ve kıyaslanabilirlik uyarısı | ✅ Tamam — [4] |
+| 6 | Takım rol tablosu (2 kişi + 1 danışman) | ✅ Tamam |
+| 7 | İş paketleri takviminin yarışma takvimiyle hizalanması | ✅ Tamam |
+| 8 | Gecikme sayısının AOT değerine (193 µs) çekilmesi | ✅ Tamam |
+| 9 | `[DEPO BAĞLANTISI]` — GitHub deposu açılıp push edilecek | ⏳ `gh auth login` bekleniyor |
+| 10 | Kullanılabilirlik testi sonuçlarının 3.3'e işlenmesi | ⏳ Test bugün yapılacak (`docs/10_KULLANILABILIRLIK_TESTI.md`) |
+| 11 | Yeni bağımsız ayrık küme + kappa | 🗓 İP-14, mentörlük penceresi (2–7 Eylül) |
+| 12 | Mimari diyagramların görsel hâli | İsteğe bağlı |
+| 13 | Şablona aktarım: Arial 12 / Arial Black 14, 1.15, iki yana yaslı, 2.5 cm | Sende |
+| 14 | Kapak: Proje Adı, Takım Adı, Takım ID, Başvuru ID, Tematik Alan | Sende |
+| 15 | 30 sayfa sınırı kontrolü | Sende |
+| 16 | Şablonun açıklama paragraflarının silindiği doğrulanacak | Sende |
