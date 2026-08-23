@@ -56,3 +56,6 @@ secrets/
 *.pt
 *.bin
 !**/vocab.txt
+
+# ml/ üretilen çıktılar (01_veri_cikar.py yeniden üretir)
+ml/*.json
