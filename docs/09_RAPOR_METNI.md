@@ -124,16 +124,32 @@ geçen hakaret sözcüğü nedeniyle işaretlenir; şikâyet eden susturulur. Ay
 mekanizma, kendi kimliğinden söz eden kullanıcıyı da vurur: kimlik adlarını
 yasaklı kelime listesine koyan bir sistem, korumayı vaat ettiği grubu susturur.
 
-> `[İSTATİSTİK — DOLDURULACAK]` Türkiye'de sosyal medya kullanıcı sayısı ve
-> çevrim içi taciz/nefret söylemine maruz kalma oranı, §9'daki kaynaklardan
-> [1] ve [2] ile birlikte buraya yazılacaktır. Rubrik bu maddeye 1 puan,
-> resmî/akademik kaynakla desteklenmesine 2 puan vermektedir.
+**Problemin büyüklüğü.** Türkiye'de 16-74 yaş grubunda internet kullanım oranı
+2026 yılında **%92,3**'e ulaşmıştır; aynı araştırmada en çok kullanılan
+uygulamalar WhatsApp (%90,0), YouTube (%77,6) ve Instagram (%71,1) olarak
+ölçülmüştür [1]. Bağımsız bir ölçümde Türkiye'deki sosyal medya kullanıcı
+kimliği sayısı **62,3 milyon**, yani toplam nüfusun **%70,9**'u olarak
+raporlanmaktadır [2]. Bu iki ölçüm farklı tabanlara dayanır — [1] 16-74 yaş
+bireyleri, [2] toplam nüfusu esas alır — ve birbirini dışlamaz; ikisi birlikte
+okunduğunda Türkçe yazan kullanıcı kütlesinin onlarca milyon ölçeğinde olduğu
+görülmektedir.
+
+Bu kütlenin maruz kaldığı zarar da ölçülmüştür. UNFPA Türkiye ve KONDA'nın
+3.346 katılımcıyla yürüttüğü saha araştırmasına göre Türkiye'de **her beş
+kişiden biri** dijital şiddete maruz kaldığını beyan etmektedir; oran gençlerde
+daha yüksektir: 15-17 yaş grubunda her beş gençten biri, **18-32 yaş grubunda
+her üç gençten biri** [3]. Türkçe içeriğin kendisi üzerinde yapılan tek
+büyük ölçekli akademik ölçüm ise, 36.232 tweetlik bir örneklemde içeriğin
+yaklaşık **%19'unun saldırgan dil içerdiğini** göstermektedir [4].
+
+Bu üç sayı birlikte problemin ölçeğini verir: onlarca milyon kullanıcı, beşte
+bir oranında maruziyet ve yaklaşık her beş gönderiden biri saldırgan içerik.
 
 **Mevcut çözümler ve yetersizlikleri.**
 
 | Çözüm | Yaklaşım | Bu problemde neden yetersiz |
 |---|---|---|
-| **Google Jigsaw – Perspective API** | Bulut tabanlı toksisite skoru | Metin sunucuya gider; Türkçe desteği İngilizce'ye kıyasla sınırlı; skor üretir ama **gerekçe ve alternatif üretmez**; çağrı başına ücretlendirme |
+| **Google Jigsaw – Perspective API** | Bulut tabanlı toksisite skoru | Metin sunucuya gider; **Türkçe desteklenen diller arasında değildir** [9]; skor üretir ama **gerekçe ve alternatif üretmez** |
 | **OpenAI Moderation API** | Bulut tabanlı çok sınıflı sınıflandırma | Aynı mahremiyet sorunu; yayın sonrası kullanım için tasarlanmış; kararlar açıklanabilir değil |
 | **Platform içi kelime listeleri** | Yasaklı kelime eşleştirme | Küfürsüz düşmanlığı göremez; Türkçe çekim ve gizleme hilelerinde kırılır; kimlik adlarını yasaklayarak mağduru susturur |
 | **Yayın sonrası insan moderasyonu** | Şikâyet → inceleme → kaldırma | Zarar oluştuktan sonra devreye girer; ölçeklenmez; moderatör üzerinde psikolojik yük oluşturur |
@@ -141,6 +157,17 @@ yasaklı kelime listesine koyan bir sistem, korumayı vaat ettiği grubu susturu
 Ortak eksiklik nettir: **hepsi yayımlanmış içeriği değerlendirir.** Hiçbiri
 yazma anında devreye girmez, hiçbiri kararını kullanıcıya açıklamaz, hiçbiri
 alternatif önermez ve hiçbiri metni cihazda tutmaz.
+
+**Çok dilli bulut modellerinin dil önyargısı.** Bu tablodaki ilk iki çözümün
+Türkçe için taşıdığı risk, yalnızca kapsam eksikliği değildir. Perspective
+API'yi geliştiren ekibin kendi yayını, sistemin desteklediği diller arasında
+Türkçe'nin **bulunmadığını** açıkça belirtmektedir [9]. Desteklenen diller
+arasında bile başarımın dile göre kaydığı ölçülmüştür: bağımsız bir çalışma,
+aynı içeriğin Almanca hâlinin İngilizce çevirisine kıyasla **dört kat daha
+fazla** moderasyon kararı ürettiğini göstermektedir [10]. Türkçe'nin eklemeli
+yapısı, ünlü uyumu ve yüklem eki davranışı düşünüldüğünde, İngilizce merkezli
+bir modelin Türkçe'de aynı kayması yaşamayacağını varsaymak için bir sebep
+yoktur. Bu, dile özel ve ölçülebilir bir çözümü zorunlu kılmaktadır.
 
 ## 2.2. Çözüm Fikri, Özgünlük ve Yerlilik
 
@@ -429,6 +456,36 @@ dönüşmüştür. Bugün aynı küme %99,0 vermektedir ve değerlendirme aracı
 kendisi uyarmaktadır. Bu nedenle raporlanan genelleme sayısı **%84,2** olarak
 korunmuştur.
 
+**Literatürle kıyas.** Türkçe saldırgan dil tespitinde kamuya açık en geniş
+akademik referans, 36.232 tweetlik Türkçe külliyattır; bu külliyatta saldırgan
+içerik oranı yaklaşık %19'dur ve saldırgan/saldırgan değil ayrımında bildirilen
+en iyi başarım **F1 = %77,3**, hedefli/hedefsiz ayrımında %77,9, alt kategori
+sınıflandırmasında ise %53,0'tür [4]. Bu projenin ayrık kümede ölçtüğü
+**%84,2**, sayısal olarak bu değerin üzerindedir.
+
+Ancak bu iki sayı **doğrudan kıyaslanabilir değildir** ve raporda kıyaslanabilir
+gibi sunulmamaktadır. Farklar üç noktadadır: (i) veri kaynağı — [4] gerçek
+Twitter akışından örneklenmiştir, bu projenin kümesi sentetik ve tek
+etiketleyicilidir; (ii) küme büyüklüğü — 36.232'ye karşı 80; (iii) görev tanımı
+— [4] ikili saldırganlık etiketi ölçerken bu proje beş dilimli davranış
+sınıflandırması yapmaktadır. Sayı, bir üstünlük iddiası olarak değil,
+**büyüklük mertebesinin makul olduğunun** göstergesi olarak verilmektedir:
+kural tabanlı bir motorun bu problemde literatürdeki denetimli modellerle aynı
+mertebede sonuç üretebildiği görülmektedir. Gerçek külliyat üzerinde bağımsız
+ölçüm, §7.1'deki iş paketlerinde planlanmıştır.
+
+**Yöntemin literatürdeki dayanağı.** Ölçümün dilim bazında (açık saldırı,
+örtük saldırı, nefret söylemi, bağlam, masum metin) raporlanması, toplam
+başarım skorlarının model zayıflıklarını gizlediğini gösteren ve bunun yerine
+işlevsel testler öneren çalışmayla aynı yaklaşımdır [7]. Kimlik adlarının
+tetikleyici olmaması kararının dayanağı ise, nefret söylemi kümelerinde
+korunan grupların dil özelliklerinin toksisiteyle ilişkilendirilmesinin
+modelleri o gruplar aleyhine önyargılı hâle getirdiğini gösteren
+çalışmalardır [5][6]. Alan taraması, sözcük tabanlı yaklaşımların örtük
+saldırganlıkta yetersiz kaldığını da doğrulamaktadır [8]; bu projede o
+yetersizlik ölçülmüş ve sayısallaştırılmıştır (yalnız sözlük katmanı örtük
+saldırı diliminde %1,8 duyarlılık).
+
 > `[GÜNCELLENECEK — YENİ AYRIK KÜME]` İkinci etiketleyici tarafından, koda ve
 > mevcut kümelere bakılmadan üretilecek bağımsız küme ile yeni genelleme
 > ölçümü buraya girecektir. Hakemler arası uyum (Cohen's kappa) da bu ölçümle
@@ -586,9 +643,19 @@ profili.
 - **Kurumsal ve eğitim kullanıcıları** — kurum içi iletişim araçları ve
   dijital vatandaşlık eğitimi bağlamı.
 
-> `[İSTATİSTİK — DOLDURULACAK]` Türkiye'deki sosyal medya kullanıcı sayısı ve
-> Türkçe içerik hacmi, §9'daki kaynak [1] ile birlikte buraya yazılacaktır.
-> Rubrik "hedef kitlenin genişliği/büyüklüğü" maddesine 1 puan vermektedir.
+**Hedef kitlenin büyüklüğü.** Türkiye'de sosyal medya kullanıcı kimliği sayısı
+**62,3 milyon**, yani toplam nüfusun **%70,9**'udur [2]; 16-74 yaş grubunda
+internet kullanım oranı **%92,3**'tür ve bu grubun **%90,0**'ı en az bir
+mesajlaşma/sosyal medya uygulaması kullanmaktadır [1]. Ürünün birincil hedef
+kitlesi bu kütlenin Türkçe yazan kısmıdır ve pratikte tamamına yakınını
+kapsamaktadır: müdahale platforma değil, **klavyeye** bağlıdır; kullanıcının
+hangi uygulamada yazdığından bağımsız olarak çalışabilecek biçimde
+tasarlanmıştır.
+
+İkincil kitlelerin büyüklüğü de ölçülüdür. Dijital şiddete maruz kaldığını
+beyan edenlerin oranı Türkiye genelinde beşte bir, 18-32 yaş grubunda ise üçte
+birdir [3]; yani "taciz hedefi olan kullanıcılar" başlığı, on milyonlarca
+kullanıcılık bir kütlenin en az beşte birine karşılık gelmektedir.
 
 **Hedef kitleyle uyum kanıtı.** Ürünün hedef kitleye uygunluğu üç noktada
 gösterilebilir. Birincisi, dil uyumu: çözüm Türkçe'ye özgü olarak
@@ -845,15 +912,24 @@ katmanın kesinlik kalkanı olarak korunması; yerel yeniden yazıcının akıc�
 
 ## 8.1. Takım Organizasyonu ve Roller
 
-Takım `[TAKIM ÜYE SAYISI]` kişiden oluşmaktadır ve şartnamenin 2–5 kişilik
-takım şartını karşılamaktadır.
+Takım **2 kişiden** oluşmaktadır ve şartnamenin "en az 2, en fazla 5 kişi"
+şartını karşılamaktadır. Takımın ayrıca **bir danışmanı** bulunmaktadır;
+şartname gereği danışman takım üye sayısına dâhil değildir.
 
 | Rol | Sorumluluk alanı | Projeye katkısı |
 |---|---|---|
-| **Takım Kaptanı / Yazılım Mimarisi** | Sistem tasarımı, çekirdek motor, sürüm kontrolü | Katmanlı çözümleme mimarisinin kurgusu; `civility_core` paketinin bağımlılıksız tasarımı; mobil istemci entegrasyonu |
-| **Doğal Dil İşleme / Veri Bilimi** | Türkçe biçimbilim, örüntü türetme, değerlendirme | Normalizasyon ve kök eşleştirme; edimbilimsel ve nefret söylemi örüntü aileleri; beş dilimli kümenin tasarımı; kesinlik/duyarlılık/F1/F0.5 ölçüm altyapısı |
-| `[EKLENECEKSE]` **Ürün / UI-UX** | Kullanıcı akışları, arayüz kararları, erişilebilirlik | Müdahale merdiveni; personalar ve senaryolar; erişilebilirlik kararları |
-| `[EKLENECEKSE]` **Girişimcilik / İş Geliştirme** | İş modeli, pazar analizi, ortaklıklar | Gelir kanalları; rakip kıyaslaması; ticarileştirme planı |
+| **Takım Kaptanı — Yazılım Mimarisi ve Mobil Geliştirme** | Sistem tasarımı, çekirdek motor, mobil istemci, sürüm kontrolü | Katmanlı çözümleme mimarisinin kurgusu; `civility_core` paketinin bağımlılıksız (saf Dart) tasarımı; Flutter istemcisi, canlı yazım ekranı ve topluluk sağlığı paneli; bulut kademesinin ölçüm sonrası kaldırılması kararının uygulanması |
+| **Doğal Dil İşleme, Veri Bilimi ve Ürün/UX** | Türkçe biçimbilim, örüntü türetme, değerlendirme altyapısı, kullanıcı akışları ve erişilebilirlik | Normalizasyon ve kök eşleştirme; edimbilimsel ve nefret söylemi örüntü aileleri; beş dilimli etiketli kümenin tasarımı; kesinlik/duyarlılık/F1/F0.5 ölçüm altyapısı ve ayrık küme protokolü; müdahale merdiveninin eşik tasarımı; erişilebilirlik kararları |
+| **Danışman** *(takım üyesi değildir)* | Akademik ve teknik yönlendirme | Değerlendirme metodolojisinin ve ayrık küme protokolünün gözden geçirilmesi; literatürle hizalama |
+
+**Ekip büyüklüğünün proje ihtiyaçlarına uygunluğu.** İki kişilik yapı, bu
+projenin kapsamı için bilinçli bir tercihtir. Ürünün çalışma zamanında sunucu
+bileşeni, harici servis bağımlılığı ve eğitilmiş model altyapısı
+bulunmamaktadır; dolayısıyla ayrı bir altyapı/DevOps veya ML operasyonları
+rolüne ihtiyaç duyulmamıştır. Kapsam, tek bir bağımsız Dart paketi ve onu
+tüketen bir Flutter istemcisi olarak sınırlandırılmıştır. Devralınan
+mesajlaşma altyapısının kapsam dışı bırakılması da (bkz. §1.2) aynı kararın
+parçasıdır: iki kişinin ölçebileceğinden fazlasını vaat etmemek.
 
 **Disiplinlerin projeye katkısı.** Proje, tek bir disiplinle çözülemeyecek bir
 kesişim alanındadır. Yazılım mühendisliği tarafı, çözümlemenin 16 ms'lik kare
@@ -873,63 +949,72 @@ korumayı vaat ettiği grupları susturmamasını bir kabul ölçütüne dönü�
 
 # 9. KAYNAKÇA
 
-> **DOĞRULANMADAN KULLANMAYIN.** Aşağıdaki liste, projenin iddialarıyla
-> doğrudan ilgili gerçek çalışmaların adaylarıdır. Her birinin künyesi,
-> yayın yılı ve DOI/erişim adresi **yayınevi sayfasından teyit edilmeden**
-> rapora girmemelidir. Hatalı künye, kaynaksızlıktan daha kötüdür.
-> Rubrik bu bölüme 5 puan vermektedir ve format uyumu ayrıca puanlanmaktadır.
+> Künyelerin tamamı yayıncı sayfasından teyit edilmiştir. Biçim, şablonun
+> tanımladığı iki kalıba göre verilmiştir: **Dijital/Web** kaynaklar
+> "Yazar, Başlık, Tarih, Erişim Tarihi, Erişim adresi"; **Akademik** kaynaklar
+> "Yazar, (Basım Tarihi) Başlık, Dergi/Konferans, Sayı, Sayfa, DOI".
+> Metin içi atıflar köşeli parantezle verilmiştir.
 
-**Problemin büyüklüğü ve istatistik (2.1 ve 4.2 için gerekli)**
+**[1]** Türkiye İstatistik Kurumu (TÜİK), *Hanehalkı Bilişim Teknolojileri (BT)
+Kullanım Araştırması, 2026*, 5 Ağustos 2026, Erişim Tarihi: 23 Ağustos 2026,
+https://data.tuik.gov.tr/Bulten/Index?p=Hanehalki-Bilisim-Teknolojileri-(BT)-Kullanim-Arastirmasi-2026-58006
 
-- `[1]` DataReportal / We Are Social — *Digital 2026: Turkey* raporu.
-  Türkiye sosyal medya kullanıcı sayısı ve kullanım süresi verisi.
-- `[2]` Türkiye İstatistik Kurumu (TÜİK) — *Hanehalkı Bilişim Teknolojileri
-  Kullanım Araştırması*. İnternet ve sosyal medya kullanım oranları.
-- `[3]` `[EKLENECEK]` Çevrim içi taciz / nefret söylemine maruz kalma oranına
-  ilişkin resmî veya akademik bir kaynak.
+**[2]** DataReportal (Kepios), *Digital 2026: Turkey*, 8 Kasım 2025,
+Erişim Tarihi: 23 Ağustos 2026,
+https://datareportal.com/reports/digital-2026-turkey
 
-**Nefret söylemi tespitinde önyargı — projenin kimlik yaklaşımının dayanağı**
+**[3]** UNFPA Türkiye ve KONDA Araştırma ve Danışmanlık, *Türkiye'de Dijital
+Şiddet Araştırması 2021*, Eylül 2021, Erişim Tarihi: 23 Ağustos 2026,
+https://turkiye.unfpa.org/sites/default/files/pub-pdf/digital_violence_report.pdf
 
-- `[4]` Sap, M., Card, D., Gabriel, S., Choi, Y., Smith, N. A. — *The Risk of
-  Racial Bias in Hate Speech Detection*, ACL 2019.
-- `[5]` Davidson, T., Bhattacharya, D., Weber, I. — *Racial Bias in Hate Speech
-  and Abusive Language Detection Datasets*, ACL Workshop on Abusive Language
-  Online, 2019.
+**[4]** Çöltekin, Ç., (2020) *A Corpus of Turkish Offensive Language on Social
+Media*, Proceedings of the Twelfth Language Resources and Evaluation Conference
+(LREC 2020), s. 6174–6184, European Language Resources Association,
+https://aclanthology.org/2020.lrec-1.758/
 
-**Değerlendirme yöntemi — işlevsel test yaklaşımının dayanağı**
+**[5]** Sap, M., Card, D., Gabriel, S., Choi, Y., Smith, N. A., (2019) *The Risk
+of Racial Bias in Hate Speech Detection*, Proceedings of the 57th Annual Meeting
+of the Association for Computational Linguistics (ACL 2019), s. 1668–1678,
+DOI: 10.18653/v1/P19-1163
 
-- `[6]` Röttger, P., Vidgen, B., Nguyen, D., Waseem, Z., Margetts, H.,
-  Pierrehumbert, J. — *HateCheck: Functional Tests for Hate Speech Detection
-  Models*, ACL 2021.
-- `[7]` Schmidt, A., Wiegand, M. — *A Survey on Hate Speech Detection using
-  Natural Language Processing*, SocialNLP Workshop, 2017.
+**[6]** Davidson, T., Bhattacharya, D., Weber, I., (2019) *Racial Bias in Hate
+Speech and Abusive Language Detection Datasets*, Proceedings of the Third
+Workshop on Abusive Language Online, s. 25–35, DOI: 10.18653/v1/W19-3504
 
-**Türkçe saldırgan dil ve nefret söylemi**
+**[7]** Röttger, P., Vidgen, B., Nguyen, D., Waseem, Z., Margetts, H.,
+Pierrehumbert, J., (2021) *HateCheck: Functional Tests for Hate Speech Detection
+Models*, Proceedings of the 59th Annual Meeting of the Association for
+Computational Linguistics and the 11th International Joint Conference on Natural
+Language Processing (Cilt 1: Uzun Bildiriler), s. 41–58,
+DOI: 10.18653/v1/2021.acl-long.4
 
-- `[8]` Çöltekin, Ç. — *A Corpus of Turkish Offensive Language on Social
-  Media*, LREC 2020.
-- `[9]` `[DOĞRULA]` SemEval-2020 Task 12 (OffensEval) Türkçe alt görevi genel
-  değerlendirme makalesi.
-- `[10]` `[DOĞRULA]` BERTurk / Türkçe önceden eğitilmiş dil modeli künyesi —
-  yol haritasındaki karşılaştırma için atıf verilecekse.
+**[8]** Schmidt, A., Wiegand, M., (2017) *A Survey on Hate Speech Detection using
+Natural Language Processing*, Proceedings of the Fifth International Workshop on
+Natural Language Processing for Social Media (SocialNLP), s. 1–10,
+DOI: 10.18653/v1/W17-1101
 
-**Mevcut çözümler (2.1 kıyas tablosu için)**
+**[9]** Lees, A., Tran, V. Q., Tay, Y., Sorensen, J., Gupta, J., Metzler, D.,
+Vasserman, L., (2022) *A New Generation of Perspective API: Efficient
+Multilingual Character-level Transformers*, Proceedings of the 28th ACM SIGKDD
+Conference on Knowledge Discovery and Data Mining (KDD '22), arXiv:2202.11176,
+DOI: 10.48550/arXiv.2202.11176
 
-- `[11]` Google Jigsaw — *Perspective API* teknik dokümantasyonu ve
-  desteklenen diller listesi. Erişim adresi ve erişim tarihi yazılacaktır.
-- `[12]` OpenAI — *Moderation API* dokümantasyonu. Erişim adresi ve erişim
-  tarihi yazılacaktır.
+**[10]** Nogara, G., Pierri, F., Cresci, S., Luceri, L., Törnberg, P.,
+Giordano, S., (2024) *Toxic Bias: Perspective API Misreads German as More
+Toxic*, arXiv:2312.12651, DOI: 10.48550/arXiv.2312.12651
 
-**Mahremiyet ve k-anonimlik**
+**[11]** Sweeney, L., (2002) *k-anonymity: A Model for Protecting Privacy*,
+International Journal of Uncertainty, Fuzziness and Knowledge-Based Systems,
+Cilt 10, Sayı 5, s. 557–570
 
-- `[13]` Sweeney, L. — *k-anonymity: A Model for Protecting Privacy*,
-  International Journal of Uncertainty, Fuzziness and Knowledge-Based
-  Systems, 2002. (Panelde uygulanan k=5 eşiğinin dayanağı.)
+**[12]** OpenAI, *Moderation — API Documentation (omni-moderation-latest)*,
+Erişim Tarihi: 23 Ağustos 2026,
+https://platform.openai.com/docs/guides/moderation
 
-**Mevzuat**
-
-- `[14]` 5237 sayılı Türk Ceza Kanunu, madde 216 — *Halkı kin ve düşmanlığa
-  tahrik veya aşağılama*. (5.1 örnek 3'ün dayanağı; mevzuat.gov.tr.)
+**[13]** T.C. Resmî Gazete, *5237 sayılı Türk Ceza Kanunu, madde 216 — Halkı kin
+ve düşmanlığa tahrik veya aşağılama*, 12 Ekim 2004, Sayı 25611,
+Erişim Tarihi: 23 Ağustos 2026,
+https://www.mevzuat.gov.tr/mevzuatmetin/1.5.5237.pdf
 
 ---
 

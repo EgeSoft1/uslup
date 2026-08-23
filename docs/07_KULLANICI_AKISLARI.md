@@ -56,7 +56,7 @@ P2 ve P3, bu ürünün rakiplerinden ayrıldığı yerdir. Çoğu filtre bu iki 
 
 1. Anıl yazmaya başlar. İlk kelimelerde hiçbir şey olmaz.
 2. "aptalsın" tamamlandığı anda mesaj kutusunun kenarlığı sarıya döner.
-   Kesinti yok, diyalog yok. (~268 µs sonra — Anıl gecikme hissetmez.)
+   Kesinti yok, diyalog yok. (~193 µs sonra — Anıl gecikme hissetmez.)
 3. Kutunun altında gerekçe belirir: **"Kişiliğin bütününü reddediyor.
    Davranışı değil, kişiyi hedef alıyor."** Hangi kelimenin işaretlendiği
    vurgulanmıştır.
@@ -157,7 +157,7 @@ panellerinin ana ekranı budur; burada yoktur ve olamaz.
        │ her tuş vuruşu
        ▼
 ┌──────────────────────────┐
-│ Cihaz üstü çözümleme     │  ~268 µs
+│ Cihaz üstü çözümleme     │  ~193 µs
 │ (normalizasyon → sözlük  │  debounce YOK
 │  → örüntü → nefret →     │
 │  gönderge → bağlam)      │
