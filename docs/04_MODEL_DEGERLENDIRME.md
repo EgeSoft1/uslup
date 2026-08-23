@@ -462,3 +462,95 @@ gerekmiyor iddiası korunuyor.
 | Bilinen tek yanlış negatif | öncülsüz zamir | öncülsüz zamir | ✅ |
 
 Metriklerin tamamı yeniden üretildi. Tek istisna §7.1'deki ayrık küme sorunudur.
+
+---
+
+## 8. 23 Ağustos 2026 — denetimli taban çizgisi ölçüldü
+
+§7'deki "sonraki adım: sinir ağı katmanı" başlığı bir varsayım içeriyordu:
+öğrenen bir modelin, elle yazılmış örüntülerin göremediğini göreceği. Bu
+varsayım artık ölçülmüştür. Hat `ml/` dizinindedir ve yeniden çalıştırılabilir.
+
+### 8.1 Protokol
+
+Motorun kuralının aynısı: seçim ayrık kümeye bakılmadan yapılır.
+
+- 45 aday (karakter/kelime/birleşik n-gram × ham/normalize/katlanmış ×
+  lojistik regresyon/DVM/naif Bayes)
+- Seçim: yalnızca geliştirme kümesinde (n=256), 5 katlı çapraz doğrulama,
+  sıralama ölçütü **F0.5**
+- Ayrık kümeye (n=80) tek sefer bakıldı, düzeltme yapılmadı
+- Sızıntı denetimi: iki küme arasında **0 ortak metin** (programla doğrulandı)
+
+Seçilen: aksan katlanmış karakter n-gram (2–4) TF-IDF + lojistik regresyon
+(C=10). Çapraz doğrulama F0.5 = %85,7 · F1 = %83,7.
+
+### 8.2 Ayrık küme sonucu
+
+| Yaklaşım | Kesinlik | Duyarlılık | F1 | F0.5 | YP | YN |
+|---|---|---|---|---|---|---|
+| Denetimli model | %87,3 | %96,0 | %91,4 | %88,9 | 7 | 2 |
+| Kural motoru (bugün) | %98,0 | %100,0 | %99,0 | %98,4 | 1 | 0 |
+| Melez — kesişim (VE) | %98,0 | %96,0 | %97,0 | %97,6 | 1 | 2 |
+| Melez — birleşim (VEYA) | %87,7 | %100,0 | %93,5 | %89,9 | 7 | 0 |
+| Kural motoru (ilk ölçüm) | %88,9 | %80,0 | %84,2 | — | 5 | 10 |
+
+Bootstrap %95 güven aralığı (5000 yeniden örnekleme): model F1 %91,4
+[%85,1 – %96,5]. n=80 için aralık geniştir.
+
+### 8.3 ⚠ Kıyas asimetriktir
+
+Küme **model için** gerçekten ayrıktır. **Motor için değildir** — §7.1'de
+kayıtlı olduğu üzere motor bu kümenin gösterdiği üç hata düzeltilerek
+güncellenmiştir. Bu nedenle:
+
+- %91,4 ↔ %99,0 kıyası **modele haksızdır**
+- %91,4 ↔ %84,2 kıyası **motora haksızdır**
+
+Simetrik kıyas ancak ikisinin de görmediği yeni bir küme üzerinde yapılabilir.
+İP-15 tam olarak budur.
+
+### 8.4 Asimetriden etkilenmeyen bulgu
+
+1. **Model, motorun kaçırdığı hiçbir örneği yakalamadı.** Beklenen kazanç bu
+   kümede gerçekleşmedi.
+2. **Model, motorun yapmadığı altı yanlış pozitif üretti** ve hepsi ürünün
+   önlemek için var olduğu hata türü:
+
+```
+"aferin sana, gerçekten hak ettin"      iltifat
+"senin gibi birini tanımak güzel"       iltifat
+"seni aptal sanmıyorum"                 olumsuzlama
+"sana salak diyen haksız"               mağduru savunma
+"hepimiz insanız sonuçta"               nötr
+"hiçbir işe yaramayan bir uygulama bu"  nesneye eleştiri
+```
+
+Dilim bazında bağlam özgüllüğü: **model %50,0 · motor %83,3**.
+
+Teşhis ölçülebilir: 256 örnekten **3.864 öznitelik** türetiliyor — örnek başına
+on beş. Model, kararı veren dilbilimsel yapıyı değil yüzeydeki karakter dizisini
+ezberliyor.
+
+### 8.5 Bu bulgunun sınırı
+
+Ölçüm, **doğrusal bir taban çizgisinin bu veri hacminde** yetersiz kaldığını
+gösterir. BERTurk gibi önceden eğitilmiş bir Türkçe modelin ince ayarının da
+başarısız olacağını göstermez. Öğrenme eğrisi modelin hâlâ veriye aç olduğunu
+gösteriyor:
+
+| Eğitim n | F1 | Kesinlik |
+|---|---|---|
+| 64 | %81,1 | %81,8 |
+| 128 | %88,4 | %85,2 |
+| 192 | %90,3 | %86,2 |
+| 256 | %91,4 | %87,3 |
+
+Eğri düzleşmemiştir; daha büyük ve **gerçek** bir külliyat sonucu değiştirebilir.
+
+### 8.6 Karara etkisi
+
+Sevk edilen sınıflandırıcı deterministik motor olmaya devam ediyor — ama artık
+gerekçesi bir tercih beyanı değil, bir ölçüm. Tablodaki en güçlü satır melez
+kesişimdir (kesinlik %98,0, F1 %97,0): öğrenen bileşen duyarlılık için, bağlam
+katmanı kesinlik vetosu olarak. Hedef mimari budur.
