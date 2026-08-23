@@ -155,3 +155,11 @@ packages/civility_core/lib/src/
   mağduru savunan cümle. Bu, doğrusal bir taban çizgisinin **bu veri hacmindeki**
   sınırıdır; önceden eğitilmiş bir Türkçe modelin de başarısız olacağı
   **iddia edilmemektedir**.
+
+---
+
+## Lisans
+
+MIT — ayrıntı: [`LICENSE`](LICENSE).
+Kod, veri kümesi ve ölçüm araçları serbestçe kullanılabilir; tek koşul telif
+notunun korunmasıdır.
