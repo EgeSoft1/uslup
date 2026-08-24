@@ -62,17 +62,59 @@ kimlik adı sızarsa test kırılır.
 
 ## Ölçülen sonuçlar
 
+Geçerli genelleme ölçümü, **üçüncü ayrık kümedir** (İP-20, 24 Ağustos 2026).
+Önceki iki ayrık küme yanmıştır — motor onlara bakılarak düzeltildiği için
+artık genelleme ölçemezler. Gerekçe ve tam geçmiş:
+[`docs/14_MENTORLUK_PENCERESI_SONUCLARI.md`](docs/14_MENTORLUK_PENCERESI_SONUCLARI.md)
+
 | Ölçüm | Değer |
 |---|---|
-| Genelleme (ayrık küme) F1 | **%84,2** (kesinlik %88,9 / duyarlılık %80,0) |
-| Nefret söylemi dilimi F1 | %97,3 (kesinlik %100) |
-| Örüntü katmanının duyarlılık katkısı | +55,2 puan, **kesinlik kaybı 0** |
-| Ortalama çözümleme süresi | 87–193 µs (AOT; üst sınırı bile 16 ms kare bütçesinin %1,2'si) |
+| Kesinlik (İP-22 ilk geçiş) | %90,5 → **%100,0** (iki kusur düzeltildikten sonra) |
+| F0.5 — ürünün hedef fonksiyonu | %79,8 → **%85,6** |
+| F1 | %67,9 → %70,4 |
+| Duyarlılık | **%54,3** |
+| **Yapısal ailenin genelleme oranı** | **%90,0** — aynı yapının hiç görülmemiş örneklerinde |
+| Çözümleme süresi | **p50 159 µs · p99 1459 µs** (AOT; p99'da 16 ms kare bütçesinin %9,1'i) |
 
-**Dürüstlük notu.** Geliştirme kümesinde F1 %99,6'dır ve bu bir genelleme kanıtı
-**değildir** — kümeyi de örüntüleri de aynı kişi yazmıştır. Raporlanan sayı, tek
-geçerli genelleme ölçümü olan **ayrık kümedeki %84,2**'dir. Aradaki ~16 puanlık
-fark, ezberleme payının büyüklüğüdür. Ayrıntı: [`docs/04_MODEL_DEGERLENDIRME.md`](docs/04_MODEL_DEGERLENDIRME.md)
+### Ölçüm geçmişi — neden tek bir sayı yok
+
+| Küme | Boyut | Kesinlik | Duyarlılık | F1 | Durum |
+|---|:--:|:--:|:--:|:--:|---|
+| Geliştirme | 256 | %100 | %99,3 | %99,6 | Ezberleme payı içerir |
+| 1. ayrık | 80 | %98,0 | %100 | %99,0 | Yanmış (ilk ölçüm F1 %84,2) |
+| 2. ayrık (İP-15) | 100 | %100 | %38,5 | %55,6 | Yanmış (İP-19 onarımında kullanıldı) |
+| 3. ayrık (İP-20) | 80 | %100 | %50,0 | %66,7 | Yanmış (İP-21 onarımında kullanıldı) |
+| **4. ayrık (İP-22)** | **65** | **%90,5** | **%54,3** | **%67,9** | **Geçerli — ilk geçiş** |
+
+### Duyarlılık sayısı neyin cevabı
+
+İP-22 üç eşit parçadan kuruldu ve toplam duyarlılığı ayrıştırdı:
+
+| Parça | Örnek | Sonuç |
+|---|:--:|:--:|
+| Yapısal ailelerin **hiç görülmemiş örnekleri** | 20 | **%90,0** |
+| Aynı ailelerin **yakın-kaçışları** (masum) | 20 | **11 yeni ailenin hiçbirinden yanlış pozitif yok** |
+| Hiçbir ailede karşılığı **olmayan** deyimler | 15 | %6,7 |
+
+Yani %54,3, "motor ne kadar iyi" sorusunun değil, **"kaç yapı ailesi
+yazıldı"** sorusunun cevabıdır. Yazılmış bir ailenin yeni örneklerini motor
+%90 görüyor; yazılmamış bir aileyi göremiyor. Türkçe deyim uzayı sonlu bir
+örüntü kataloğuyla kapatılamaz — bu, kural tabanlı katmanın tavanıdır ve
+gizlenmemektedir.
+
+**Dürüstlük notu.** Geliştirme kümesindeki %99,6 bir genelleme kanıtı
+**değildir** — kümeyi de örüntüleri de aynı kişi yazmıştır. Ayrık kümeler bunu
+sayıya çevirdi: örtük saldırı diliminde duyarlılık %100'den %12,0'ye düştü.
+
+**Dördüncü küme bir kesinlik felaketi buldu.** `"bardak dolu"` cümlesi yüksek
+riskli **nefret söylemi** sayılıyordu. Sebep: `dölü` epiteti aksan
+katlamasından sonra (`ö→o`, `ü→u`) `dolu` ile birebir aynı hâle geliyor ve tam
+eşleşme modundaki girdi Türkçe'nin en sık kelimelerinden birini yakalıyordu.
+Önceki 521 örneğin hiçbirinde "dolu" geçmediği için kusur görünmemişti.
+Girdi kaldırıldı; ayrıntı [`docs/14`](docs/14_MENTORLUK_PENCERESI_SONUCLARI.md) §9.3.
+
+Bu, ayrık küme disiplininin neden vazgeçilmez olduğunun kanıtıdır: kusuru
+bulan şey, kümenin **saldırganlıkla hiç ilgisi olmayan** kısmıydı.
 
 ---
 
@@ -86,6 +128,21 @@ dart pub get
 dart test                          # çekirdek testler
 dart run bin/evaluate.dart --hepsi # tüm metrikler
 dart run bin/evaluate.dart --karsilastir  # katman katkısı A/B
+dart run bin/evaluate.dart --genelleme3   # geçerli genelleme ölçümü (İP-22)
+
+# Gecikme ölçümü — ÜRÜN sayısı için AOT derleyin
+dart compile exe bin/benchmark.dart -o benchmark.exe && ./benchmark.exe
+
+# İkinci etiketleyici için kör etiketleme dosyası + hakemler arası uyum
+dart run bin/annotate_export.dart --kume=ip20 > etiketleme.csv
+dart run bin/kappa.dart etiketleme.csv
+```
+
+Erişilebilirlik denetimi (Flutter gerektirmez):
+
+```bash
+cd mobile
+dart run tool/erisilebilirlik_denetimi.dart   # WCAG 2.1 AA kontrast oranları
 ```
 
 Mobil uygulama (Flutter):
@@ -105,7 +162,7 @@ flutter run
 | `packages/civility_core/` | **Nezaket motoru** — saf Dart, bağımlılıksız. Projenin çekirdeği. |
 | `mobile/` | Flutter istemci; canlı yazım ekranı ve topluluk sağlığı paneli |
 | `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Üründe çalışmaz; mimari kararı ölçmek içindir. |
-| `docs/` | Ürün tanımı, model değerlendirme, kullanıcı akışları, teknik rapor taslağı |
+| `docs/` | Ürün tanımı, model değerlendirme, kullanıcı akışları, teknik rapor, erişilebilirlik denetimi |
 > **Not.** Bu depo, devralınan bir mesajlaşma platformu iskeletinin üzerine
 > kurulmuştur. Devralınan sunucu altyapısı (`crates/`, `db/`, `devops/`)
 > **üründe kullanılmamaktadır** ve depodan çıkarılmıştır; gerekçesi
@@ -122,7 +179,7 @@ packages/civility_core/lib/src/
 ├── context/         bağlam çözümleyici — saldırı/iltifat/şikâyet/öz-ifade
 ├── rewrite/         iki modlu yerel yeniden yazıcı
 ├── community/       anonim topluluk sağlığı sinyalleri (k-anonimlik)
-└── eval/            336 etiketli örnek + kesinlik/duyarlılık/F1/F0.5
+└── eval/            581 etiketli örnek (5 küme) + kesinlik/duyarlılık/F1/F0.5
 ```
 
 ---
@@ -142,9 +199,18 @@ packages/civility_core/lib/src/
 ## Bilinen sınırlar
 
 - Metrikler **tek etiketleyicilidir**; hakemler arası uyum (kappa) ölçülmemiştir.
+  Ölçüm altyapısı hazırdır — `bin/annotate_export.dart` kör etiketleme dosyası
+  üretir, `bin/kappa.dart` Cohen's kappa'yı hesaplar; eksik olan ikinci insandır.
+- **Duyarlılık, yazılmış yapı ailesi sayısıyla sınırlıdır.** Taze ayrık
+  kümede toplam %54,3; ama yazılmış bir ailenin hiç görülmemiş örneklerinde
+  %90,0. Yazılmamış ailelerde ~%7. Kural tabanlı bir katman Türkçe deyim
+  uzayını kapsayamaz.
+- **"dölü" epiteti kaldırıldı** — aksan katlaması onu "dolu" ile birebir
+  aynı hâle getiriyor ve ayırt etmenin normalize metin üzerinde yolu yok.
 - Öncülsüz gönderge **kasıtlı olarak** kaçırılır — hedefin kim olduğu metinden
   bilinemez ve zamirden kimlik uydurmak kesinlik iddiasını çürütür.
-- Kimlik söz varlığı 40 terimle sınırlıdır.
+- Kimlik söz varlığı 94 terimdir (İP-17'de 35'ten genişletildi); siyasi
+  görüş **kasıtlı olarak** kapsam dışıdır — korunan nitelik değildir.
 - Tüm veri sentetiktir; hiçbir örnek gerçek kullanıcıdan gelmemiştir.
 - Yalnızca Türkçe desteklenmektedir.
 - Bir Büyük Dil Modeli **kullanılmamaktadır** — yazılmış, ölçülmüş ve kasıtlı

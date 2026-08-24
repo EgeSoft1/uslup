@@ -83,7 +83,7 @@ Jüri bunu yakalarsa §2.2, §3.1 ve §6.1'in tamamı şüpheye düşer.
 
 ---
 
-## 3. Şekil yerleşim planı — 8 görsel
+## 3. Şekil yerleşim planı — 10 görsel
 
 > **Çapalar rapora yerleştirilmiştir.** `docs/09_RAPOR_METNI.md` içinde her
 > şeklin geleceği noktada `**[ŞEKİL N BURAYA — …]**` satırı, hemen altında da
@@ -91,130 +91,81 @@ Jüri bunu yakalarsa §2.2, §3.1 ve §6.1'in tamamı şüpheye düşer.
 > "(Şekil N)" atıfları yapılmıştır. Word'de yapılacak iş: görseli çapanın
 > yerine koymak ve **yalnızca köşeli parantezli satırı silmek**.
 
-Sayfa bütçesi uygun: metin ~23 sayfa, sınır **30**. 8 görsel ≈ 3–4 sayfa;
-toplam ~27 sayfada kalırsın.
+**Beş şekil çizim olarak üretilmiştir ve ekran görüntüsüne bağlı değildir.**
+Dosyalar `docs/gorseller/` altındadır; Flutter kurulumu olmasa bile rapor
+görselsiz kalmaz.
 
-### Şekil 1 — Katmanlı çözümleme mimarisi → **§1.2 sonuna**
+| # | Bölüm | İçerik | Tür | Kaynak |
+|:--:|---|---|---|---|
+| **1** | §1.2 sonu | Cihaz üstü çözümleme hattı | Çizim | `gorseller/sekil1_mimari.png` ✅ |
+| **2** | §2.2, merdiven tablosunun altı | Müdahale merdiveni, dört seviye | Çizim | `gorseller/sekil2_merdiven.png` ✅ |
+| **3** | §2.2, bağlam ağırlıklandırma tablosunun altı | Aynı sözcük, dört bağlam | Çizim | `gorseller/sekil3_baglam.png` ✅ |
+| **4** | §3.2, katman izolasyonu tablosunun altı | Katman katkısının izolasyonu | Grafik | `gorseller/sekil4_katman.png` ✅ |
+| **5** | §3.3, A1 anlatımının altı | Ana kullanıcı akışı (A1) | Diyagram | `gorseller/sekil5_akis.png` ✅ |
+| **6** | §3.3, A3 anlatımının altı | Mağdur akışı — uyarı **çıkmıyor** | Ekran | Derleme gerekli |
+| **7** | §3.3, arayüz kararları tablosunun altı | "Neden uyarıldın?" gerekçe kartı | Ekran (kırpma) | Elimizde |
+| **8** | §5.1 başı | NSosyal gönderi kutusu | Ekran | Elimizde |
+| **9** | §5.1, Örnek 2'nin altı | Kimlik beyanı işaretlenmiyor | Ekran | Derleme gerekli |
+| **10** | §5.1, Örnek 5'in altı | Topluluk paneli + "Dışarı ne gider" | Ekran | Derleme gerekli |
 
-Ekran görüntüsü değil, **çizim**. README'deki hat şemasının Word'de kutu-ok
-hâline getirilmiş biçimi:
-
-```
-Kullanıcı yazıyor
-   ↓  ─── CİHAZ ÜZERİNDE ───────────────────────────────
-   │  1. Normalizasyon      "$3r3fsiz" → "serefsiz"
-   │  2. Sözlük eşleştirme  Türkçe kök eşleşmesi
-   │  3. Örüntü katmanı     Küfürsüz düşmanlık
-   │  4. Nefret katmanı     Kimlik hedefli düşmanlık
-   │  5. Gönderge katmanı   Zamiri öncüle bağlar
-   │  6. Bağlam çözümleme   saldırı/iltifat/şikâyet/öz-ifade
-   │  7. Öneri üretimi      Yerel, deterministik
-   ↓  ────────────────────────────────────────────────────
-Kullanıcı seçer → gönderir          ⛔ Sunucu adımı yoktur
-```
-
-**Alt yazı:** *Şekil 1. Üslup'un cihaz üstü çözümleme hattı. Hattın hiçbir
-adımında ağ çağrısı bulunmaz; çözümleme kullanıcının cihazında başlar ve biter.*
-
-> Neden burada: 3.1'in "teknik altyapı eksiksiz tanımlanmış" maddesi (0–2 puan)
-> ve 4.3'ün "teknolojik yenilik teknik detaylarla ortaya konmuş" maddesi
-> (0–2 puan) için en güçlü tek görsel budur.
+Sayfa bütçesi uygun: metin ~24 sayfa, sınır **30**. 10 görsel ≈ 4 sayfa;
+toplam ~28–29 sayfada kalırsın.
 
 ---
 
-### Şekil 2 — Müdahale merdiveni, dört seviye yan yana → **§2.2'ye, merdiven tablosunun hemen altına**
+### Çizim olarak hazır olan beş şekil
 
-Dört ekran görüntüsünü **tek satırda yan yana** yerleştir. En değerli görselin
-budur; ürünün tezini tek bakışta anlatır.
+**Şekil 1 — Katmanlı çözümleme mimarisi → §1.2 sonuna.** Ham metinden anonim
+sinyale kadar olan yedi adımlı hat. Kritik mesaj: hattın hiçbir adımında ağ
+çağrısı yoktur. Jürinin "bu gerçekten cihazda mı çalışıyor?" sorusunun görsel
+cevabı budur.
 
-| Panel | Hangi ekran | Ne göstermeli |
-|---|---|---|
-| (a) Temiz | "100 puan" / temiz metin ekranı | Hiçbir uyarı yok |
-| (b) Dikkat | Yalnızca kenarlık rengi değişen ekran | Kesinti yok |
-| (c) Riskli | Gerekçe + yeniden yazma önerisi | Kart açık |
-| (d) Yüksek | "Yine de gönder / Vazgeç" onayı | Gönderim engellenmiyor |
+**Şekil 2 — Müdahale merdiveni → §2.2, merdiven tablosunun hemen altına.**
+Dört seviye yan yana: temiz · dikkat · riskli · yüksek. Kritik mesaj: hiçbir
+seviyede gönderim engellenmiyor. Alt panel harfleri (a) (b) (c) (d) alt yazıyla
+eşleşmelidir.
 
-**Alt yazı:** *Şekil 2. Müdahale merdiveni. (a) temiz metinde hiçbir kesinti
-yoktur; (b) dikkat seviyesinde yalnızca kenarlık rengi değişir; (c) riskli
-seviyede gerekçe ve alternatif sunulur; (d) yüksek riskte onay istenir — ancak
-hiçbir seviyede gönderim engellenmez.*
+**Şekil 3 — Bağlam ağırlıklandırma → §2.2, katsayı tablosunun altına.** Aynı
+sözcüğün saldırı / iltifat / şikâyet / öz-ifade bağlamlarında aldığı ağırlık.
+Rubrik 2.2'nin "özgün algoritma" maddesinin doğrudan kanıtı: projenin teknik
+kalbi tek karede görülür.
 
-> (b) elinde yoksa üç panelle yap ve alt yazıdan (b)'yi çıkar. Uydurma.
+**Şekil 4 — Katman katkısının izolasyonu → §3.2, izolasyon tablosunun altına.**
+Raporun en güçlü sayısal iddiası. "Yasaklı kelime listesi yetmez" cümlesini bir
+görüşten bir ölçüme dönüştürür: örtük saldırıda %1,8 → %100,0, nefret
+söyleminde %10,5 → %94,7 — kesinlikten hiçbir şey götürmeden.
 
----
-
-### Şekil 3 — "Neden uyarıldın?" gerekçe kartı → **§3.3, "Arayüz tasarım kararları" tablosunun altına**
-
-Yakın plan (crop) al; kartın metni okunsun.
-
-**Alt yazı:** *Şekil 3. Açıklanabilirlik. Her uyarı, hangi ifadenin neden
-işaretlendiğini metin olarak bildirir; kullanıcı kararın gerekçesini görmeden
-bir öneriyle karşılaşmaz.*
-
-> Rubrik: "Arayüz tasarım kararları gerekçelendirilmiş" (0–2 puan). Tablodaki
-> "Her uyarıda hangi kelime ve neden" satırının kanıtı bu görseldir.
+**Şekil 5 — Ana kullanıcı akışı (A1) → §3.3, A1 anlatımının altına.** Rubrik
+3.3'ün "Kullanıcı akışları sunulmuş" maddesi (0–2 puan) doğrudan bunu istiyor.
+Akışın iki kritik özelliği görsel olarak da okunur: hiçbir dal gönderimi
+engellemez ve hiçbir dalda metin cihazdan çıkmaz.
 
 ---
 
-### Şekil 4 — Mağdur akışı (A3): uyarı **çıkmıyor** → **§3.3, A3 anlatımının altına**
+### Ekran görüntüsü gereken beş şekil
 
-"Bana 'şerefsiz' dedi, çok üzüldüm" yazılmış ve **hiçbir uyarı çıkmamış** ekran.
+**Şekil 6 — Mağdur akışı → §3.3, A3 anlatımının altına.** "Bana 'şerefsiz'
+dedi, çok üzüldüm" yazılmış ve **hiçbir uyarı çıkmamış** hâlin ekran
+görüntüsü. Bu görselin gücü, gösterdiği şeyin **yokluğu** olmasıdır: 0,88 taban
+şiddetli bir terim var, uyarı yok. Ekranda nezaket puanının 100 göründüğünden
+emin ol.
 
-**Alt yazı:** *Şekil 4. Mağdur akışı. Cümlede 0,88 taban şiddetinde bir terim
-geçmesine rağmen uyarı üretilmez; bağlam katmanı ifadeyi aktarım olarak tanır
-(×0,20) ve yumuşatma tavanı sonucu eşiğin altında tutar.*
+**Şekil 7 — Gerekçe kartı → §3.3, arayüz kararları tablosunun altına.** Yakın
+plan (crop). Kartta hangi ifadenin neden işaretlendiği metin olarak
+görünmelidir — rubrik 3.3'ün açıklanabilirlik beklentisinin kanıtı.
 
-> Bu, raporun rakiplerden ayrıldığı yer. "Bizde uyarı çıkmıyor" cümlesini
-> yazmak kolay; **göstermek** ikna edicidir.
+**Şekil 8 — NSosyal gönderi kutusu → §5.1 başına.** Jürinin ilk sorusu "bu
+NSosyal'e ne katıyor?" olacak; bu görsel soruyu ekranla cevaplıyor. **Öne çıkar,
+mümkünse büyük bas.**
 
----
+**Şekil 9 — Kimlik beyanı işaretlenmiyor → §5.1, Örnek 2'nin altına.** "Ben
+Kürtüm" gibi bir cümlenin uyarısız geçtiği ekran. Rakiplerden ayrışmanın en
+somut tek karesi.
 
-### Şekil 5 — Kimlik beyanı işaretlenmiyor → **§3.3 veya §5.1 Örnek 2'nin altına**
-
-"Ben Kürtüm" ya da benzeri bir kimlik cümlesinin uyarısız geçtiği ekran.
-
-**Alt yazı:** *Şekil 5. Kimlik adı hiçbir zaman tek başına tetikleyici değildir.
-Sözlükte kimlik adı bulunmaz; bu davranış yapısal bir testle korunur.*
-
----
-
-### Şekil 6 — Bağlam testleri ekranı → **§2.2, "Özgün yön 3 — Mağdurun korunması" paragrafının altına**
-
-> Plan başlangıçta §3.2'yi işaret ediyordu; bağlam ağırlıklandırmasının
-> anlatıldığı yer §2.2 olduğu için çapa oraya konuldu.
-
-Aynı kelimenin dört bağlamda farklı sonuç verdiğini gösteren test/demo ekranı
-("aptalsın" ×1,25 · "aptal değilsin" ×0,15 · "bana aptal dedi" ×0,20 ·
-"kendimi aptal hissettim" ×0,20).
-
-**Alt yazı:** *Şekil 6. Bağlam ağırlıklandırma. Aynı sözcük, saldırı / iltifat /
-şikâyet / öz-ifade bağlamlarında farklı ağırlık alır; yumuşatma yalnızca çarpan
-değil aynı zamanda tavandır.*
-
----
-
-### Şekil 7 — Topluluk sağlığı paneli + "Dışarı ne gider" kartı → **§5.1 Örnek 5'in altına**
-
-İki panel: (a) panelin üstü, "Bu paneldeki hiçbir sayı mesaj içeriğinden
-üretilmez" ifadesi görünecek şekilde; (b) "Dışarı ne gider" kartı.
-
-**Alt yazı:** *Şekil 7. Mahremiyetten ödün vermeyen topluluk yönetimi. Panel
-davranıştan beslenir, mesaj listesi içermez; 5 gözlemin altındaki kategoriler
-k-anonimlik gereği açılmaz ve "Dışarı ne gider" kartı platforma gidecek veriyi
-harfi harfine gösterir.*
-
----
-
-### Şekil 8 — NSosyal gönderi kutusu → **§4.3 veya §5.1'in başına**
-
-"NSosyal'e bir gönderi yaz…" yazan ekran. **Bu senin en stratejik görselin.**
-
-**Alt yazı:** *Şekil 8. Katman platforma bağlı değildir; Türkçe metin girişi
-yapılan herhangi bir yüzeye — burada NSosyal gönderi kutusuna — kütüphane
-bağımlılığı olarak eklenebilir.*
-
-> Neden kritik: jürinin ilk sorusu "bu NSosyal'e ne katıyor?" olacak. Bu görsel
-> soruyu ekranla cevaplıyor. **Öne çıkar, mümkünse büyük bas.**
+**Şekil 10 — Topluluk paneli + "Dışarı ne gider" kartı → §5.1, Örnek 5'in
+altına.** İki panel yan yana: (a) panelin üstü ve mahremiyet ifadesi, (b)
+"Dışarı ne gider" kartı. Kartın platforma gidecek veriyi harfi harfine
+gösterdiği okunabilir olmalı.
 
 ---
 
@@ -239,12 +190,13 @@ bağımlılığı olarak eklenebilir.*
 |---|---|
 | Kapak | 1 |
 | İçindekiler | 1 |
-| Gövde (§1–§8) | ~21 |
-| 8 şekil | ~3,5 |
+| Gövde (§1–§8) | ~22 |
+| 10 şekil | ~4 |
 | Kaynakça | 1,5 |
 | **Toplam** | **~28** |
 | **Sınır** | **30** |
 
-Payın ~2 sayfa. Sınırı aşarsan **önce Şekil 6'yı**, sonra Şekil 5'i çıkar;
+Payın ~1 sayfa. Sınırı aşarsan **önce Şekil 8'i**, sonra Şekil 10'u çıkar;
 ikisi de rubrikte doğrudan karşılığı olmayan destekleyici görsellerdir.
-Şekil 1, 2, 3, 4 ve 8 **çıkarılmaz** — her biri bir rubrik maddesinin kanıtıdır.
+Şekil 1, 2, 3, 4, 5, 7 ve 9 **çıkarılmaz** — her biri bir rubrik maddesinin
+kanıtıdır.

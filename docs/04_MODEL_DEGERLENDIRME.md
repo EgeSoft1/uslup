@@ -554,3 +554,65 @@ Sevk edilen sınıflandırıcı deterministik motor olmaya devam ediyor — ama 
 gerekçesi bir tercih beyanı değil, bir ölçüm. Tablodaki en güçlü satır melez
 kesişimdir (kesinlik %98,0, F1 %97,0): öğrenen bileşen duyarlılık için, bağlam
 katmanı kesinlik vetosu olarak. Hedef mimari budur.
+
+
+---
+
+## 9. 24 Ağustos 2026 (teslim sonrası) — ikinci ve üçüncü ayrık küme
+
+> Ayrıntılı belge: [`14_MENTORLUK_PENCERESI_SONUCLARI.md`](14_MENTORLUK_PENCERESI_SONUCLARI.md)
+
+§7.1'de kaydedilen sorun — "ayrık küme artık ayrık değil, genelleme sayımız
+yeniden üretilemiyor" — kapatıldı. Yöntem: motoru dondurup **yeni** bir küme
+yazmak, bir kez ölçmek, düzeltmeden raporlamak.
+
+### 9.1 İkinci ayrık küme (İP-15, 100 örnek) — ilk ölçüm
+
+| | Geliştirme | İP-15 |
+|---|:--:|:--:|
+| Kesinlik | %100,0 | %100,0 |
+| Özgüllük | %100,0 | %100,0 |
+| Duyarlılık | %99,3 | **%38,5** |
+| F1 | %99,6 | **%55,6** |
+| Örtük saldırı duyarlılığı | %100,0 | **%12,0** |
+
+Ezberleme payı ilk kez sayıya döndü. Örüntüler kümedeki cümlelerin **yüzey
+biçimine** kilitlenmişti; Türkçe eklemeli olduğu için bir kalıbı tek çekimiyle
+yazmak onlarca biçimini kaçırmak demekti.
+
+### 9.2 İP-19 onarımı ve maliyeti
+
+Üç ayrı onarım yapıldı: bağlam katmanındaki varlık olumsuzlaması hatası
+("burada senin gibilere yer **yok**" → temiz), nefret katmanındaki yuvarlak
+ünlü uyumu eksiği ("Katolikler bozuk**tur**" → temiz) ve örüntü kataloğunun
+çekim toleransı (4 örüntü genelleştirildi, 19 yeni kuruluş eklendi).
+
+Onarım sonrası İP-15'te F1 %98,0 — **ama küme yandı**, çünkü onarım ona
+bakılarak yapıldı. Bu, birinci ayrık kümenin başına gelenin aynısıdır ve
+tekrarlanmasına izin verilmemesi gereken bir örüntüdür.
+
+### 9.3 Üçüncü ayrık küme (İP-20, 80 örnek) — geçerli ölçüm
+
+Onarım bittikten **sonra** yazıldı; üçte biri, İP-19'da eklenen örüntülerin
+yakın-kaçışıdır.
+
+| Ölçüm | Değer |
+|---|:--:|
+| Kesinlik | **%100,0** |
+| Özgüllük | **%100,0** |
+| Duyarlılık | %50,0 |
+| F1 | %66,7 |
+| F0.5 | %83,3 |
+
+**İki ayrı sonuç.** Kesinlik genelleşiyor — üç bağımsız kümede de %100, yeni
+örüntülerin kendi yakın-kaçışlarında bile sıfır yanlış pozitif. Duyarlılık
+genelleşmiyor — 19 kaçağın 12'si hiçbir örüntü ailesinde karşılığı olmayan
+**deyimlerdir**. Bu, kural tabanlı katmanın tavanıdır.
+
+### 9.4 §7.1'in kapanışı
+
+| §7.1'de yazan | Bugünkü durum |
+|---|---|
+| "Genelleme sayımız yeniden üretilemiyor" | ✅ Kapandı — İP-20 yeniden üretilebilir: `dart run bin/evaluate.dart --genelleme2` |
+| "Yeni bir ayrık küme yazılmalı" | ✅ İki tane yazıldı (İP-15, İP-20) |
+| "Hakemler arası uyum ölçülmeli" | 🟡 Araçlar hazır, ikinci etiketleyici bekleniyor |

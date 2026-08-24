@@ -179,3 +179,37 @@ durulmaz. Öncelik sırası:
 | 14 | Erişilebilirlik değerlendirmesi | 🟨 Akışa gömülü kararlar yazıldı (`07` §5); tam değerlendirme kaldı |
 
 🟩 hazır · 🟨 kısmen · ⬜ yapılmadı
+
+
+---
+
+## 📌 Teslim sonrası durum — 24 Ağustos 2026
+
+Teknik rapor 17.00'de teslim edildi. Aynı gün, 2–7 Eylül mentörlük penceresine
+planlanan iş paketlerinin yürütülebilir olanları yürütüldü.
+
+| İP | İş | Durum | Kanıt |
+|---|---|---|---|
+| İP-15 | Bağımsız genelleme doğrulaması | 🟡 Yarısı | İkinci ayrık küme ölçüldü (F1 %55,6). Kappa için araçlar hazır, **ikinci insan** bekleniyor |
+| İP-16 | Erişilebilirlik değerlendirmesi | 🟡 Yarısı | Kontrast: **5 ihlal bulundu ve düzeltildi**, 30/30 geçiyor. Cihaz üstü denetim Flutter bekliyor |
+| İP-17 | Kimlik söz varlığının genişletilmesi | ✅ | 35 → **94 terim**, kesinlik kaybı sıfır. Ayrıca 35 yaygın hakaretin kaçtığı bulundu ve düzeltildi |
+| **İP-19** | **Genelleme onarımı** (planda yoktu) | ✅ | Bağlam katmanı hatası + ünlü uyumu eksiği + 19 yeni örüntü |
+| **İP-20** | **Üçüncü ayrık küme** (planda yoktu) | ✅ | Onarım sonrası dürüst ölçüm: kesinlik %100, F1 %66,7 |
+| İP-14 | Kullanılabilirlik testi | ⛔ | İnsan katılımcı gerekiyor |
+| İP-18 | Sunum ve demo videosu | ⛔ | **Flutter SDK bu makinede kurulu değil** |
+
+Ayrıntı: [`14_MENTORLUK_PENCERESI_SONUCLARI.md`](14_MENTORLUK_PENCERESI_SONUCLARI.md)
+· [`13_ERISILEBILIRLIK_DENETIMI.md`](13_ERISILEBILIRLIK_DENETIMI.md)
+
+### 🔴 Finale kalan tek kritik engel
+
+**Flutter SDK yeniden kurulmalı.** `flutter_windows_3.38.5-stable` klasörü bu
+makineden silinmiş. Çekirdek motor saf Dart olduğu için testler ve ölçümler
+etkilenmedi, ancak:
+
+- Mobil uygulama derlenemiyor → **20 Eylül canlı demosu risk altında**
+- İP-18 demo videosu çekilemiyor → **14 Eylül final teslimi risk altında**
+- İP-16'nın `mobile/` değişiklikleri derleyiciyle **doğrulanamadı**
+- Raporun 5 ekran görüntüsü (Şekil 6, 7, 8, 9, 10) üretilemiyor
+
+Bu, kalan takvimin en yüksek öncelikli maddesidir.
