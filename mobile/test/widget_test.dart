@@ -13,7 +13,6 @@
 // belgede değil, test hattında korunur.
 // =============================================================================
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:turkiye_mesajlasma/core/theme/app_palette.dart';
 import 'package:turkiye_mesajlasma/core/theme/app_theme.dart';

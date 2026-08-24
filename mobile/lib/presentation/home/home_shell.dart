@@ -90,13 +90,11 @@ class _BottomNav extends StatelessWidget {
     required this.currentIndex,
     required this.items,
     required this.onSelect,
-    this.badges = const {},
   });
 
   final int currentIndex;
   final List<_NavSpec> items;
   final ValueChanged<int> onSelect;
-  final Map<int, int> badges;
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +123,6 @@ class _BottomNav extends StatelessWidget {
                   child: _NavItem(
                     spec: items[i],
                     selected: currentIndex == i,
-                    badgeCount: badges[i] ?? 0,
                     onTap: () => onSelect(i),
                   ),
                 ),
@@ -142,13 +139,11 @@ class _NavItem extends StatelessWidget {
     required this.spec,
     required this.selected,
     required this.onTap,
-    this.badgeCount = 0,
   });
 
   final _NavSpec spec;
   final bool selected;
   final VoidCallback onTap;
-  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -175,39 +170,12 @@ class _NavItem extends StatelessWidget {
                 color: selected ? p.brandSoft : Colors.transparent,
                 borderRadius: AppRadius.pill,
               ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(selected ? spec.activeIcon : spec.icon,
-                      color: color, size: 23),
-                  if (badgeCount > 0)
-                    Positioned(
-                      top: -5,
-                      right: -9,
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: badgeCount > 9 ? 4 : 0),
-                        constraints:
-                            const BoxConstraints(minWidth: 16, minHeight: 16),
-                        decoration: BoxDecoration(
-                          color: p.brand,
-                          borderRadius: AppRadius.pill,
-                          border: Border.all(color: p.surface, width: 1.5),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          badgeCount > 99 ? '99+' : '$badgeCount',
-                          style: TextStyle(
-                            color: p.brandOn,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            height: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+              // Rozet katmanı KALDIRILDI: okunmamış mesaj sayacı, sohbet
+              // sekmesiyle birlikte kapsam dışına çıktı. Üç sekmenin
+              // hiçbirinde sayılacak bir şey yok; ölü kod, çalışan
+              // çekirdeğin güvenilirliğini düşürür.
+              child: Icon(selected ? spec.activeIcon : spec.icon,
+                  color: color, size: 23),
             ),
             const SizedBox(height: 3),
             AnimatedDefaultTextStyle(
