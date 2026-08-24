@@ -9,7 +9,7 @@
 //
 //   "aptalsın"                → SALDIRI          (şiddet ×1.35)
 //   "aptal değilsin"          → İLTİFAT          (şiddet ×0.15)
-//   "kendimi aptal hissettim" → ÖZ-İFADE         (şiddet ×0.25)
+//   "kendimi aptal hissettim" → ÖZ-İFADE         (şiddet ×0.20)
 //   "bana 'aptal' dedi"       → ŞİKÂYET/AKTARIM  (şiddet ×0.30)
 //   "APTALSIN!!!"             → ŞİDDETLİ SALDIRI (şiddet ×1.35×1.15×1.10)
 //
@@ -126,8 +126,27 @@ class ContextAnalyzer {
   /// Gerçek olumsuzlama zaten "değil" / "yok" ile kurulur.
   static const Set<String> _negators = {
     'degil', 'degilsin', 'degilsiniz', 'degildi', 'degilim',
-    'yok', 'asla',
+    'asla',
   };
+
+  /// VARLIK olumsuzlaması — ayrı ele alınır ve YALNIZCA bitişik konumda
+  /// olumsuzlayıcı sayılır.
+  ///
+  /// ── NEDEN AYRI (İP-19, 24 Ağustos 2026) ─────────────────────────────────
+  /// "yok" başlangıçta `_negators` içindeydi ve iki token ileriye kadar
+  /// taranıyordu. Bu, ölçümle bulunan bir kaçış yolu üretiyordu:
+  ///
+  ///   "burada senin gibilere yer YOK"     → temiz (0.00)  ✗
+  ///   "senin gibilere tahammülüm YOK"     → temiz (0.00)  ✗
+  ///
+  /// Çünkü "yok" burada saldırıyı değil, ARADAKİ BAŞKA BİR ADI olumsuzluyor
+  /// ("yer", "tahammülüm"). "değil" yüklem olumsuzlayıcısıdır ve araya
+  /// kelime alabilir ("aptal da değilsin"); "yok" ise varlık olumsuzlayıcısı
+  /// olarak doğrudan kendi adına bitişir. Bu yüzden penceresi tek token'dır:
+  ///
+  ///   "burada aptal yok"    → olumsuzlama geçerli (bitişik)
+  ///   "aptalsın, param yok" → olumsuzlama geçersiz (araya ad girmiş)
+  static const Set<String> _existentialNegators = {'yok', 'yoktur'};
 
   /// FİİL olumsuzluk çekimleri.
   ///
@@ -164,6 +183,16 @@ class ContextAnalyzer {
   static const Set<String> _pejorativeHeads = {
     'herif', 'herifin', 'herife', 'herifi', 'herifler',
     'mahluk', 'yaratik', 'moruk',
+    // İP-19: "hıyarın önde gideni", "şerefsizin tekisin" — ikinci şahıs
+    // eki yok ama yönelim aşağılayıcı tamlamanın kendisiyle kuruluyor.
+    'onde', 'gideni', 'teki', 'tekisin',
+    // İP-21 · PEKİŞTİREÇ ADLARI. Bunlar kendileri hakaret değildir; önlerine
+    // geldikleri sözcüğü bir EPİTETE çevirirler ve o sözcüğün muhataba
+    // yöneltildiğini kesinleştirirler:
+    //   "terbiyesizliğin daniskası"  ·  "yalancının âlâsı"  ·  "ezik kralı"
+    // Ölçümde "terbiyesizliğin daniskası bu" yönelim bulunamadığı için
+    // kaçıyordu — sözlük girdisi `requiresDirection` taşıyordu.
+    'daniskasi', 'daniskası', 'alasi', 'krali', 'dikalasi', 'resmen',
   };
 
   /// Aktarma fiilleri. "bana aptal DEDİ" → şikâyet, saldırı değil.
@@ -325,6 +354,15 @@ class ContextAnalyzer {
               _negators,
               backward: 1,
               forward: 2,
+            ) ||
+            // Varlık olumsuzlaması yalnızca BİTİŞİK konumda geçerlidir.
+            _windowContains(
+              tokens,
+              matchIndex,
+              spanEnd,
+              _existentialNegators,
+              backward: 0,
+              forward: 1,
             ) ||
             _hasNegativeVerb(tokens, matchIndex, spanEnd)) &&
         !_hasRhetoricalNegation(tokens, matchIndex);
