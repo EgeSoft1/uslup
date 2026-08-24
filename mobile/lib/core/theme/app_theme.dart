@@ -272,13 +272,16 @@ abstract final class AppTheme {
         labelStyle: GoogleFonts.inter(color: p.textSecondary, fontSize: 15),
         prefixIconColor: p.textTertiary,
         suffixIconColor: p.textTertiary,
+        // İP-16 · WCAG 1.4.11 — metin girdisinin sınırı işlevsel bilgidir,
+        // dekorasyon değil. Dekoratif `p.border` beyaz yüzeyde 1,28:1
+        // veriyordu; burada 3,0:1 eşiğini karşılayan belirteç kullanılır.
         border: OutlineInputBorder(
           borderRadius: AppRadius.mdAll,
-          borderSide: BorderSide(color: p.border),
+          borderSide: BorderSide(color: p.borderStrong),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.mdAll,
-          borderSide: BorderSide(color: p.border),
+          borderSide: BorderSide(color: p.borderStrong),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.mdAll,
