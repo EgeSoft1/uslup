@@ -108,6 +108,12 @@ class ContextAnalyzer {
   static const Set<String> _secondPerson = {
     'sen', 'sana', 'seni', 'senin', 'sende', 'senden', 'seninle',
     'siz', 'size', 'sizi', 'sizin', 'sizde', 'sizden', 'sizinle',
+    // İP-24: SORU EKİ ikinci şahsa yöneliktir ve ayrı bir kelimedir.
+    // Eksikliği ölçümle bulundu: "salak mısın nesin" yönelimsiz sayılıyor,
+    // dolayısıyla şiddeti düşük kalıyor ve yeniden yazıcı öbek moduna
+    // geçemeyip bozuk çıktı üretiyordu ("Yanlış mısın nesin").
+    'misin', 'mısın', 'musun', 'müsün',
+    'misiniz', 'mısınız', 'musunuz', 'müsünüz',
   };
 
   /// Birinci şahıs göstergeleri.
@@ -210,6 +216,18 @@ class ContextAnalyzer {
   ///         -sınız/-siniz/-sunuz/-sünüz → "siniz"/"sunuz"
   static const List<String> _secondPersonSuffixes = [
     'siniz', 'sunuz', 'sin', 'sun',
+    // İP-24: GÖRÜLEN GEÇMİŞ ZAMAN ikinci şahıs eki — "davrandın", "yaptın",
+    // "konuştun". Eksikliği "avanak gibi davrandın" cümlesini yönelimsiz
+    // gösteriyordu.
+    //
+    // Bu ekler ad köklerinde de görünür — "kadın", "aydın", "altın". Onları
+    // [_endsWithAny] içindeki uzunluk koşulu eler: kelime, ekten en az üç
+    // harf uzun olmak zorundadır. Üçü de beş harflidir ve eşiğin altında
+    // kalır; "davrandın" (9), "yaptın" (6), "konuştun" (8) geçer.
+    //
+    // Eşiği aşan ve fiil olmayan biçimler ("vaktin", "bulutun") ikinci şahıs
+    // İYELİK ekidir — yani yönelim göstergesi sayılmaları zaten doğrudur.
+    'din', 'dun', 'tin', 'tun',
   ];
 
   /// Birinci şahıs bildirme ekleri: -ım/-im/-um/-üm → "im"/"um"

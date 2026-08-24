@@ -77,6 +77,25 @@ abstract class RewriteSuggester {
   Future<RewriteSuggestion?> suggest(CivilityAnalysis analysis);
 }
 
+/// Yan cümlenin konuşma edimi. Öbek modunda hangi nötr kalıbın
+/// seçileceğini belirler; amaç kullanıcının NİYETİNİ korumaktır.
+enum _Edim {
+  /// "salak mısın nesin" — soru kuruluşu.
+  soru,
+
+  /// "maymun gibi davranıyorsun" — bir davranış eleştiriliyor.
+  davranis,
+
+  /// "kafasız bir öneri bu" — bir söz, yorum ya da fikir eleştiriliyor.
+  ifade,
+
+  /// "ne ahmak adamsın!" — ünlem kuruluşu.
+  unlem,
+
+  /// Hiçbiri ayırt edilemedi.
+  genel,
+}
+
 /// Metnin, kendi başına yeniden yazılabilen bir parçası.
 class _Clause {
   final int start;
@@ -109,13 +128,55 @@ class LocalRewriteSuggester implements RewriteSuggester {
   /// ama saldırıyı çıkarır. Kasıtlı olarak özür veya yumuşatma içermezler;
   /// ürünün ilkesi kullanıcıyı susturmak değil, aynı itirazı saldırmadan
   /// söyletmektir.
-  static const Map<ToxicityCategory, String> _clauseTemplate = {
-    ToxicityCategory.hakaret: 'bu konuda sana katılmıyorum',
-    ToxicityCategory.asagilama: 'bu yaklaşımı doğru bulmuyorum',
-    ToxicityCategory.kufur: 'bu durumu kabul edilemez buluyorum',
-    ToxicityCategory.tehdit: 'bu durumdan çok rahatsızım',
-    ToxicityCategory.nefret: 'bu genellemeye katılmıyorum',
-    ToxicityCategory.taciz: 'bu davranışı rahatsız edici buluyorum',
+  static const Map<ToxicityCategory, Map<_Edim, String>> _clauseTemplate = {
+    ToxicityCategory.hakaret: {
+      _Edim.soru: 'bu yaklaşımını anlamakta zorlanıyorum',
+      _Edim.davranis: 'bu davranışını doğru bulmuyorum',
+      _Edim.ifade: 'bu söylediğine katılmıyorum',
+      _Edim.unlem: 'bu tavrı hiç doğru bulmuyorum',
+      _Edim.genel: 'bu konuda sana katılmıyorum',
+    },
+    ToxicityCategory.asagilama: {
+      _Edim.soru: 'bu yaklaşımı nasıl savunduğunu anlamıyorum',
+      _Edim.davranis: 'bu davranışı yersiz buluyorum',
+      _Edim.ifade: 'bu söylediğini yersiz buluyorum',
+      _Edim.unlem: 'bu yaklaşımı hiç doğru bulmuyorum',
+      _Edim.genel: 'bu yaklaşımı doğru bulmuyorum',
+    },
+    ToxicityCategory.kufur: {
+      _Edim.soru: 'bu durumu kabul edilemez buluyorum',
+      _Edim.davranis: 'bu davranışı kabul edilemez buluyorum',
+      _Edim.ifade: 'bu söylediğini kabul edilemez buluyorum',
+      _Edim.unlem: 'bu durum kabul edilemez',
+      _Edim.genel: 'bu durumu kabul edilemez buluyorum',
+    },
+    ToxicityCategory.tehdit: {
+      _Edim.soru: 'bu durumdan çok rahatsızım',
+      _Edim.davranis: 'bu davranıştan çok rahatsızım',
+      _Edim.ifade: 'bu söylediğinden çok rahatsızım',
+      _Edim.unlem: 'bu durumdan çok rahatsızım',
+      _Edim.genel: 'bu durumdan çok rahatsızım',
+    },
+    ToxicityCategory.nefret: {
+      _Edim.soru: 'bu genellemeye katılmıyorum',
+      _Edim.davranis: 'bu yaklaşımı doğru bulmuyorum',
+      _Edim.ifade: 'bu genellemeye katılmıyorum',
+      _Edim.unlem: 'bu genellemeyi hiç doğru bulmuyorum',
+      _Edim.genel: 'bu genellemeye katılmıyorum',
+    },
+    ToxicityCategory.taciz: {
+      _Edim.soru: 'bu davranışı rahatsız edici buluyorum',
+      _Edim.davranis: 'bu davranışı rahatsız edici buluyorum',
+      _Edim.ifade: 'bu söylediğini rahatsız edici buluyorum',
+      _Edim.unlem: 'bu davranış rahatsız edici',
+      _Edim.genel: 'bu davranışı rahatsız edici buluyorum',
+    },
+  };
+
+  /// Tablodaki bütün kalıpların düz kümesi. Komşu yan cümlelerin aynı
+  /// kalıba düşüp düşmediğini denetlemek için kullanılır.
+  static final Set<String> _allTemplates = {
+    for (final byEdim in _clauseTemplate.values) ...byEdim.values,
   };
 
   /// Yerinde modda, sözlükte karşılık tanımlanmamış terimler için.
@@ -152,7 +213,7 @@ class LocalRewriteSuggester implements RewriteSuggester {
       }
 
       final rewritten = _rewriteClause(body, clause, inside);
-      final isTemplate = _clauseTemplate.containsValue(rewritten);
+      final isTemplate = _allTemplates.contains(rewritten);
 
       // İki komşu yan cümle de kalıba dönüştüyse ikincisini yutuyoruz:
       // "bu konuda sana katılmıyorum, bu konuda sana katılmıyorum" saçmadır.
@@ -203,7 +264,23 @@ class LocalRewriteSuggester implements RewriteSuggester {
     }
 
     if (dominant != null) {
-      return _clauseTemplate[dominant.category] ?? 'bu konuda sana katılmıyorum';
+      // ── ÖRÜNTÜNÜN KENDİ KARŞILIĞI ÖNCELİKLİDİR (İP-24) ────────────────────
+      // Örüntüler ve sözlük girdileri, kendilerine özgü bir nötr karşılık
+      // tanımlayabilir ("göç politikası hakkında farklı düşünüyorum",
+      // "bu konu karmaşık"). Bunlar kategori kalıbından DAHA İYİDİR: yazar,
+      // o kuruluşun ne söylemeye çalıştığını bilerek yazmıştır.
+      //
+      // Önceki hâlde bu karşılıklar öbek modunda tamamen atılıyordu —
+      // üstelik öbek moduna geçme sebeplerinden biri tam da karşılığın çok
+      // kelimeli olmasıydı. Yani karşılık ne kadar iyi yazılmışsa o kadar
+      // kesin çöpe gidiyordu.
+      final ozel = dominant.neutralAlternative?.trim();
+      if (ozel != null && ozel.contains(' ')) return ozel;
+
+      final byEdim = _clauseTemplate[dominant.category];
+      if (byEdim == null) return 'bu konuda sana katılmıyorum';
+      final edim = _edimOf(body);
+      return byEdim[edim] ?? byEdim[_Edim.genel]!;
     }
 
     // Yerinde mod: sondan başa doğru değiştir ki henüz işlenmemiş bulguların
@@ -218,6 +295,72 @@ class LocalRewriteSuggester implements RewriteSuggester {
       result = result.replaceRange(from, to, _inlineReplacement(f));
     }
     return result;
+  }
+
+  // ── KONUŞMA EDİMİ ÇIKARIMI (İP-24) ────────────────────────────────────────
+  // Öbek modunda kategori başına TEK kalıp vardı ve sonuç ölçümle görüldü:
+  // 133 saldırı örneğinin büyük çoğunluğu aynı cümleye — "bu konuda sana
+  // katılmıyorum" — çöküyordu. Sayısal kapı bunu göremez çünkü yalnızca
+  // toksisiteye bakar ve kalıp her seferinde 100 puan alır.
+  //
+  // Ama ürünün vaadi "toksisiteyi düşürmek" değil, kullanıcının SÖYLEMEK
+  // İSTEDİĞİNİ saldırmadan söyletmektir. Beş farklı hakarete beş aynı cevap
+  // veren bir katman, kullanıcının niyetini silmiş olur:
+  //
+  //   "maymun gibi davranıyorsun"  → bir DAVRANIŞ eleştirisi
+  //   "salak mısın nesin"          → bir SORU
+  //   "kafasız bir öneri bu"       → bir İFADE eleştirisi
+  //
+  // Üçü de aynı cümleye çıkarsa kullanıcı öneriyi kullanmaz.
+  //
+  // Çözüm rastgelelik DEĞİLDİR — rastgele seçim yeniden üretilemez ve test
+  // edilemez. Kalıp, yan cümlenin konuşma ediminden BELİRLENİMCİ olarak
+  // seçilir: aynı girdi her zaman aynı öneriyi verir.
+
+  /// Soru eki biçimleri. Ünlü uyumunun dört hâli de alınır.
+  static const Set<String> _soruEki = {
+    'mi', 'mı', 'mu', 'mü',
+    'misin', 'mısın', 'musun', 'müsün',
+    'misiniz', 'mısınız', 'musunuz', 'müsünüz',
+  };
+
+  /// Bir DAVRANIŞ eleştirildiğinde geçen kökler.
+  static const List<String> _davranisKokleri = [
+    'davran', 'yapıyor', 'yaptın', 'yapıyorsun', 'ediyorsun', 'edersin',
+    'konuş', 'hareket', 'tavır', 'tavr', 'davranış',
+  ];
+
+  /// Bir İFADE (söz, yorum, fikir) eleştirildiğinde geçen kökler.
+  static const List<String> _ifadeKokleri = [
+    'yorum', 'öneri', 'fikir', 'laf', 'söz', 'cümle', 'açıklama', 'iddia',
+    'diyorsun', 'dediğin', 'yazdığın', 'yazıyorsun', 'üslup', 'üslubun',
+  ];
+
+  /// Yan cümlenin konuşma edimi.
+  _Edim _edimOf(String clause) {
+    final lower = TurkishMorphology.toLowerTr(clause);
+
+    if (lower.contains('!')) return _Edim.unlem;
+
+    final words = lower
+        .split(RegExp(r'[^\wçğıöşü]+'))
+        .where((w) => w.isNotEmpty)
+        .toList();
+
+    if (lower.contains('?')) return _Edim.soru;
+    for (final w in words) {
+      if (_soruEki.contains(w)) return _Edim.soru;
+    }
+    // "ne ahmak adamsın" — ünlem kuruluşu, ünlem işareti olmadan.
+    if (words.isNotEmpty && words.first == 'ne') return _Edim.unlem;
+
+    for (final kok in _davranisKokleri) {
+      if (lower.contains(kok)) return _Edim.davranis;
+    }
+    for (final kok in _ifadeKokleri) {
+      if (lower.contains(kok)) return _Edim.ifade;
+    }
+    return _Edim.genel;
   }
 
   /// İkinci şahıs zamirleri — yan cümlenin bir kişiyi hedefleyip
@@ -253,10 +396,21 @@ class LocalRewriteSuggester implements RewriteSuggester {
       if (_secondPersonPronouns.contains(word)) return true;
       if (_personNouns.contains(word)) return true;
 
+      // Soru eki ikinci şahsa yöneliktir: "sersem misin nesin".
+      if (_soruEki.contains(word)) return true;
+
       // İkinci şahıs çekimi taşıyan herhangi bir kelime: "yapıyorsun",
       // "adamsın", "konuşuyorsunuz". Fiil de olabilir, ad da.
+      //
+      // İP-24: GÖRÜLEN GEÇMİŞ ZAMAN eki de eklendi ("davrandın", "yaptın",
+      // "konuştun"). Eksikliği ölçümde bozuk çıktı üretiyordu:
+      //   "avanak gibi davrandın" → "Yanlış gibi davrandın"
+      // Yan cümle kişiyi hedeflemiyor sayıldığı için kelime ikamesi
+      // yapılıyor, oysa sıfat bir KİŞİ benzetmesinin içinde.
       for (final s in const ['sın', 'sin', 'sun', 'sün',
-                             'sınız', 'siniz', 'sunuz', 'sünüz']) {
+                             'sınız', 'siniz', 'sunuz', 'sünüz',
+                             'dın', 'din', 'dun', 'dün',
+                             'tın', 'tin', 'tun', 'tün']) {
         if (word.length > s.length + 1 && word.endsWith(s)) return true;
       }
     }
@@ -337,6 +491,21 @@ class LocalRewriteSuggester implements RewriteSuggester {
 
     for (var i = 0; i < text.length; i++) {
       if (!'.!?,;:'.contains(text[i])) continue;
+
+      // ── GİZLEME NOKTASI YAN CÜMLE AYIRICISI DEĞİLDİR (İP-24) ─────────────
+      // Kullanıcılar süzgeçten kaçmak için harflerin arasına noktalama
+      // serpiştirir: "a.p.t.a.l", "s-a-l-a-k". Normalleştirici bunu çözer ve
+      // motor tek bir bulgu üretir, ama yeniden yazıcı metni HAM hâliyle
+      // parçalıyordu:
+      //
+      //   "a.p.t.a.l mısın" → 5 yan cümle → nötr karşılık 5 kez yazılıyordu
+      //   sonuç: "Yanlış.yanlış.yanlış.yanlış.yanlış mısın"
+      //
+      // Gerçek bir cümle sınırı, ayırıcıdan sonra boşluk ya da metin sonu
+      // ister. Harf-nokta-harf dizisi bir sınır değildir.
+      final sonrasi = i + 1 < text.length ? text[i + 1] : ' ';
+      final ayiriciMi = ' \t\n.!?,;:'.contains(sonrasi);
+      if (!ayiriciMi) continue;
 
       // Ayırıcıyı ve ardındaki boşluğu topla.
       var end = i;
