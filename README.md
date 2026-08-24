@@ -129,6 +129,7 @@ dart test                          # çekirdek testler
 dart run bin/evaluate.dart --hepsi # tüm metrikler
 dart run bin/evaluate.dart --karsilastir  # katman katkısı A/B
 dart run bin/evaluate.dart --genelleme3   # geçerli genelleme ölçümü (İP-22)
+dart run bin/rewrite_audit.dart --hepsi   # öneri kalitesi: çeşitlilik + dilbilgisi
 
 # Gecikme ölçümü — ÜRÜN sayısı için AOT derleyin
 dart compile exe bin/benchmark.dart -o benchmark.exe && ./benchmark.exe
@@ -212,6 +213,9 @@ packages/civility_core/lib/src/
 - Kimlik söz varlığı 94 terimdir (İP-17'de 35'ten genişletildi); siyasi
   görüş **kasıtlı olarak** kapsam dışıdır — korunan nitelik değildir.
 - Tüm veri sentetiktir; hiçbir örnek gerçek kullanıcıdan gelmemiştir.
+- **Öneri çeşitliliği sınırlı.** En sık öneri, üretilen tüm önerilerin
+  %28,9'unu kaplıyor. Daha ileri gitmek her örüntüye kendi nötr karşılığını
+  yazmayı gerektirir — algoritma işi değil, veri işi.
 - Yalnızca Türkçe desteklenmektedir.
 - Bir Büyük Dil Modeli **kullanılmamaktadır** — yazılmış, ölçülmüş ve kasıtlı
   olarak kaldırılmıştır. Gerekçe: [`docs/03_LLM_SERVISI.md`](docs/03_LLM_SERVISI.md)

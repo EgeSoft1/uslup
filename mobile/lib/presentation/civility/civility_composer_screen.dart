@@ -558,9 +558,8 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
           Expanded(
             child: Text(
               'Model: ${_engine.modelName}\n'
-              'Ölçülen doğruluk: kesinlik %100 · F1 %66,7
-'
-              '(İP-20 ayrık küme, 80 örnek · toplam 516 etiketli)',
+              'Ölçülen doğruluk: kesinlik %100 · F1 %70,4\n'
+              '(İP-22 ayrık küme, 65 örnek · toplam 581 etiketli)',
               style: TextStyle(
                   fontSize: 11.5, color: p.textTertiary, height: 1.45),
             ),

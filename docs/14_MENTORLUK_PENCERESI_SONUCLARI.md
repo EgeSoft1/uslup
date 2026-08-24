@@ -427,15 +427,32 @@ dart run tool/erisilebilirlik_denetimi.dart   # İP-16, Flutter gerektirmez
 |---|---|---|
 | İP-14 · Kullanılabilirlik testi (5 katılımcı) | Yapılmadı | İnsan katılımcı gerekiyor; protokol hazır (`docs/10`) |
 | İP-15 · Cohen's kappa | Yapılmadı | İkinci etiketleyici gerekiyor; **araçlar hazır** |
-| İP-16 · Cihaz üstü ekran okuyucu denetimi | Yapılmadı | Flutter SDK bu makinede kurulu değil |
-| Demo videosu / canlı demo derlemesi | Yapılmadı | Flutter SDK bu makinede kurulu değil |
+| İP-16 · Cihaz üstü ekran okuyucu denetimi | Yapılmadı | Gerçek cihazda TalkBack/VoiceOver oturumu gerekiyor |
+| İP-18 · Demo videosu | Yapılmadı | Derleme engeli kalktı; çekilebilir |
 
-> 🔴 **Kritik uyarı.** Flutter SDK bu makineden kaldırılmış durumda
-> (`flutter_windows_3.38.5-stable` klasörü artık yok). Çekirdek motor saf
-> Dart olduğu için ölçümler ve testler etkilenmedi, ancak **mobil uygulama
-> derlenemiyor**. 14 Eylül final teslimi ve 20 Eylül canlı demo için Flutter
-> yeniden kurulmalıdır. Bu belgedeki `mobile/` değişiklikleri (İP-16 palet ve
-> ekran okuyucu düzenlemeleri) **derleyiciyle doğrulanmamıştır.**
+### ✅ Derleme engeli kaldırıldı — 25 Ağustos 2026
+
+Flutter SDK bu makineden silinmişti; mobil uygulama derlenemiyordu ve
+14 Eylül final teslimi ile 20 Eylül canlı demosu risk altındaydı.
+
+**Flutter 3.47.1 kuruldu** (Dart 3.13.1 — bağımsız Dart SDK'sıyla aynı sürüm,
+yani çekirdek paket iki ortamda da birebir aynı derleniyor).
+
+| Denetim | Sonuç |
+|---|---|
+| `flutter analyze` | **Temiz** |
+| `flutter test` | **12 test geçiyor** |
+| Sürüm | 3.47.1 · stable · Android SDK 36.1.0 mevcut |
+
+**Doğrulama boşuna değildi.** Derleyici, elle yapılmış bir düzenlemede oluşan
+**kapanmamış dize hatasını** yakaladı (`civility_composer_screen.dart:561`).
+Statik ölçüm ve saf Dart testleri o hatayı göremezdi; uygulama hiç
+açılmayacaktı. Ayrıca sohbet sekmesiyle birlikte anlamsızlaşan rozet
+katmanının ölü kod olarak kaldığı görüldü ve temizlendi.
+
+> **Ders.** "Derleyiciyle doğrulanmadı" uyarısı bir formalite değildi. Beş
+> ayrık küme ve 258 saf Dart testi, mobil katmandaki tek satırlık bir sözdizim
+> hatasını göremez.
 
 
 ---
@@ -705,3 +722,136 @@ Ayrıca iki yapısal değişmez kilitlendi:
 | Kare bütçesinin p99'da kullanılan oranı | **%9,1** |
 
 Yeniden üretme: `dart compile exe bin/benchmark.dart -o benchmark.exe && ./benchmark.exe`
+
+
+---
+
+## 11. İP-24 · Yeniden yazıcı — ürünün vaadi ilk kez ölçüldü
+
+### 11.1 Neden bakıldı
+
+Ürünün vaadi iki cümledir: *saldırgan ifadeyi gönderilmeden önce yakala* ve
+*daha yapıcı bir alternatif öner*. Birinci yarı beş ayrık kümede ölçüldü.
+**İkinci yarı hiç ölçülmemişti.**
+
+Elde yalnızca bir kapsam sayısı vardı ("öneri üretilebildi: 132/133") ve bu
+sayı hiçbir şey söylemiyor: öneri üretilmiş olması, önerinin işe yaradığı
+anlamına gelmez.
+
+### 11.2 İki kusur — ikisi de doğrulama kapısının kör noktasında
+
+Yeniden yazıcının bir doğrulama kapısı var: üretilen öneri motordan geçirilir
+ve orijinalden daha temiz değilse atılır. Kapı **yalnızca toksisiteye** bakar.
+Bu, iki kusuru birden görünmez kılıyordu.
+
+#### 🔴 Kusur 1 — kalıp çöküşü
+
+Öbek modunda kategori başına **tek bir** nötr kalıp vardı. Sonuç:
+
+```
+"maymun gibi davranıyorsun"  →  "Bu konuda sana katılmıyorum"
+"domuz herif"                →  "Bu konuda sana katılmıyorum"
+"eşeksin sen"                →  "Bu konuda sana katılmıyorum"
+"öküz gibisin"               →  "Bu konuda sana katılmıyorum"
+"köpeksin sen resmen"        →  "Bu konuda sana katılmıyorum"
+```
+
+Toksisite her seferinde 100 puan alıyordu; kapı "başarılı" diyordu. Ama ürünün
+vaadi toksisiteyi düşürmek değil, kullanıcının **söylemek istediğini**
+saldırmadan söyletmektir. Üç ayrı konuşma edimi tek cevaba çöküyordu:
+
+| Girdi | Ne söylüyor | Eski öneri |
+|---|---|---|
+| "maymun gibi davranıyorsun" | bir **davranış** eleştirisi | Bu konuda sana katılmıyorum |
+| "salak mısın nesin" | bir **soru** | Bu konuda sana katılmıyorum |
+| "kafasız bir öneri bu" | bir **ifade** eleştirisi | Bu konuda sana katılmıyorum |
+
+Beş farklı eleştiriye beş aynı cevap veren bir katmanı kullanıcı kullanmaz —
+ve jüri demosunda bu, tek denemede görülür.
+
+#### 🔴 Kusur 2 — bozuk çıktı
+
+Kelime ikamesi, sıfat bir **kişi benzetmesinin** içindeyken dilbilgisini
+bozuyordu:
+
+```
+"avanak gibi davrandın"  →  "Yanlış gibi davrandın"                    ✗
+"sersem misin nesin"     →  "Yanlış mısın nesin"                       ✗
+"a.p.t.a.l mısın"        →  "Yanlış.yanlış.yanlış.yanlış.yanlış mısın" ✗
+```
+
+Üçünün de toksisitesi sıfırdır ve kapıdan geçerler.
+
+### 11.3 Kök nedenler — yeniden yazıcıda değil, iki katman aşağıda
+
+**(a) Bağlam katmanı ikinci şahsı eksik tanıyordu.** Soru eki ("mısın") ve
+görülen geçmiş zaman eki ("davrandın") ikinci şahıs göstergesi sayılmıyordu.
+Bu yüzden `isDirected` yanlış çıkıyor, yeniden yazıcı öbek moduna geçemiyor
+ve kelime ikamesi yapmaya çalışıyordu.
+
+Bu düzeltmenin ikinci bir faydası var: yönelim doğru hesaplandığı için bu
+cümlelerin **şiddeti de** artık doğru.
+
+**(b) Yan cümle ayırıcısı gizleme noktalarını cümle sonu sanıyordu.**
+Kullanıcılar süzgeçten kaçmak için harf aralarına noktalama serper
+("a.p.t.a.l"). Normalleştirici bunu çözüyor ve motor tek bir bulgu üretiyor,
+ama yeniden yazıcı metni **ham** hâliyle parçalıyordu: beş yan cümle, beş
+ayrı ikame. Gerçek bir cümle sınırı, ayırıcıdan sonra boşluk ya da metin sonu
+ister.
+
+**(c) Örüntülerin kendi karşılıkları çöpe gidiyordu.** Örüntüler ve sözlük
+girdileri kendilerine özgü nötr karşılık tanımlayabiliyor ("göç politikası
+hakkında farklı düşünüyorum"). Öbek modunda bunlar tamamen atılıyor, yerine
+genel kategori kalıbı konuyordu — üstelik öbek moduna geçme sebeplerinden
+biri tam da karşılığın çok kelimeli olmasıydı. Yani **karşılık ne kadar iyi
+yazılmışsa o kadar kesin çöpe gidiyordu.**
+
+### 11.4 Onarım
+
+**Konuşma edimi çıkarımı.** Kalıp tablosu kategori × edim matrisine
+dönüştürüldü. Edim, yan cümlenin kendisinden **belirlenimci** olarak
+çıkarılır — rastgele seçim çeşitlilik üretirdi ama yeniden üretilemez ve
+test edilemez olurdu.
+
+| Edim | İşaret | Örnek kalıp (hakaret) |
+|---|---|---|
+| soru | soru eki ya da `?` | "bu yaklaşımını anlamakta zorlanıyorum" |
+| davranış | davran-, yap-, konuş-, tavır | "bu davranışını doğru bulmuyorum" |
+| ifade | yorum, öneri, fikir, söz, üslup | "bu söylediğine katılmıyorum" |
+| ünlem | `!` ya da "ne …" kuruluşu | "bu tavrı hiç doğru bulmuyorum" |
+| genel | — | "bu konuda sana katılmıyorum" |
+
+Ayrıca **örüntünün kendi karşılığı kategori kalıbını ezer.**
+
+### 11.5 Ölçüm
+
+`bin/rewrite_audit.dart` yeniden yazıldı ve artık çeşitlilik ile dilbilgisi
+şüphesini sayıya çeviriyor. Beş kümenin tamamında, 287 öneri üzerinden:
+
+| Ölçüm | Onarım öncesi | Onarım sonrası |
+|---|:--:|:--:|
+| Kapsam (öneri üretilebilen) | 287 / 288 | 287 / 288 |
+| Benzersiz öneri | 73 | **80** |
+| Çeşitlilik oranı | %25,4 | **%27,9** |
+| En sık önerinin payı | %32,8 | **%28,9** |
+| **Dilbilgisi şüphesi taşıyan çıktı** | **5** | **0** |
+
+> **Not.** Çeşitlilik ilk düzeltmeden sonra geçici olarak %23,0'e düştü:
+> bozuk çıktılar "benzersiz" sayılıyordu ve düzelince kalıba dönüştüler.
+> Doğruluk uğruna sahte çeşitlilik kaybedildi; sonra örüntü karşılıklarının
+> önceliklendirilmesiyle gerçek çeşitlilik %27,9'a çıktı.
+
+Denetim aracı artık **çıkış kodu** da döndürüyor: tek bir öneri örneklerin
+yarısından fazlasını kaplarsa ya da dilbilgisi şüphesi varsa sıfırdan farklı
+döner. Yani kalıp çöküşü sessizce geri gelemez.
+
+`test/rewrite_quality_test.dart` beş bozuk vakayı, konuşma edimi ayrımını,
+belirlenimciliği ve çeşitlilik eşiğini kilitler.
+
+### 11.6 Kalan sınır
+
+En sık öneri hâlâ tüm çıktıların **%28,9**'unu kaplıyor. Bunun sebebi örüntü
+katmanının çoğu bulgusunun `asagilama` kategorisinde ve belirgin bir konuşma
+edimi işareti taşımaması. Daha ileri gitmenin yolu her örüntüye kendi nötr
+karşılığını yazmaktır — bu bir veri işidir, algoritma işi değil, ve açıkça
+kayıtlıdır.

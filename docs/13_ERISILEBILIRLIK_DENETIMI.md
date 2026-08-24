@@ -176,7 +176,13 @@ karşılandı diye sunmamalıdır:
 | 4.1.2 Ad, Rol, Değer | Kısmen | Puan halkası düzeltildi; diğer bileşenler denetlenmedi |
 | Ekran okuyucu ile uçtan uca oturum | Yapılmadı | TalkBack/VoiceOver ile cihazda test gerekir |
 
-> 🔴 **Engel.** Flutter SDK bu makinede kurulu değil. Bu belgedeki palet ve
-> `Semantics` değişiklikleri **derleyiciyle doğrulanmamıştır**; kontrast
-> ölçümleri ise saf Dart olduğu için doğrulanmıştır. Cihaz üstü denetim,
-> Flutter yeniden kurulduğunda yapılmalıdır.
+> ✅ **Engel kalktı (25 Ağustos 2026).** Flutter 3.47.1 kuruldu; bu belgedeki
+> palet ve `Semantics` değişiklikleri artık **derleyiciyle doğrulanmıştır**:
+> `flutter analyze` temiz, 12 arayüz testi geçiyor.
+>
+> Doğrulama boşuna değildi — derleyici, elle yapılan bir düzenlemede oluşan
+> kapanmamış dize hatasını (`civility_composer_screen.dart:561`) yakaladı.
+> Statik ölçüm o hatayı göremezdi; uygulama hiç açılmayacaktı.
+>
+> Cihaz üstü ekran okuyucu denetimi (TalkBack/VoiceOver) **hâlâ yapılmadı**:
+> gerçek bir cihazda oturum gerektirir.

@@ -201,15 +201,26 @@ planlanan iş paketlerinin yürütülebilir olanları yürütüldü.
 Ayrıntı: [`14_MENTORLUK_PENCERESI_SONUCLARI.md`](14_MENTORLUK_PENCERESI_SONUCLARI.md)
 · [`13_ERISILEBILIRLIK_DENETIMI.md`](13_ERISILEBILIRLIK_DENETIMI.md)
 
-### 🔴 Finale kalan tek kritik engel
+### ✅ Kritik engel kaldırıldı — 25 Ağustos 2026
 
-**Flutter SDK yeniden kurulmalı.** `flutter_windows_3.38.5-stable` klasörü bu
-makineden silinmiş. Çekirdek motor saf Dart olduğu için testler ve ölçümler
-etkilenmedi, ancak:
+**Flutter 3.47.1 kuruldu** (`C:\Users\egeme\flutter`, PATH kalıcı).
+Bundan sonrası artık mümkün:
 
-- Mobil uygulama derlenemiyor → **20 Eylül canlı demosu risk altında**
-- İP-18 demo videosu çekilemiyor → **14 Eylül final teslimi risk altında**
-- İP-16'nın `mobile/` değişiklikleri derleyiciyle **doğrulanamadı**
-- Raporun 5 ekran görüntüsü (Şekil 6, 7, 8, 9, 10) üretilemiyor
+| Daha önce engelliydi | Durum |
+|---|---|
+| Mobil uygulamanın derlenmesi | ✅ `flutter analyze` temiz, 12 test geçiyor |
+| İP-16'nın `mobile/` değişikliklerinin doğrulanması | ✅ Doğrulandı — ve bir **derleme hatası yakalandı** |
+| Raporun 5 ekran görüntüsü (Şekil 6–10) | ✅ Artık alınabilir |
+| İP-18 demo videosu | ✅ Artık çekilebilir |
 
-Bu, kalan takvimin en yüksek öncelikli maddesidir.
+Derleyici, elle yapılmış bir düzenlemede oluşan kapanmamış dize hatasını
+yakaladı. 258 saf Dart testi ve beş ayrık küme onu göremezdi.
+
+### 🟡 Kalan iki iş — ikisi de İNSAN gerektiriyor
+
+| İş | Neden bekliyor |
+|---|---|
+| İP-14 · Kullanılabilirlik testi | 5 katılımcı gerekiyor; protokol hazır (`docs/10`) |
+| İP-15 · Cohen's kappa | İkinci etiketleyici gerekiyor; araçlar hazır (`bin/annotate_export.dart`, `bin/kappa.dart`) |
+
+İkisi de yazılımla çözülemez; kod tarafında yapılacak bir şey kalmadı.
