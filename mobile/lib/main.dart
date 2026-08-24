@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
-import 'presentation/splash/splash_screen.dart';
+import 'presentation/home/home_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +45,7 @@ class NSosyalApp extends StatelessWidget {
                 child: child!,
               );
             },
-            home: const SplashScreen(),
+            home: const HomeShell(),
           );
         },
       ),

@@ -18,12 +18,9 @@ import 'package:flutter/services.dart';
 
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/widgets/app_surfaces.dart';
-import '../call/calls_history_screen.dart';
 import '../civility/civility_composer_screen.dart';
-import '../contacts/contacts_screen.dart';
-import '../conversations/conversations_screen.dart';
-import '../settings/settings_screen.dart';
+import '../community/community_health_screen.dart';
+import '../settings/about_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initialIndex = 0});
@@ -38,22 +35,16 @@ class _HomeShellState extends State<HomeShell> {
   late int _currentIndex = widget.initialIndex;
 
   static const List<Widget> _screens = [
-    ConversationsScreen(),
     CivilityComposerScreen(),
-    CallsHistoryScreen(),
-    ContactsScreen(),
-    SettingsScreen(),
+    CommunityHealthScreen(),
+    AboutScreen(),
   ];
 
   static const List<_NavSpec> _items = [
-    _NavSpec(Icons.chat_bubble_outline_rounded, Icons.chat_bubble_rounded, 'Sohbetler'),
     _NavSpec(Icons.shield_outlined, Icons.shield_rounded, 'Nezaket'),
-    _NavSpec(Icons.call_outlined, Icons.call_rounded, 'Aramalar'),
-    _NavSpec(Icons.people_outline_rounded, Icons.people_rounded, 'Kişiler'),
-    _NavSpec(Icons.settings_outlined, Icons.settings_rounded, 'Ayarlar'),
+    _NavSpec(Icons.insights_outlined, Icons.insights_rounded, 'Topluluk'),
+    _NavSpec(Icons.info_outline_rounded, Icons.info_rounded, 'Hakkında'),
   ];
-
-  final int _unreadCount = 3;
 
   void _select(int index) {
     if (_currentIndex == index) return;
@@ -75,7 +66,6 @@ class _HomeShellState extends State<HomeShell> {
         bottomNavigationBar: _BottomNav(
           currentIndex: _currentIndex,
           items: _items,
-          badges: {0: _unreadCount},
           onSelect: _select,
         ),
       ),
@@ -236,11 +226,3 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// Sekme ekranlarının liste altına bırakması gereken boşluk.
-///
-/// Artık `Scaffold` alt çubuğu kendisi hesapladığı için bu sıfırdır; sabit
-/// yalnızca eski çağrı yerlerini tek noktadan nötrlemek için duruyor.
-const double kBottomNavClearance = AppSpacing.base;
-
-/// Boş liste durumlarında kullanılmak üzere yeniden dışa açılır.
-typedef HomeEmptyState = AppEmptyState;

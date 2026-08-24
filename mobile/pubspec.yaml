@@ -17,22 +17,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Nezaket motoru — saf Dart, Flutter'sız. Sunucu (server/) ile ORTAK.
-  # Tek kaynak: cihaz ile bulut aynı sınıflandırıcıyı çağırır.
+  # Nezaket motoru — saf Dart, Flutter'sız, harici bağımlılığı yok.
+  # Mobil istemci, komut satırı değerlendirme aracı ve testler AYNI paketi
+  # çağırır; farklı ortamların farklı karar vermesi mümkün değildir.
   civility_core:
     path: ../packages/civility_core
 
   # UI / UX
   cupertino_icons: ^1.0.6
-  cached_network_image: ^3.3.1
   flutter_animate: ^4.5.0
   google_fonts: ^6.2.1
-
-  # QR Kod (oluşturma ve tarama)
-  qr_flutter: ^4.1.0
-  mobile_scanner: ^6.0.0
-  pinput: ^6.0.2
-  country_picker: ^2.0.28
 
 # ── KALDIRILAN BAĞIMLILIKLAR (3 Ağustos 2026) ────────────────────────────────
 # Aşağıdakiler devralınan mesajlaşma altyapısından kalmıştı ve hiçbir yerde
@@ -44,6 +38,15 @@ dependencies:
 #                              etmiyordu, tamamen sahte bir modüldü
 #   web_socket_channel, uuid — yalnızca ölü WebSocket katmanında
 #   protobuf                 — sıfır import
+#
+# ── KALDIRILAN BAĞIMLILIKLAR (24 Ağustos 2026) ───────────────────────────────
+# Devralınan mesajlaşma arayüzü (sohbet, arama, kişiler, kimlik doğrulama,
+# ayarlar) tamamen silindi; ürün yalnızca Sosyal Yapay Zekâ katmanından
+# oluşuyor. Bu ekranlarla birlikte gereksiz kalan paketler:
+#
+#   cached_network_image     — yalnızca kişi avatarlarında
+#   qr_flutter, mobile_scanner — yalnızca QR ile kişi ekleme
+#   pinput, country_picker   — yalnızca SMS doğrulama akışında
 #
 # Bağlı olmayan katmanlar, çalışan çekirdeğin güvenilirliğini düşürür.
 # Gerektiğinde geri eklenebilir: git geçmişinde duruyorlar.
@@ -58,7 +61,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-    - assets/sounds/
 
 flutter_launcher_icons:
   android: "launcher_icon"
