@@ -56,7 +56,7 @@ Aynı metne iki jüri farklı puan verir.
 
 | # | İş | Etkilediği madde | Kaybedilebilecek |
 |---|---|---|---|
-| 1 | **8 şekli yerleştir.** Çapalar ve alt yazılar metinde hazır; yalnızca görseli koy | 3.3 (akış + arayüz kararı), 7.1 (görsel şema) | **3–4 puan** |
+| 1 | **10 şekli yerleştir.** Çapalar ve alt yazılar metinde hazır; beşi çizim olarak üretildi, yalnızca görseli koy | 3.3 (akış + arayüz kararı), 7.1 (görsel şema) | **3–4 puan** |
 | 2 | **Kara listeye uy.** Mesajlaşma uygulaması ekranları ve telefon numaralı SMS ekranı rapora girmeyecek | 1.2, 2.2, 4.3 — "proje aslında ne?" karışıklığı | **2–5 puan** |
 | 3 | **Biçim kuralları.** Arial 12 / Arial Black 14 / 1.15 / iki yana yaslı / 2,5 cm / ≤30 sayfa | Tümü | **Eleme riski** |
 | 4 | **Şablonun son iki sayfasını ve talimat paragraflarını sil** | Tümü | **Eleme riski** |

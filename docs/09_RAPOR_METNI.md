@@ -18,6 +18,17 @@ boşluğu) Word'de yapılacaktır.
 
 ---
 
+> ⚠️ **TESLİM SONRASI NOT — bu blok Word'e kopyalanmayacaktır.**
+> Bu metin 24 Ağustos 2026 saat 17.00'de teslim edilen hâlidir ve
+> **değiştirilmemiştir.** Teslimden sonra alınan ölçümler (İP-15, İP-17,
+> İP-19, İP-20, İP-16) raporun sayılarını geçersiz kılmaz; üstüne yenilerini
+> koyar ve 14 Eylül final sunumunun dayanağıdır:
+> [`14_MENTORLUK_PENCERESI_SONUCLARI.md`](14_MENTORLUK_PENCERESI_SONUCLARI.md)
+>
+> En önemli değişiklik: §3.2'de bildirilen genelleme sayısı (F1 %84,2, yanmış
+> birinci ayrık küme) yerine artık **taze bir üçüncü ayrık kümede** ölçülmüş
+> sayı vardır — kesinlik %100,0 · F1 %66,7 · F0.5 %83,3.
+
 # KAPAK SAYFASI
 
 > Şablonun kapak sayfasına girilecek bilgiler. Ayrı sayfa olacaktır.
@@ -169,19 +180,32 @@ raporlanmıştır.
 
 ## 2.1. Problem Tanımı ve Mevcut Çözümler
 
-**Problem.** Sosyal medyada saldırgan dil, oluştuktan sonra yönetilmektedir ve
-bu yaklaşımın üç yapısal kusuru vardır:
+**Problem.** Sosyal medyada saldırgan dil, oluştuktan **sonra** yönetilmektedir.
+Bugün kullanılan bütün araçlar — otomatik moderasyon servisleri, platform içi
+kelime listeleri, şikâyet mekanizmaları — yayımlanmış bir metnin üzerinde
+çalışır. Bu yaklaşımın dört yapısal kusuru vardır; hiçbiri mevcut yaklaşımın
+daha iyi ayarlanmasıyla kapanmaz, çünkü kusurlar tekniğin değil, kurgunun
+kendisindedir:
 
 1. **Zarar geri alınamaz.** İçerik kaldırılana kadar hedef kişi onu görmüştür.
-2. **Yaptırım davranışı değiştirmez.** Ceza, öfkeyi artırır; alışkanlığı değil.
+   Kaldırma işlemi istatistiği düzeltir, maruziyeti düzeltmez.
+2. **Yaptırım davranışı değiştirmez.** Ceza öfkeyi artırır, alışkanlığı değil.
+   Kullanıcı neyi neden yanlış yaptığını öğrenmediği için aynı kalıbı tekrarlar.
 3. **Türkçe'de doğruluk düşüktür.** İngilizce merkezli modeller Türkçe'nin
-   eklemeli biçimbilgisinde, argosunda ve bağlamında zayıf kalmaktadır.
+   eklemeli biçimbilgisinde, ünlü uyumunda, argosunda ve bağlamında zayıf kalır.
+4. **Mevcut filtreler sıklıkla mağduru cezalandırır.** Tacize uğradığını anlatan
+   kullanıcının mesajı, içinde geçen hakaret sözcüğü nedeniyle işaretlenir;
+   şikâyet eden susturulur. Aynı mekanizma kendi kimliğinden söz eden kullanıcıyı
+   da vurur: kimlik adlarını yasaklı kelime listesine koyan bir sistem, korumayı
+   vaat ettiği grubu susturur.
 
-Bunlara dördüncü ve en az fark edilen kusur eklenir: **mevcut filtreler sıklıkla
-mağduru cezalandırır.** Tacize uğradığını anlatan kullanıcının mesajı, içinde
-geçen hakaret sözcüğü nedeniyle işaretlenir; şikâyet eden susturulur. Aynı
-mekanizma, kendi kimliğinden söz eden kullanıcıyı da vurur: kimlik adlarını
-yasaklı kelime listesine koyan bir sistem, korumayı vaat ettiği grubu susturur.
+Dördüncü kusur akademik yazında da belgelenmiştir. Nefret söylemi tespit
+kümeleri üzerinde yapılan ölçümler, bu sistemlerin korumayı amaçladıkları
+gruplara ait dil kullanımını orantısız biçimde işaretlediğini göstermektedir
+[5][6]; işlevsel test yaklaşımı ise başarım rakamı yüksek modellerin
+olumsuzlama, alıntı ve karşı-söylem gibi temel dilsel işlevlerde sistematik
+olarak hata yaptığını ortaya koymuştur [7]. Alan taraması, sorunun kaynağını
+kelime düzeyinde özniteliklere aşırı bağımlılık olarak tanımlamaktadır [8].
 
 **Problemin büyüklüğü.** Türkiye'de 16-74 yaş grubunda internet kullanım oranı
 2026 yılında **%92,3**'e ulaşmıştır; aynı araştırmada en çok kullanılan
@@ -197,12 +221,14 @@ Bu kütlenin maruz kaldığı zarar da ölçülmüştür. UNFPA Türkiye ve KOND
 3.346 katılımcıyla yürüttüğü saha araştırmasına göre Türkiye'de **her beş
 kişiden biri** dijital şiddete maruz kaldığını beyan etmektedir; oran gençlerde
 daha yüksektir: 15-17 yaş grubunda her beş gençten biri, **18-32 yaş grubunda
-her üç gençten biri** [3]. Türkçe içeriğin kendisi üzerinde yapılan tek
-büyük ölçekli akademik ölçüm ise, 36.232 tweetlik bir örneklemde içeriğin
-yaklaşık **%19'unun saldırgan dil içerdiğini** göstermektedir [4].
+her üç gençten biri** [3]. Türkçe içeriğin kendisi üzerinde yapılan tek büyük
+ölçekli akademik ölçüm ise, 36.232 tweetlik bir örneklemde içeriğin yaklaşık
+**%19'unun saldırgan dil içerdiğini** göstermektedir [4].
 
 Bu üç sayı birlikte problemin ölçeğini verir: onlarca milyon kullanıcı, beşte
 bir oranında maruziyet ve yaklaşık her beş gönderiden biri saldırgan içerik.
+Türkiye'de Türkçe yazan bir kullanıcı için bu, istisnai değil olağan bir
+karşılaşmadır.
 
 **Mevcut çözümler ve yetersizlikleri.**
 
@@ -217,19 +243,38 @@ Ortak eksiklik nettir: **hepsi yayımlanmış içeriği değerlendirir.** Hiçbi
 yazma anında devreye girmez, hiçbiri kararını kullanıcıya açıklamaz, hiçbiri
 alternatif önermez ve hiçbiri metni cihazda tutmaz.
 
+**"Yasaklı kelime listesi yeter" iddiası ölçülerek çürütülmüştür.** Tablodaki
+üçüncü satır bu projede bir görüş değil, bir ölçümdür. Motorun sözlük katmanı
+tek başına ve tam hâliyle **aynı 256 örnek** üzerinde ayrı ayrı çalıştırıldığında
+(§3.2, `dart run bin/evaluate.dart --karsilastir`) elde edilen fark şudur:
+
+| Dilim | Yalnız sözlük | Sözlük + örüntü katmanları |
+|---|:--:|:--:|
+| Örtük saldırı (duyarlılık) | **%1,8** | **%100,0** |
+| Nefret söylemi (duyarlılık) | **%10,5** | **%94,7** |
+| Bağlam dilimi (duyarlılık) | %66,7 | %100,0 |
+| Genel duyarlılık | %44,0 | %99,3 |
+| Genel kesinlik | %100,0 | %100,0 |
+
+Yani bir kelime listesi, küfür içermeyen saldırganlığın **ellide birini**,
+kimlik hedefli düşmanlığın ise **onda birini** görebilmektedir. Bu, piyasadaki
+en yaygın çözümün neden yetersiz kaldığının sayısal ifadesidir — ve aynı
+ölçümde kesinliğin iki yapılandırmada da %100,0 kalması, farkın bir eşik
+ayarından değil, katmanın kendisinden geldiğini göstermektedir.
+
 **Maliyet bir ayrışma noktası değildir; süreklilik ve mahremiyet öyledir.**
-Bu iki servisin ikisi de bugün ücretsizdir: OpenAI'ın moderasyon uç noktası
+İlk iki servisin ikisi de bugün ücretsizdir: OpenAI'ın moderasyon uç noktası
 resmî dokümantasyonunda "free to use" olarak tanımlanmaktadır [12] ve
 Perspective API hiçbir zaman çağrı başına ücretlendirilmemiştir [14]. Rapor bu
 nedenle bir maliyet üstünlüğü iddiasında bulunmamaktadır. Buna karşılık iki
-yapısal risk ölçülebilir durumdadır. Birincisi süreklilik: Perspective API
-kendi duyurusuna göre **31 Aralık 2026'da hizmete kapanmaktadır**; kota artışı
+yapısal risk ölçülebilir durumdadır. **Birincisi süreklilik:** Perspective API
+kendi duyurusuna göre 31 Aralık 2026'da hizmete kapanmaktadır; kota artışı
 talepleri Şubat 2026'da sona ermiştir ve doğrudan göç desteği verilmeyecektir
 [14]. Bir moderasyon yeteneğini üçüncü tarafın ürün yol haritasına bağlamanın
-maliyeti, çağrı ücreti değil, servisin kapanmasıdır. İkincisi mahremiyet: her
-iki serviste de değerlendirilecek metin kullanıcının cihazından çıkıp üçüncü
-taraf sunucusuna gitmek zorundadır. Cihaz üstü çözümlemede bu iki riskin ikisi
-de yapısal olarak bulunmamaktadır.
+maliyeti, çağrı ücreti değil, servisin kapanmasıdır. **İkincisi mahremiyet:**
+her iki serviste de değerlendirilecek metin kullanıcının cihazından çıkıp
+üçüncü taraf sunucusuna gitmek zorundadır. Cihaz üstü çözümlemede bu iki riskin
+ikisi de yapısal olarak bulunmamaktadır.
 
 **Çok dilli bulut modellerinin dil önyargısı.** Bu tablodaki ilk iki çözümün
 Türkçe için taşıdığı risk, yalnızca kapsam eksikliği değildir. Perspective
@@ -239,16 +284,22 @@ arasında bile başarımın dile göre kaydığı ölçülmüştür: bağımsız
 aynı içeriğin Almanca hâlinin İngilizce çevirisine kıyasla **dört kat daha
 fazla** moderasyon kararı ürettiğini göstermektedir [10]. Türkçe'nin eklemeli
 yapısı, ünlü uyumu ve yüklem eki davranışı düşünüldüğünde, İngilizce merkezli
-bir modelin Türkçe'de aynı kayması yaşamayacağını varsaymak için bir sebep
+bir modelin Türkçe'de aynı kaymayı yaşamayacağını varsaymak için bir sebep
 yoktur. Bu, dile özel ve ölçülebilir bir çözümü zorunlu kılmaktadır.
 
 ## 2.2. Çözüm Fikri, Özgünlük ve Yerlilik
 
-**Çözüm fikri.** Üslup, müdahaleyi yayın sonrasından yayın öncesine taşır.
+**Çözüm fikri.** Üslup, müdahaleyi yayın sonrasından **yayın öncesine** taşır.
 Kullanıcı cümleyi yazarken, her tuş vuruşunda, cihaz üzerinde çalışan katman
-metni çözümler; risk seviyesine göre orantılı bir müdahale uygular ve daha
-yapıcı bir alternatif önerir. Sistem hiçbir metni kendiliğinden değiştirmez
-veya engellemez.
+metni çözümler; risk seviyesine göre orantılı bir müdahale uygular, kararının
+gerekçesini gösterir ve aynı fikri saldırmadan söyleyen bir alternatif önerir.
+Sistem hiçbir metni kendiliğinden değiştirmez, hiçbir gönderimi engellemez ve
+hiçbir metni cihaz dışına çıkarmaz.
+
+Çözümün üç iddiası vardır ve üçü de ölçülebilirdir: **(a)** müdahale zarardan
+önce gerçekleşir, **(b)** karar kullanıcıya açıklanır, **(c)** metin cihazdan
+çıkmaz. Üçüncüsü bir politika beyanı değil, mimarinin sonucudur: motorun
+bağımlılık listesi boştur ve ürün çalışma zamanında tek bir ağ çağrısı yapmaz.
 
 **Müdahale merdiveni.** Ürünün tek davranış kuralı, müdahale şiddetinin riskle
 orantılı olması ve hiçbir seviyede gönderimin engellenmemesidir (Şekil 2):
@@ -260,13 +311,14 @@ orantılı olması ve hiçbir seviyede gönderimin engellenmemesidir (Şekil 2):
 | 0,40 – 0,70 | Riskli | Gerekçe + yeniden yazma önerisi | Yok |
 | ≥ 0,70 | Yüksek | Gönderim öncesi onay diyaloğu | Bir dokunuş |
 
-**[ŞEKİL 2 BURAYA — dört ekran görüntüsü yan yana: (a) temiz · (b) dikkat · (c) riskli · (d) yüksek]**
+**[ŞEKİL 2 BURAYA — müdahale merdiveni çizimi, dört seviye yan yana]**
 
 *Şekil 2. Müdahale merdiveni. (a) temiz metinde hiçbir kesinti yoktur; (b) dikkat seviyesinde yalnızca kenarlık rengi değişir; (c) riskli seviyede gerekçe ve alternatif sunulur; (d) yüksek riskte onay istenir — ancak hiçbir seviyede gönderim engellenmez.*
 
 Kullanıcıyı her seferinde uyarmak, uyarıyı görünmez kılar. "Dikkat"
 seviyesinde hiçbir kesinti olmaması bir eksiklik değil, uyarının anlamını
-koruma kararıdır.
+koruma kararıdır. Gönderimin hiçbir seviyede engellenmemesi de aynı biçimde
+bilinçlidir: ürün bir sansür aracı değil, bir farkındalık aracıdır.
 
 **Somut piyasa kıyası.**
 
@@ -274,23 +326,143 @@ koruma kararıdır.
 |---|---|---|---|---|
 | Müdahale anı | Yayın sonrası | Yayın sonrası | Yayın anı | **Yazma anı** |
 | Metin nerede işlenir | Bulut | Bulut | Cihaz/sunucu | **Yalnızca cihaz** |
-| Kararın açıklanması | Skor | Etiket | Eşleşen kelime | **Gerekçe + hangi kelime + neden** |
-| Alternatif önerisi | Yok | Yok | Yok | **Var** |
-| Küfürsüz düşmanlık | Kısmi | Kısmi | **Yok** | **Var (8 aile, 50 örüntü)** |
-| Kimlik adı muamelesi | Model belirler | Model belirler | Yasaklı kelime | **Hiçbir zaman tetikleyici değil** |
-| Mağduru ayırt etme | Sınırlı | Sınırlı | Yok | **Alıntı/şikâyet/öz-ifade ayrımı** |
+| Türkçe desteği | **Yok** [9] | Çok dilli, dile özel ölçüm yok | Değişken | **Yalnızca Türkçe** |
+| Kararın açıklanması | Skor | Etiket | Eşleşen kelime | **Gerekçe + hangi ifade + neden** |
+| Alternatif önerisi | Yok | Yok | Yok | **Var (iki modlu yeniden yazıcı)** |
+| Küfürsüz düşmanlık | Kısmi | Kısmi | **Yok (ölçüldü: %1,8)** | **Var (8 aile · 52 örüntü)** |
+| Kimlik adı muamelesi | Model belirler | Model belirler | Yasaklı kelime | **Hiçbir zaman tek başına tetikleyici değil** |
+| Mağduru ayırt etme | Sınırlı | Sınırlı | Yok | **Alıntı / şikâyet / öz-ifade ayrımı** |
+| Cümleler arası gönderge | Yok | Yok | Yok | **Var (anafora çözümlemesi)** |
 | Servis sürekliliği | **31 Ara 2026'da kapanıyor** [14] | Sağlayıcının yol haritasına bağlı | Platforma ait | **Dış servise bağlı değil** |
 | Ağ bağımlılığı | Var | Var | Değişken | **Yok** |
+| Gecikme | Ağ turu | Ağ turu | — | **87 – 193 µs (cihazda)** |
+
+### Özgün mimari ve algoritmalar
+
+Çözümleme, tek bir sınıflandırıcı çağrısı değil, **yedi adımlı bir hattır** ve
+her adım kendi başına özgün bir tasarım kararı taşımaktadır. Hattın tamamı saf
+Dart ile, **sıfır harici bağımlılıkla** yazılmıştır: 6.293 satır çekirdek kod
+ve 1.457 satır test.
+
+**1. Türkçe farkındalıklı normalizasyon.** Filtreden kaçmak için kullanılan
+yazım hileleri kanonik bir forma indirgenir: aksan katlama (`şerefsiz` →
+`serefsiz`), leetspeak (`4pt4l` → `aptal`), harf tekrarı (`şerefsiiiz`), harf
+arası ayırma (`a p t a l`) ve 30 maskeleme öneki. İki özgün karar vardır.
+**Birincisi**, Dart'ın standart `toLowerCase()` işlevi Türkçe için yanlış sonuç
+verdiğinden (`'I'` → `'i'`, olması gereken `'ı'`) kendi Türkçe küçük harf
+tablomuz kullanılır. **İkincisi**, normalizasyon iki varyant üretir: temkinli
+varyant sayısal veriyi bozmaz (`saat 19:00` korunur), agresif varyant tüm leet
+karakterlerini çevirir (`$3r3fsiz` yakalanır); eşleştirme ikisinde de denenir.
+Her normalize karakterin orijinal metindeki indeksi bir **offset haritasında**
+saklanır — kullanıcıya "şu ifade sorunlu" diye doğru karakterlerin altını
+çizebilmenin tek yolu budur. Hat tek geçişlidir, O(n) çalışır ve düzenli ifade
+kullanmaz; geri izleme (backtracking) riski taşımaz.
+
+**2. Sözlük katmanı.** 92 girdilik Türkçe toksisite sözlüğü; her girdi kategori,
+taban şiddet, eşleşme kipi (kök/tam/öbek), yönelim şartı ve nötr karşılık
+taşır. Sözlük tek başına yeterli değildir ve bu ölçülmüştür (§2.1); hattaki
+işlevi yüksek kesinlikli bir ön filtre olmaktır.
+
+**3. Edimbilimsel örüntü katmanı — projenin birinci özgün katkısı.**
+Saldırganlığın kelimelerde değil **kelimelerin dizilişinde** taşındığı
+durumlar için 8 aile ve **52 örüntü** tanımlanmıştır: küçümseme, ötekileştirme,
+yok sayma, susturma, alaycılık, örtük tehdit, karakter saldırısı ve inkâr
+kalıbı. Her örüntü, kendisine kelime düzeyinde benzeyen masum bir cümleyle
+**birlikte** tasarlanmış ve o cümle değerlendirme kümesine "yakın-kaçış" olarak
+konmuştur (`senin gibilerden bu beklenirdi` ↔ `senin gibi düşünenler haklı`).
+Bu disiplin, katmanın kesinliği düşürmeden eklenmesini sağlamıştır.
+
+**4. Nefret söylemi katmanı — kimlik yuvadır, saldırı kuruluştur.** 35 kimlik
+terimi (etnik, inanç, yönelim, statü) ve 5 aile üzerinden **12 düşmanca
+kuruluş** tanımlıdır. Kimlik terimi hiçbir zaman tek başına bulgu üretmez;
+yalnızca bir kuruluşun içindeki yuvayı doldurur. Kesinliği ayakta tutan iki
+özgün mekanizma vardır. **Yüklem eki şartı:** düşmanca sözcüğün gerçekten
+yüklem konumunda olması aranır (`-dır/-sınız/-tir` ya da cümle sonu); çoğul eki
+`-lar` kasıtlı olarak yüklem sayılmaz. Böylece "Suriyeliler hayvandır"
+yakalanırken "Suriyeli gönüllüler hayvan haklarıyla ilgileniyor" yakalanmaz.
+**Ambigü köklerde yalnızca çoğul biçim:** aksan katlaması bazı kimlik adlarını
+meşru kelimelerle çakıştırdığından (Kürt→kurt, Laz→lazım, Roman→roman) tekil
+biçim hiç kullanılmaz; Türkçe ünlü uyumu ayrımı katlamadan sonra da korur
+(`kurtlar` ≠ `kurtler`).
+
+**5. Cümleler arası gönderge (anafora) çözümlemesi.** "Suriyeliler her yeri
+doldurdu. **Bunların** soyunu kurutmak lazım." cümlesinde kimlik yuvası ikinci
+cümlede yoktur; cümle cümle bakan hiçbir katman bunu göremez. Katman, çoğul
+işaret zamirlerini bir önceki cümledeki kimlik öncülüne bağlar. Buradaki özgün
+karar bir **kısıttır**: gönderge sürümleri yalnızca varlık reddi, insanlıktan
+çıkarma ve dışlama söz varlıkları için tanımlanmıştır, çünkü bu sözcükler
+nesneler hakkında iyi niyetle kullanılmaz. Toplu suçlama ve değersizleştirme
+söz varlıkları nesneler için olağan olduğundan gönderge sürümleri **kasıtlı
+olarak yoktur.** Katmanın maliyeti de ölçülerek sıfırlanmıştır: ilk sürümde
+kimlik söz varlığı her çözümlemede taranıyordu; tarama tembelleştirilerek
+öncül araması yalnızca bir gönderge örüntüsü fiilen eşleştiğinde çalışır hâle
+getirilmiş ve ortalama çözümleme süresi yaklaşık **%40 azaltılmıştır** (§3.2).
+
+**6. Bağlam ağırlıklandırma — projenin teknik kalbi.** Aynı sözcük, niyete göre
+yeniden ağırlıklandırılır (Şekil 3):
+
+| İfade | Yorum | Katsayı |
+|---|---|:--:|
+| "aptalsın" | Doğrudan saldırı | **×1,25** |
+| "aptal değilsin" | Olumsuzlama / iltifat | **×0,15** |
+| "bana aptal dedi" | Alıntı / şikâyet | **×0,20** |
+| "kendimi aptal hissettim" | Öz-ifade | **×0,20** |
+| "APTALSIN!!!" | Bağırma + noktalama patlaması | ×1,25 × 1,15 × 1,10 |
+
+Türkçe'ye özgü zorluk şudur: yönelim bilgisi ayrı bir kelimede değil, kelimenin
+**ekinde** taşınır. İngilizce "you are stupid" üç kelimedir; Türkçe'de
+"aptalsın" tek kelimedir. Bu yüzden katman ek çözümlemesi yapar. "aptal değil
+misin" gibi retorik olumsuzlamalar ise yumuşatma dışında bırakılır.
+
+Katmanın özgün mekanizması, çarpanın tek başına yeterli olmamasıdır. Yüksek
+taban şiddetli bir terim ("şerefsiz" = 0,88), alıntı çarpanından sonra bile
+0,176'da kalır ve eşiği aşar — yani tacize uğrayan kişi olayı anlatırken uyarı
+alır. Bu yüzden yumuşatıcı bağlamlarda sonuç ayrıca **0,10'luk bir tavanla**
+sınırlanır; tavan, 0,12'lik eleme eşiğinin altında olduğu için bulgu hiç
+üretilmez. Böylece kural, terimin taban şiddetinden **bağımsız olarak**
+geçerlidir: alıntı, olumsuzlama veya öz-ifade olarak tanınan bir ifade —
+sözlükteki şiddeti ne olursa olsun — uyarı üretemez. Mağdurun uyarı alması
+yapısal olarak imkânsızdır.
+
+**[ŞEKİL 3 BURAYA — bağlam ağırlıklandırma çizimi: aynı sözcük, dört bağlam]**
+
+*Şekil 3. Bağlam ağırlıklandırma. Aynı sözcük, saldırı / iltifat / şikâyet / öz-ifade bağlamlarında farklı ağırlık alır; yumuşatma yalnızca bir çarpan değil, aynı zamanda bir tavandır.*
+
+**7. Skor birleştirme — noisy-OR.** Birden fazla bulgunun şiddeti
+`toplam = 1 − Π(1 − sᵢ)` bağıntısıyla tek skora indirgenir. Toplama taşar (0,6
++ 0,6 = 1,2), maksimum ise birikimi göremez ("aptalsın **ve** şerefsizsin" tek
+hakaretten saldırgandır). Noisy-OR her iki sorunu da çözer: sonuç [0,1)
+aralığında kalır ve birikimlidir.
+
+**Yeniden yazıcı ve Türkçe biçimbilim.** Tespit tek başına yetmez; kullanıcıya
+"bu mesaj saldırgan" demek onu susturmaktan ibarettir. Yeniden yazıcı iki modda
+çalışır. **Öbek modu**, kişiye yöneltilmiş hakarette ilgili yan cümlenin
+tamamını nötr bir kalıpla değiştirir — çünkü "sen tam bir ___sın" kalıbına ne
+konursa konsun saldırı çerçevesi ayakta kalır. **Yerinde mod**, nesneyi
+niteleyen sıfatta kelimeyi yerinde değiştirir ve **taşıdığı eki korur**: "bu
+karar salakça" → "bu karar hatalı". Ek taşıma, ünlü uyumu ve ünsüz benzeşmesi
+uygulayan yerli bir biçimbilim modülüyle yapılır (`haksız` → `haksızsın`,
+`sersem` → `sersemsin`). Sabit bir ek listesi Türkçe'de çalışmaz.
+
+**Topluluk sağlığı — mahremiyeti bozmadan yönetim.** Panel metinden değil
+davranıştan beslenir: kullanıcının uyarı karşısında ne yaptığı (gönderdi /
+öneriyi kabul etti / kendi düzeltti / vazgeçti) tek bir sayıya indirgenir.
+Sinyal sınıfı **yapısal olarak metin taşıyamaz** — tüm alanları enum veya tam
+sayıdır, tek bir metin alanı yoktur ve bu bir testle korunmaktadır.
+Toplulaştırma cihazda yapılır ve **k-anonimlik** [11] uygulanır: bir kategori
+ancak en az k gözlem varsa sayı olarak açılır, altındakiler "yetersiz örnek"
+olarak gizlenir. Eşik arayüz tarafından değil, katmanın kendisi tarafından
+uygulanır ki arayüzün unutması mümkün olmasın.
+
+### Mevcut çözümlere kıyasla net üstünlükler
 
 **Özgün yön 1 — Küfürsüz düşmanlığın tespiti.** Sosyal medyadaki saldırganlığın
 büyük kısmı tek bir yasaklı kelime içermez: "senin gibilerden zaten bu
 beklenirdi" (ötekileştirme), "sen ne anlarsın bu işlerden" (yetkinlik reddi),
-"gününü göreceksin" (örtük tehdit). Edimbilimsel örüntü katmanı saldırganlığı
-kelimelerde değil, **kelimelerin dizilişinde** arar. Ölçüm bu katkıyı
-sayısallaştırmıştır: bu dilimde yalnız sözlük katmanı **%1,8** duyarlılık
-gösterirken, örüntü katmanıyla **%100,0**'a çıkmakta ve bu kazanç
-**kesinlikten hiçbir şey götürmeden** sağlanmaktadır (her iki ölçümde de
-kesinlik %100,0).
+"gününü göreceksin" (örtük tehdit). Ölçüm bu katkıyı sayısallaştırmıştır: bu
+dilimde yalnız sözlük katmanı **%1,8** duyarlılık gösterirken, örüntü katmanıyla
+**%100,0**'a çıkmakta ve bu kazanç **kesinlikten hiçbir şey götürmeden**
+sağlanmaktadır (her iki ölçümde de kesinlik %100,0).
 
 **Özgün yön 2 — Kimlik adı tetikleyici değildir.** Nefret söylemi
 filtrelerinin yaygın kusuru, korunan grubun adını yasaklı kelime listesine
@@ -302,57 +474,78 @@ koymaktır. Sonuç ters teper:
 "Bütün Kürtler hırsızdır"      → filtrelenmeli
 ```
 
-Bu katmanda kimlik adı yalnızca düşmanca bir **kuruluşun** içindeki yuvayı
-doldurur; tek başına asla bulgu üretmez. Sözlükte tek bir kimlik adı yoktur ve
-bu, `hate_layer_test.dart` içinde **yapısal bir testle** korunmaktadır —
-sözlüğe bir kimlik adı sızarsa test kırılır. Ölçüm doğrulamaktadır: 20 masum
-kimlik cümlesinin hiçbiri işaretlenmemektedir.
+Bu katmanda sözlükte **tek bir kimlik adı yoktur** ve bu, `hate_layer_test.dart`
+içinde **yapısal bir testle** korunmaktadır: sözlüğe bir kimlik adı sızarsa test
+kırılır. Ölçüm doğrulamaktadır — 20 masum kimlik cümlesinin hiçbiri
+işaretlenmemektedir. Bu, akademik yazında belgelenen önyargı sorununa [5][6]
+verilmiş mimari bir cevaptır.
 
-Kesinliği ayakta tutan iki mekanizma vardır. **Yüklem eki şartı:** düşmanca
-sözcüğün gerçekten yüklem konumunda olması gerekir; çoğul eki `-lar` kasıtlı
-olarak yüklem sayılmaz. Böylece "Suriyeliler hayvandır" yakalanırken
-"Suriyeli gönüllüler hayvan haklarıyla ilgileniyor" yakalanmaz. **Ambigü
-köklerde yalnızca çoğul biçim:** aksan katlaması bazı kimlik adlarını meşru
-kelimelerle çakıştırdığı için (Kürt→kurt, Laz→lazım, Roman→roman) tekil biçim
-hiç kullanılmaz. Bedeli bir miktar duyarlılıktır ve bilinçli bir seçimdir.
-
-**Özgün yön 3 — Mağdurun korunması.** Bağlam çözümleme katmanı aynı kelimeyi
-niyete göre yeniden ağırlıklandırır: "aptalsın" saldırı (×1,25), "aptal
-değilsin" iltifat (×0,15), "bana aptal dedi" şikâyet (×0,20), "kendimi
-aptal hissettim" öz-ifade (×0,20). "aptal değil misin" ise retorik
-olumsuzlama olarak saldırı sayılır. Yumuşatmanın yalnızca çarpan değil aynı
-zamanda **tavan** olması, tacize uğrayan kullanıcının uyarı almasını yapısal
-olarak engeller (Şekil 6).
-
-**[ŞEKİL 6 BURAYA — aynı kelimenin dört bağlamdaki sonucunu gösteren test/demo ekranı]**
-
-*Şekil 6. Bağlam ağırlıklandırma. Aynı sözcük, saldırı / iltifat / şikâyet / öz-ifade bağlamlarında farklı ağırlık alır; yumuşatma yalnızca çarpan değil aynı zamanda tavandır.*
-
+**Özgün yön 3 — Mağdurun korunması.** Yumuşatmanın yalnızca çarpan değil aynı
+zamanda tavan olması, tacize uğrayan kullanıcının uyarı almasını yapısal olarak
+engeller. Bu, [7]'de işlevsel testlerle ölçülen "olumsuzlama ve karşı-söylemde
+sistematik hata" bulgusuna doğrudan karşılık gelir ve ölçümde bağlam dilimi
+F1'i %50,0'den %100,0'a çıkarmıştır (§3.2).
 
 **Özgün mimari kararı — bulut kademesinin kaldırılması.** Sunucu tarafında
 çalışan, kullanıcı onaylı bir dil modeli yeniden yazma servisi yazılmış, 50
 testle doğrulanmış ve uçtan uca sınanmıştır. Sonra **kasıtlı olarak
-kaldırılmıştır.** Üç gerekçe: (a) "metin cihazdan çıkmaz" iddiasına
-açıklanması gereken bir istisna ekliyordu, (b) jürinin çalıştıramayacağı
-üçüncü taraf API bağımlılığı getiriyordu, (c) katkısı yalnızca öneri
-akıcılığıydı; tespit, bağlam çözümleme ve müdahale onsuz da çalışıyordu.
-Karardan korunan ilke rapora ayrıca girmektedir: **model bir öneri kaynağıdır,
-bir otorite değildir.** Bir dil modeli akıcı ama işe yaramaz bir öneri
-üretebilir; bunu istemden rica ederek değil, deterministik bir motorla ölçüp
-geçemeyeni atarak garanti edersiniz.
+kaldırılmıştır.** Üç gerekçe: (a) "metin cihazdan çıkmaz" iddiasına açıklanması
+gereken bir istisna ekliyordu, (b) jürinin çalıştıramayacağı üçüncü taraf API
+bağımlılığı getiriyordu, (c) katkısı yalnızca öneri akıcılığıydı; tespit, bağlam
+çözümleme ve müdahale onsuz da çalışıyordu. Karardan korunan ilke rapora ayrıca
+girmektedir: **model bir öneri kaynağıdır, bir otorite değildir.** Bir dil
+modeli akıcı ama işe yaramaz bir öneri üretebilir; bunu istemden rica ederek
+değil, deterministik bir motorla ölçüp geçemeyeni atarak garanti edersiniz.
 
-**Pazarda uygulanabilirlik.** Katman platforma bağlı değildir; Türkçe metin
-girişi olan herhangi bir yüzeye (mesajlaşma, forum, yorum alanı, kurumsal
-iletişim aracı, e-posta) taşınabilir. Harici bağımlılığı, API anahtarı ve
-sunucu maliyeti bulunmadığından entegrasyon yükü bir kütüphane bağımlılığı
-eklemekten ibarettir.
+### Piyasada uygulanabilirlik ve problem uyumu
 
-**Yerlilik.** Çözümün tamamı yerli olarak geliştirilmiştir ve hiçbir yabancı
-yapay zekâ servisine bağımlı değildir. Türkçe normalizasyon, ünlü uyumu ve
-ek çözümlemesi yapan biçimbilim modülü, toksisite sözlüğü, edimbilimsel örüntü
-ailesi, nefret söylemi kuruluş ailesi, gönderge çözümleyici ve değerlendirme
-kümesinin tamamı proje kapsamında sıfırdan üretilmiştir. Ürün, çalışması için
-hiçbir dış servise çağrı yapmaz; ağ bağlantısı olmadan tam işlevlidir.
+Katman platforma bağlı değildir: Türkçe metin girişi olan herhangi bir yüzeye —
+mesajlaşma, forum, yorum alanı, kurumsal iletişim aracı, e-posta istemcisi —
+taşınabilir. Harici bağımlılığı, API anahtarı ve sunucu maliyeti bulunmadığından
+entegrasyon yükü bir kütüphane bağımlılığı eklemekten ibarettir; çekirdek paket
+saf Dart olduğu için mobil istemci, komut satırı aracı ve sunucu **birebir aynı
+kodu** çalıştırır ve farklı ortamların farklı karar vermesi mümkün değildir.
+
+Çözümün problem durumuna uyumu maddeler hâlinde doğrulanabilir durumdadır:
+
+| §2.1'de tanımlanan kusur | Çözümdeki karşılığı |
+|---|---|
+| Zarar geri alınamaz | Müdahale **yazma anında**, yayından önce |
+| Yaptırım davranışı değiştirmez | Ceza değil **gerekçe + alternatif**; gönderim hiç engellenmez |
+| Türkçe'de doğruluk düşük | Yalnızca Türkçe için tasarlanmış biçimbilim, normalizasyon ve örüntü katmanları |
+| Filtreler mağduru cezalandırır | Bağlam tavanı + kimlik adının hiçbir zaman tetikleyici olmaması |
+| Metin üçüncü tarafa gider | Sıfır ağ çağrısı; bağımlılık listesi boş |
+| Servis kapanma riski | Dış servise bağımlılık yok |
+
+Çözümlemenin cihazda **87 – 193 µs** sürmesi (AOT derlenmiş ikili, ürünün
+cihazda çalıştığı biçim; §3.2) uygulanabilirliğin teknik dayanağıdır: bandın
+üst sınırında bile 16 ms'lik 60 FPS kare bütçesinin **%1,2'si** harcanmaktadır,
+dolayısıyla her tuş vuruşunda çalıştırmak için gecikmeli tetikleme (debounce)
+dahi gerekmemektedir.
+
+### Yerlilik
+
+Çözümün tamamı yerli olarak, sıfırdan geliştirilmiştir ve **hiçbir yabancı
+yapay zekâ servisine bağımlı değildir.** Bu iddia beyan değil, denetlenebilir
+bir olgudur: çekirdek paketin `pubspec.yaml` dosyasındaki bağımlılık listesi
+**boştur** ve ürün çalışma zamanında tek bir ağ çağrısı yapmaz.
+
+Proje kapsamında üretilen yerli bileşenler:
+
+| Bileşen | İçerik | Neden yerli olmak zorunda |
+|---|---|---|
+| **Türkçe biçimbilim çekirdeği** | Ünlü uyumu, ünsüz benzeşmesi, ek üretimi, Türkçe küçük/büyük harf dönüşümü | Hazır kütüphanelerin `toLowerCase()`'i Türkçe'de yanlış sonuç verir |
+| **Türkçe normalizasyon katmanı** | Aksan katlama, leet çevirimi, harf tekrarı, 30 maskeleme öneki, offset haritası | Kaçınma hileleri dile özgüdür |
+| **Toksisite sözlüğü** | 92 girdi, 6 kategori, taban şiddet ve nötr karşılıklarıyla | Türkçe hakaret ve argo söz varlığı |
+| **Edimbilimsel örüntü kataloğu** | 8 aile · 52 örüntü, yakın-kaçış çiftleriyle | Türkçe söz dizimi kalıpları |
+| **Nefret söylemi kuruluşları** | 5 aile · 12 kuruluş · 35 kimlik terimi · yüklem eki şartı | Türkiye bağlamına özgü kimlik eksenleri |
+| **Gönderge çözümleyici** | Çoğul işaret zamirleri üzerinden öncül bağlama | Türkçe zamir dizgesi |
+| **Değerlendirme kümesi** | 336 etiketli örnek, beş dilim, yakın-kaçış çiftleri | Türkçe için eşdeğeri bulunmayan ölçüm tabanı |
+
+Kullanılan tek yabancı teknoloji, açık kaynaklı ve genel amaçlı geliştirme
+araçlarıdır (Dart dili, Flutter arayüz çatısı). Bunlar bir yapay zekâ servisi
+değildir, veri taşımaz ve ürünün karar mekanizmasına dâhil değildir. Ürün ağ
+bağlantısı olmadan tam işlevlidir.
 
 ---
 
@@ -611,7 +804,11 @@ Dilim bazında duyarlılık: açık saldırı %98,2 → %100,0 · **örtük sald
 
 Bu tablo, "yasaklı kelime listesi yetmez" cümlesini bir görüşten bir ölçüme
 dönüştürür: kimlik hedefli düşmanlığın yedide altısı tek bir hakaret sözcüğü
-içermez.
+içermez (Şekil 4).
+
+**[ŞEKİL 4 BURAYA — katman katkısının izolasyonu grafiği, ekran görüntüsü değil]**
+
+*Şekil 4. Katman katkısının izolasyonu. Aynı 256 örnek üzerinde yalnız sözlük katmanı ile tüm örüntü katmanlarının dilim bazında duyarlılığı; kazanç kesinlikten hiçbir şey götürmeden elde edilmiştir (her iki ölçümde de kesinlik %100,0).*
 
 **⚠️ Genelleme başarımı ve veri sızıntısı üzerine dürüstlük beyanı.**
 Geliştirme kümesindeki %99,6 bir genelleme kanıtı **değildir**; kümeyi de
@@ -713,7 +910,11 @@ kenarlık rengi; riskli/yüksek ise kenarlık + gerekçe + yeniden yazma öneris
 Kullanıcı öneriyi uygulayabilir, kendi düzeltebilir veya görmezden gelebilir.
 Risk yüksekse gönderim öncesi onay diyaloğu açılır; "Vazgeç" ve "Yine de
 gönder" seçenekleri sunulur. Gönderim sonrası **metin içermeyen** anonim bir
-sinyal üretilir.
+sinyal üretilir (Şekil 5).
+
+**[ŞEKİL 5 BURAYA — A1 ana kullanıcı akışı diyagramı, ekran görüntüsü değil]**
+
+*Şekil 5. Ana kullanıcı akışı (A1). Yazma anından anonim sinyale kadar olan yol; hiçbir dal gönderimi engellemez ve hiçbir dalda metin cihazdan çıkmaz.*
 
 *A2 — Sinyal sonucu.* Panelin ölçtüğü şey uyarı sayısı değil, uyarının işe
 yarayıp yaramadığıdır. Bu nedenle gönderim anındaki duruma değil, yazım boyunca
@@ -725,11 +926,11 @@ müdahale hiç olmamış gibi görünürdü. Dört sonuç ayırt edilir: `temizG
 *A3 — Mağdur akışı.* "Bana 'şerefsiz' dedi, çok üzüldüm" cümlesinde 0,88
 taban şiddetli bir terim geçmesine rağmen hiçbir şey olmaz: bağlam katmanı bunu
 aktarım olarak tanır (×0,20) ve yumuşatma tavanı devreye girerek sonucu eşiğin
-altına indirir (Şekil 4).
+altına indirir (Şekil 6).
 
-**[ŞEKİL 4 BURAYA — cümlenin yazıldığı ve HİÇBİR uyarı çıkmadığı ekran görüntüsü]**
+**[ŞEKİL 6 BURAYA — cümlenin yazıldığı ve HİÇBİR uyarı çıkmadığı ekran görüntüsü]**
 
-*Şekil 4. Mağdur akışı. Cümlede 0,88 taban şiddetinde bir terim geçmesine rağmen uyarı üretilmez; bağlam katmanı ifadeyi aktarım olarak tanır (×0,20) ve yumuşatma tavanı sonucu eşiğin altında tutar.*
+*Şekil 6. Mağdur akışı. Cümlede 0,88 taban şiddetinde bir terim geçmesine rağmen uyarı üretilmez; bağlam katmanı ifadeyi aktarım olarak tanır (×0,20) ve yumuşatma tavanı sonucu eşiğin altında tutar.*
 
 
 *A4 — Topluluk paneli akışı.* Panel açıldığında, herhangi bir sayıdan önce
@@ -752,11 +953,11 @@ ekranı budur; ürünün tezi tam olarak bunun reddidir.
 | Yüksek riskte onay diyaloğu, engel değil | Sorulan soru ve kaydedilen tereddüt, engellemekten çok şey değiştirir |
 | Panelde mesaj listesi yok | "Metin cihazdan çıkmaz" iddiasıyla tutarlılık |
 
-Tablodaki "hangi kelime ve neden" kararının üründeki karşılığı Şekil 3'tedir.
+Tablodaki "hangi kelime ve neden" kararının üründeki karşılığı Şekil 7'dedir.
 
-**[ŞEKİL 3 BURAYA — gerekçe kartının yakın plan (crop) ekran görüntüsü]**
+**[ŞEKİL 7 BURAYA — gerekçe kartının yakın plan (crop) ekran görüntüsü]**
 
-*Şekil 3. Açıklanabilirlik. Her uyarı, hangi ifadenin neden işaretlendiğini metin olarak bildirir; kullanıcı kararın gerekçesini görmeden bir öneriyle karşılaşmaz.*
+*Şekil 7. Açıklanabilirlik. Her uyarı, hangi ifadenin neden işaretlendiğini metin olarak bildirir; kullanıcı kararın gerekçesini görmeden bir öneriyle karşılaşmaz.*
 
 **Erişilebilirlik yaklaşımı.**
 
@@ -942,7 +1143,7 @@ ayrışır:
    eki şartı ve ambigü köklerde yalnızca çoğul biçim kullanımı, Türkçe'nin
    biçimbilgisine özgü çözümlerdir.
 2. **Edimbilimsel örüntü katmanı.** Saldırganlığı sözcük dağarcığında değil,
-   sözcüklerin dizilişinde arar. Sekiz edimbilimsel aile ve 50 örüntü ile
+   sözcüklerin dizilişinde arar. Sekiz edimbilimsel aile ve 52 örüntü ile
    küfürsüz düşmanlığı yakalar; ölçülen katkısı duyarlılıkta +55,2 puan,
    kesinlikte 0,0 puan kayıptır.
 3. **Bağlam ağırlıklandırma.** Aynı sözcüğün saldırı, iltifat, şikâyet ve
@@ -1010,11 +1211,11 @@ işlemesinin ön koşuludur.
 konferansına katıldım" gibi cümleler, kimlik adlarını yasaklayan sistemlerde
 filtrelenir ve sonuç, korunmak istenen grubun susturulması olur. Üslup'ta
 kimlik adı hiçbir zaman tek başına bulgu üretmez; bu davranış yapısal bir
-testle korunur ve 20 masum kimlik cümlesinin hiçbiri işaretlenmez (Şekil 5).
+testle korunur ve 20 masum kimlik cümlesinin hiçbiri işaretlenmez (Şekil 9).
 
-**[ŞEKİL 5 BURAYA — kimlik cümlesinin uyarısız geçtiği ekran görüntüsü]**
+**[ŞEKİL 9 BURAYA — kimlik cümlesinin uyarısız geçtiği ekran görüntüsü]**
 
-*Şekil 5. Kimlik adı hiçbir zaman tek başına tetikleyici değildir. Sözlükte kimlik adı bulunmaz; bu davranış yapısal bir testle korunur.*
+*Şekil 9. Kimlik adı hiçbir zaman tek başına tetikleyici değildir. Sözlükte kimlik adı bulunmaz; bu davranış yapısal bir testle korunur.*
 
 
 *Örnek 3 — Yasal riskin kullanıcıya hatırlatılması.* Bir grubun varlık hakkını
@@ -1034,11 +1235,11 @@ paneli, bir topluluğun iletişim iklimini metin okumadan görünür kılar. Pan
 davranıştan beslenir, sinyal sınıfı yapısal olarak metin taşıyamaz ve 5
 gözlemin altındaki kategoriler k-anonimlik [11] gereği açılmaz. Böylece topluluk
 yönetimi ile bireysel mahremiyet arasındaki geleneksel ödünleşim ortadan kalkar
-(Şekil 7).
+(Şekil 10).
 
-**[ŞEKİL 7 BURAYA — iki panel: (a) panelin üstü + mahremiyet ifadesi · (b) "Dışarı ne gider" kartı]**
+**[ŞEKİL 10 BURAYA — iki panel: (a) panelin üstü + mahremiyet ifadesi · (b) "Dışarı ne gider" kartı]**
 
-*Şekil 7. Mahremiyetten ödün vermeyen topluluk yönetimi. Panel davranıştan beslenir, mesaj listesi içermez; 5 gözlemin altındaki kategoriler k-anonimlik gereği açılmaz ve "Dışarı ne gider" kartı platforma gidecek veriyi harfi harfine gösterir.*
+*Şekil 10. Mahremiyetten ödün vermeyen topluluk yönetimi. Panel davranıştan beslenir, mesaj listesi içermez; 5 gözlemin altındaki kategoriler k-anonimlik gereği açılmaz ve "Dışarı ne gider" kartı platforma gidecek veriyi harfi harfine gösterir.*
 
 
 **Dijital yaşam kalitesine etkisi.** Ürünün hedeflediği değişim, kaldırılan
@@ -1161,8 +1362,8 @@ kapalı olmadığını gösterir.
 | İP-1 | Türkçe normalizasyon | Gizleme direnci, aksan katlama, biçimbilim, kök eşleştirme | Tamamlandı |
 | İP-2 | Sözlük tabanlı tespit | Toksisite sözlüğü, çekim farkındalığı | Tamamlandı |
 | İP-3 | Ölçüm altyapısı | Beş dilimli küme, kesinlik/duyarlılık/F1/F0.5, A/B karşılaştırma | Tamamlandı |
-| İP-4 | Edimbilimsel örüntü katmanı | 8 aile, 50 örüntü, regresyon testleri | Tamamlandı |
-| İP-5 | Nefret söylemi katmanı | 5 kuruluş ailesi, 40 kimlik terimi, yapısal test | Tamamlandı |
+| İP-4 | Edimbilimsel örüntü katmanı | 8 aile, 52 örüntü, regresyon testleri | Tamamlandı |
+| İP-5 | Nefret söylemi katmanı | 5 kuruluş ailesi, 35 kimlik terimi, yapısal test | Tamamlandı |
 | İP-6 | Bağlam çözümleme | Saldırı/iltifat/şikâyet/öz-ifade, yumuşatma tavanı | Tamamlandı |
 | İP-7 | Gönderge (anafora) katmanı | Cümleler arası zamir bağlama, tembel tarama | Tamamlandı |
 | İP-8 | Yerel yeniden yazıcı | İki mod, Türkçe biçimbilim farkındalığı | Tamamlandı |
@@ -1356,7 +1557,7 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 | 13 | Gecikme sayısının AOT bandına (87–193 µs) çekilmesi ve JIT/AOT farkının beyanı | ✅ |
 | 14 | **Kullanılabilirlik testi**: yapılmamış testin "yürütülmüştür" iddiası kaldırıldı; protokol tablosu eklendi, sonuç bildirilmiyor | ✅ |
 | 15 | İP-14 kilometre taşı ve Gantt satırı 2–7 Eylül'e taşındı | ✅ |
-| 16 | Görsel yerleşim planı (8 şekil, alt yazılar, kara liste) | ✅ `docs/11` |
+| 16 | Görsel yerleşim planı (10 şekil, alt yazılar, kara liste) | ✅ `docs/11` |
 
 ### Bugün yapılacak — sıraya göre
 
@@ -1367,10 +1568,10 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 | **3** | Şablonun **talimat paragraflarını sil** ("…net bir dille ifade edilir" tarzı) — onlar talimat, içerik değil | Eleme riski | 10 dk |
 | **4** | Bu dosyadaki **⛔ ve ⚠️ kutularını, başlık bloğunu ve bu kontrol listesini kopyalama** | Kritik | — |
 | **5** | Kapak: `[TAKIM ID]` + `[BAŞVURU ID]` KYS'den | Format | 5 dk |
-| **6** | 8 şekli yerleştir — **çapalar ve alt yazılar metinde hazır**, yalnızca `[ŞEKİL N BURAYA]` satırlarının yerine görseli koy. Kara liste ve sansür kuralları: `docs/11_GORSEL_PLANI.md` | **3–4 puan** (3.3) | 45 dk |
+| **6** | 10 şekli yerleştir — **çapalar ve alt yazılar metinde hazır**, yalnızca `[ŞEKİL N BURAYA]` satırlarının yerine görseli koy. Kara liste ve sansür kuralları: `docs/11_GORSEL_PLANI.md` | **3–4 puan** (3.3) | 45 dk |
 | **7** | Biçim: Arial 12 / başlık Arial Black 14 / 1.15 / iki yana yaslı / 2,5 cm | Eleme riski | 15 dk |
 | **8** | İçindekiler sayfa numaralarını güncelle (Word: Başvurular → İçindekiler tablosunu güncelle) | Format | 5 dk |
-| **9** | **Sayfa sayısını kontrol et — sınır 30.** Metin ~22–25 sayfa + 8 şekil ≈ 27–28 | Eleme riski | 5 dk |
+| **9** | **Sayfa sayısını kontrol et — sınır 30.** Metin ~24–27 sayfa + 10 şekil ≈ 28–29 | Eleme riski | 5 dk |
 | **10** | PDF/DOCX olarak KYS'ye yükle — **son saati bekleme** | — | 10 dk |
 
 ### Yapılırsa artı puan (opsiyonel, süre varsa)

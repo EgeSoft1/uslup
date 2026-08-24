@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 700" width="900" height="700" font-family="Arial, Helvetica, sans-serif">
+<rect width="900" height="700" fill="#fff"/>
+<rect x="270" y="8" width="360" height="46" rx="10" fill="#fff" stroke="#e4dcd6" stroke-width="1.6"/>
+<text x="450" y="31.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="middle" dominant-baseline="central">Kullanıcı cümleyi yazıyor</text>
+<line x1="450" y1="54" x2="450" y2="75" stroke="#6e6864" stroke-width="1.6"/>
+<polygon points="444,74 456,74 450,82" fill="#6e6864"/>
+<rect x="30" y="82" width="840" height="518" rx="16" fill="#fcf8f4" stroke="#c41230" stroke-width="2"/>
+<line x1="30" y1="130" x2="870" y2="130" stroke="#e4dcd6" stroke-width="1.2"/>
+<text x="54" y="106.0" font-size="16" fill="#c41230" font-weight="bold" text-anchor="start" dominant-baseline="central">CİHAZ ÜZERİNDE</text>
+<rect x="683.0" y="93.0" width="163.0" height="26.0" rx="13" fill="#c41230"/>
+<text x="764.5" y="106.0" font-size="11.5" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">SUNUCU ADIMI YOKTUR</text>
+<rect x="54" y="138" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="166.0" r="15" fill="#c41230"/>
+<text x="84" y="166.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">1</text>
+<text x="118" y="166.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Normalizasyon</text>
+<text x="396" y="166.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">$3r3fsiz → serefsiz  ·  aptaaaal → aptal</text>
+<rect x="54" y="200" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="228.0" r="15" fill="#c41230"/>
+<text x="84" y="228.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">2</text>
+<text x="118" y="228.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Sözlük eşleştirme</text>
+<text x="396" y="228.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">Eklemeli yapıda kök eşleşmesi: aptallığın → aptal</text>
+<rect x="54" y="262" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="290.0" r="15" fill="#c41230"/>
+<text x="84" y="290.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">3</text>
+<text x="118" y="290.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Edimbilimsel örüntü</text>
+<text x="396" y="290.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">Küfürsüz düşmanlık — kelimede değil, dizilişte</text>
+<rect x="54" y="324" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="352.0" r="15" fill="#c41230"/>
+<text x="84" y="352.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">4</text>
+<text x="118" y="352.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Nefret söylemi</text>
+<text x="396" y="352.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">Kimlik hedefli düşmanlık; kimlik adı tetikleyici değil</text>
+<rect x="54" y="386" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="414.0" r="15" fill="#c41230"/>
+<text x="84" y="414.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">5</text>
+<text x="118" y="414.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Gönderge (anafora)</text>
+<text x="396" y="414.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">Zamiri önceki cümledeki öncüle bağlar</text>
+<rect x="54" y="448" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="476.0" r="15" fill="#c41230"/>
+<text x="84" y="476.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">6</text>
+<text x="118" y="476.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Bağlam çözümleme</text>
+<text x="396" y="476.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">saldırı / iltifat / şikâyet / öz-ifade ayrımı</text>
+<rect x="54" y="510" width="792" height="56" rx="8" fill="#fff" stroke="#e4dcd6" stroke-width="1.2"/>
+<circle cx="84" cy="538.0" r="15" fill="#c41230"/>
+<text x="84" y="538.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">7</text>
+<text x="118" y="538.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Öneri üretimi</text>
+<text x="396" y="538.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">Yerel, deterministik yeniden yazım</text>
+<text x="450" y="584" font-size="12.5" fill="#6e6864" text-anchor="middle" dominant-baseline="central">Toplam çözümleme: 87–193 µs (AOT) — 16 ms kare bütçesinin %1,2'si</text>
+<line x1="450" y1="600" x2="450" y2="621" stroke="#6e6864" stroke-width="1.6"/>
+<polygon points="444,620 456,620 450,628" fill="#6e6864"/>
+<rect x="250" y="628" width="400" height="52" rx="10" fill="#e9f6ee" stroke="#2e7d5b" stroke-width="1.6"/>
+<text x="450" y="654.0" font-size="16" fill="#1b5e43" font-weight="bold" text-anchor="middle" dominant-baseline="central">Kullanıcı seçer ve gönderir</text>
+</svg>
