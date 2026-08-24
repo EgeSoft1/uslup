@@ -43,11 +43,28 @@ abstract final class AppColors {
   static const Color creamSurface = Color(0xFFFFFFFF);
   static const Color creamMuted = Color(0xFFF4EEE6);
   static const Color creamBorder = Color(0xFFEBE2D6);
+
+  /// ETKİLEŞİMLİ bileşen kenarlığı — WCAG 2.1 §1.4.11 (3,0:1).
+  ///
+  /// İP-16 denetimi `creamBorder`ın beyaz yüzeyde 1,28:1 verdiğini ölçtü.
+  /// Bu, dekoratif ayraçlar için sorun DEĞİLDİR: 1.4.11 yalnızca "bir arayüz
+  /// bileşenini tanımak için gerekli görsel bilgiyi" kapsar, süslemeyi değil.
+  /// Ama metin girdisinin sınırı dekoratif değildir — kullanıcı yazma
+  /// alanının nerede başladığını oradan anlar. Bu yüzden iki belirteç ayrıldı:
+  ///
+  ///   creamBorder        → kart ayracı, liste çizgisi (dekoratif, muaf)
+  ///   creamBorderStrong  → metin girdisi, seçilebilir çip (3,75:1)
+  static const Color creamBorderStrong = Color(0xFF8F8271);
   static const Color creamDivider = Color(0xFFF1EBE3);
 
   static const Color inkPrimary = Color(0xFF1C1C1E);
-  static const Color inkSecondary = Color(0xFF77726E);
-  static const Color inkTertiary = Color(0xFFA9A29C);
+  // İP-16: 0xFF77726E kremde 4,46:1 veriyordu — WCAG 1.4.3 AA eşiği 4,5:1.
+  // Ölçümle 4,94:1'e çekildi (`tool/erisilebilirlik_denetimi.dart`).
+  static const Color inkSecondary = Color(0xFF706B67);
+  // İP-16: 0xFFA9A29C beyazda 2,52:1 veriyordu. Bu renk 11,5 px metinde
+  // kullanılıyor — yani "büyük metin" istisnası GEÇERSİZ, eşik 4,5:1.
+  // 4,90:1'e çekildi. Görsel hiyerarşi korunuyor: ana metin 17:1.
+  static const Color inkTertiary = Color(0xFF767068);
 
   // ─── Koyu tema nötrleri (sıcak kömür ailesi) ──────────────────────────────
   // Saf siyah değil: OLED'de kontrast şoku yapar ve marka sıcaklığını öldürür.
@@ -55,6 +72,10 @@ abstract final class AppColors {
   static const Color charcoalSurface = Color(0xFF1E1A19);
   static const Color charcoalMuted = Color(0xFF272220);
   static const Color charcoalBorder = Color(0xFF352E2B);
+
+  /// Koyu temanın etkileşimli bileşen kenarlığı — 3,60:1. Gerekçe için
+  /// bkz. [creamBorderStrong].
+  static const Color charcoalBorderStrong = Color(0xFF7A7167);
   static const Color charcoalDivider = Color(0xFF2A2523);
 
   static const Color snowPrimary = Color(0xFFF6F1EB);
@@ -62,7 +83,10 @@ abstract final class AppColors {
   static const Color snowTertiary = Color(0xFF716A65);
 
   // ─── Durum renkleri ───────────────────────────────────────────────────────
-  static const Color success = Color(0xFF10B981);
+  // İP-16: 0xFF10B981 beyaz yüzeyde 2,54:1 — WCAG 1.4.11 (metin dışı
+  // kontrast) eşiği 3,0:1. Durum rengi bir BİLGİ TAŞIYICIDIR; ayırt
+  // edilemezse renk körü kullanıcı için sinyal kaybolur. 4,83:1.
+  static const Color success = Color(0xFF0B8258);
   static const Color successLifted = Color(0xFF34D399);
   static const Color warning = Color(0xFFD97706);
   static const Color warningLifted = Color(0xFFFBBF24);
@@ -90,6 +114,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     required this.surfaceMuted,
     required this.surfaceElevated,
     required this.border,
+    required this.borderStrong,
     required this.divider,
     required this.textPrimary,
     required this.textSecondary,
@@ -125,6 +150,11 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color surfaceMuted;
   final Color surfaceElevated;
   final Color border;
+
+  /// Etkileşimli bileşen sınırı. [border]dan farklıdır ve WCAG 1.4.11
+  /// eşiğini (3,0:1) karşılamak zorundadır — metin girdisinin sınırı
+  /// dekoratif değil, işlevsel bilgidir.
+  final Color borderStrong;
   final Color divider;
 
   // Metin
@@ -168,6 +198,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     surfaceMuted: AppColors.creamMuted,
     surfaceElevated: AppColors.creamSurface,
     border: AppColors.creamBorder,
+    borderStrong: AppColors.creamBorderStrong,
     divider: AppColors.creamDivider,
     textPrimary: AppColors.inkPrimary,
     textSecondary: AppColors.inkSecondary,
@@ -202,6 +233,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     surfaceMuted: AppColors.charcoalMuted,
     surfaceElevated: AppColors.charcoalMuted,
     border: AppColors.charcoalBorder,
+    borderStrong: AppColors.charcoalBorderStrong,
     divider: AppColors.charcoalDivider,
     textPrimary: AppColors.snowPrimary,
     textSecondary: AppColors.snowSecondary,
@@ -285,6 +317,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
     Color? surfaceMuted,
     Color? surfaceElevated,
     Color? border,
+    Color? borderStrong,
     Color? divider,
     Color? textPrimary,
     Color? textSecondary,
@@ -317,6 +350,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       surfaceMuted: surfaceMuted ?? this.surfaceMuted,
       surfaceElevated: surfaceElevated ?? this.surfaceElevated,
       border: border ?? this.border,
+      borderStrong: borderStrong ?? this.borderStrong,
       divider: divider ?? this.divider,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
@@ -355,6 +389,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
       surfaceMuted: c(surfaceMuted, other.surfaceMuted),
       surfaceElevated: c(surfaceElevated, other.surfaceElevated),
       border: c(border, other.border),
+      borderStrong: c(borderStrong, other.borderStrong),
       divider: c(divider, other.divider),
       textPrimary: c(textPrimary, other.textPrimary),
       textSecondary: c(textSecondary, other.textSecondary),

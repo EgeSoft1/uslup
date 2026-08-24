@@ -66,9 +66,10 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
 
   /// Her tuş vuruşunda çalışır.
   ///
-  /// Gecikmeli tetikleme (debounce) KASITLI OLARAK YOK. Çözümleme ~280 µs
-  /// sürüyor; 16 ms'lik kare bütçesinin %1,7'si. Geciktirmek, geri bildirimi
-  /// gereksiz yere yavaşlatmaktan başka bir işe yaramazdı.
+  /// Gecikmeli tetikleme (debounce) KASITLI OLARAK YOK. Çözümleme AOT
+  /// derlemede tipik olarak 159 µs sürüyor; p99 bile (1459 µs) 16 ms'lik
+  /// kare bütçesinin %9,1'i. Geciktirmek, geri bildirimi yavaşlatmaktan
+  /// başka işe yaramazdı. Ölçüm: `bin/benchmark.dart` (İP-23).
   void _onTextChanged() {
     final analysis = _engine.analyze(_controller.text);
 
@@ -557,7 +558,9 @@ class _CivilityComposerScreenState extends State<CivilityComposerScreen> {
           Expanded(
             child: Text(
               'Model: ${_engine.modelName}\n'
-              'Ölçülen doğruluk: F1 %84,2 (ayrık küme, 291 etiketli örnek)',
+              'Ölçülen doğruluk: kesinlik %100 · F1 %66,7
+'
+              '(İP-20 ayrık küme, 80 örnek · toplam 516 etiketli)',
               style: TextStyle(
                   fontSize: 11.5, color: p.textTertiary, height: 1.45),
             ),
@@ -585,53 +588,71 @@ class _ScoreRing extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 52,
-          height: 52,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: score / 100),
-                duration: AppDurations.normal,
-                curve: AppCurves.standard,
-                builder: (_, value, __) => SizedBox(
-                  width: 52,
-                  height: 52,
-                  child: CircularProgressIndicator(
-                    value: value,
-                    strokeWidth: 4.5,
-                    strokeCap: StrokeCap.round,
-                    backgroundColor: p.surfaceMuted,
-                    valueColor: AlwaysStoppedAnimation(color),
+    // ── İP-16 · EKRAN OKUYUCU ────────────────────────────────────────────────
+    // Bu bileşen üç ayrı görsel parçadan bir tek anlam kurar: halka, sayı ve
+    // seviye etiketi. Ekran okuyucu bunları ayrı ayrı okursa kullanıcı
+    // "belirsiz ilerleme çubuğu", "72", "Riskli" duyar — hiçbiri diğerine
+    // bağlı değildir. `container: true` üçünü tek bir düğüme indirir,
+    // `ExcludeSemantics` parçaların ayrıca okunmasını engeller.
+    //
+    // `liveRegion: true` kritiktir: puan kullanıcı yazarken değişir. Canlı
+    // bölge olmadan görme engelli kullanıcı, uyarının oluştuğunu ancak
+    // odağı buraya taşırsa fark eder — yani müdahalenin GÖNDERİM ÖNCESİ
+    // olma iddiası onun için geçersiz olur.
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: 'Nezaket puanı $score, yüz üzerinden. Durum: $label',
+      child: ExcludeSemantics(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 52,
+              height: 52,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: score / 100),
+                    duration: AppDurations.normal,
+                    curve: AppCurves.standard,
+                    builder: (_, value, __) => SizedBox(
+                      width: 52,
+                      height: 52,
+                      child: CircularProgressIndicator(
+                        value: value,
+                        strokeWidth: 4.5,
+                        strokeCap: StrokeCap.round,
+                        backgroundColor: p.surfaceMuted,
+                        valueColor: AlwaysStoppedAnimation(color),
+                      ),
+                    ),
                   ),
-                ),
+                  Text(
+                    '$score',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '$score',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: color,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: color,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
