@@ -50,7 +50,7 @@ Milli" açılış ekranı.
 Bu yarışma **NSosyal platformuna değer katan** bir çözüm istiyor; rakip bir
 mesajlaşma uygulaması değil. Raporun kendisi de bunu söylüyor: devralınan
 mesajlaşma altyapısı §1.2'de açıkça **kapsam dışı** ilan edilmiş ve depodan
-çıkarılmış (`a054352`). Kapsam dışı ilan ettiğin şeyin ekran görüntüsünü rapora
+çıkarılmış (`95a8346`). Kapsam dışı ilan ettiğin şeyin ekran görüntüsünü rapora
 koyarsan, jüri "proje aslında ne?" diye sorar.
 
 **Rapora yalnızca Üslup / Nezaket Koçu ekranları girecek.**
