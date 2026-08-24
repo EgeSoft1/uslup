@@ -26,3 +26,6 @@ export 'src/normalization/turkish_morphology.dart';
 export 'src/normalization/turkish_normalizer.dart';
 export 'src/rewrite/rewrite_suggester.dart';
 export 'src/eval/holdout_dataset.dart';
+export 'src/eval/generalization_dataset.dart';
+export 'src/eval/generalization2_dataset.dart';
+export 'src/eval/generalization3_dataset.dart';
