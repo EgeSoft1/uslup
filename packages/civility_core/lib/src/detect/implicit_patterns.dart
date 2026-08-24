@@ -262,14 +262,22 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.zaman_kaybi',
-      pattern: _re(r'\b(seninle|sizinle) tartismak (zaman kaybi|bosuna|anlamsiz)\b'),
+      // İP-19: eylem ve yönelim biçimleri çeşitlendi. Eski hâli YALNIZCA
+      // "seninle tartışmak zaman kaybı" yazımını görüyordu; ölçümde
+      // "sana anlatmak zaman kaybı" kaçtı.
+      pattern: _re('\\b(seninle|sizinle|sana|size)\\b${_bosluk(2)}'
+          r'(tartismak|anlatmak|konusmak|yazmak|ugrasmak) '
+          r'(zaman kaybi|bosuna|anlamsiz|nafile|imkansiz)\b'),
       family: ImplicitFamily.kucumseme,
       category: ToxicityCategory.asagilama,
       severity: 0.45,
     ),
     ImplicitPattern(
       id: 'kucumseme.seviye',
-      pattern: _re(r'\bseviye(ne|nize|sine) in(ip|erek|mek)\b'),
+      // İP-19: fiil çekimi açıldı ("inmeyeceğim", "inmem") ve seviye
+      // üstünlüğünün ikinci kuruluşu eklendi ("bu seviyede biriyle").
+      pattern: _re(r'\bseviye(ne|nize|sine) in\w+'
+          r'|\bbu seviyede (biri|birisi|insan|kisi|tip)\w*'),
       family: ImplicitFamily.kucumseme,
       category: ToxicityCategory.asagilama,
       severity: 0.48,
@@ -283,7 +291,10 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.anlatmak_nafile',
-      pattern: _re(r'\b(sana|size) anlatmak (nafile|bosuna|imkansiz)\b'),
+      // İP-19: "sana BİR ŞEY anlatmak nafile" — araya nesne girebiliyor.
+      pattern: _re(r'\b(sana|size)\b' +
+          _bosluk(2) +
+          r'anlatmak (nafile|bosuna|imkansiz)\b'),
       family: ImplicitFamily.kucumseme,
       category: ToxicityCategory.asagilama,
       severity: 0.42,
@@ -332,7 +343,8 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'otekilestirme.baska_ne_beklenir',
-      pattern: _re(r'\b(senden|sizden|onlardan) baska ne beklenir\b'),
+      // İP-19: "beklenirDİ", "beklenebilir" — bileşik çekimler kaçıyordu.
+      pattern: _re(r'\b(senden|sizden|onlardan|bunlardan) baska ne beklen\w+'),
       family: ImplicitFamily.otekilestirme,
       category: ToxicityCategory.asagilama,
       severity: 0.48,
@@ -633,6 +645,365 @@ abstract final class ImplicitPatterns {
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.58,
+    ),
+
+    // ═══ İP-19 · GENELLEME ONARIMI ═══════════════════════════════════════════
+    // Aşağıdaki örüntüler, İP-15 ikinci ayrık kümesindeki 22 kaçağın
+    // taksonomisinden üretildi. Her biri TEK BİR CÜMLEYİ değil, o cümlenin
+    // temsil ettiği EDİMBİLİMSEL KURULUŞU hedefler — aksi hâlde katman
+    // yeniden ezberlemeye döner ve bir sonraki ayrık kümede yine kaçırır.
+    //
+    // ⚠ MALİYET BEYANI: bu örüntüler İP-15 kümesine BAKILARAK yazıldı.
+    //   O küme bu andan itibaren YANMIŞTIR ve bir daha "ayrık" olarak
+    //   raporlanamaz. Onarım sonrası dürüst ölçüm, aynı protokolle yazılan
+    //   üçüncü kümeye (İP-20) aittir.
+
+    ImplicitPattern(
+      // "senin kafan basmaz bunlara" — deyimsel yetersizlik atfı.
+      id: 'kucumseme.kafan_basmaz',
+      pattern: _re(r'\bkafa(n|niz|si) bas(maz|miyor)\w*'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+      neutralAlternative: 'bu konu karmaşık',
+    ),
+    ImplicitPattern(
+      // "ağzından çıkanı kulağın duyuyor mu" — muhakeme yetisinin reddi.
+      id: 'kucumseme.agzindan_cikan',
+      pattern: _re(r'\bagzindan cikani kulag(in|iniz) duy\w+'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "bu ne cehalet" · "cehaletin konuşuyor" — kusuru kişiye atfetme.
+      // Yakın-kaçış: "cehaletle mücadele" kalıba DÜŞMEZ; ya bir niteleme
+      // ünlemi ya da bir atfetme yüklemi şarttır.
+      id: 'kucumseme.cehalet_atfi',
+      pattern: _re(r'\b(bu )?ne (cehalet|cahillik|aptallik)\b'
+          r'|\b(cehaletin|cahilligin|egitimsizligin|kompleksin) konus\w+'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "kim sordu ki senin fikrini" · "konuşan da kim" — muhataplığın reddi.
+      // "kim sordu" tek başına bir bilgi sorusu olabilir; ikinci şahıs
+      // göstergesi ya da "konuşan da kim" kuruluşu şarttır.
+      id: 'yoksayma.kim_sordu',
+      pattern: _re(r'\bkim sordu\b(?=.{0,30}\b(sen|senin|sana|siz|sizin|size)\b)'
+          r'|\b(konusan|yazan) da kim\b'
+          r'|\bsana mi sorduk\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+    ),
+    ImplicitPattern(
+      // "sen önce kendine bak" — karşı suçlamayla muhataplığı reddetme.
+      id: 'yoksayma.once_kendine_bak',
+      pattern: _re(r'\b(sen |siz )?once (bir )?kendi(ne|nize) bak\w*'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+    ImplicitPattern(
+      // "sana kalmış bir konu değil" — yetkisizleştirme, nazik yüzeyli.
+      id: 'yoksayma.sana_kalmis_degil',
+      pattern: _re(r'\b(sana|size) kalmis\b' + _bosluk(2) + r'degil\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "seninle konuşmaya değmez" · "sana laf anlatılmaz".
+      id: 'yoksayma.degmez',
+      pattern: _re(r'\b(seninle|sizinle) (konusmaya|tartismaya) degmez\b'
+          r'|\b(sana|size) laf anlatilmaz\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.44,
+    ),
+    ImplicitPattern(
+      // "sus da adam konuşsun" — susturma + insan yerine koymama.
+      // `susturma.sus` yalnızca tümce SONUNU görüyordu.
+      id: 'susturma.sus_da',
+      pattern: _re(r'\b(sus|susun) da\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+    ImplicitPattern(
+      // "senin yerinde olsam susardım" — öğüt kılığında susturma.
+      id: 'susturma.yerinde_olsam',
+      pattern: _re(r'\b(senin|sizin) yerinde olsam\b' +
+          _bosluk(2) +
+          r'(susar|konusmaz|yazmaz)\w*'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+    ImplicitPattern(
+      // "sana had bildiririm" — `susturma.haddini_asma` kalıbının tehdit
+      // yüzü; farklı çekim, farklı yüklem.
+      id: 'susturma.had_bildiririm',
+      pattern: _re(r'\bhad(dini|dinizi)? bildir\w+'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+    ),
+    ImplicitPattern(
+      // "burada senin gibilere yer yok" — dışlama.
+      // NOT: `otekilestirme.gibiler` bu cümleyi zaten eşleştiriyordu; kaçağın
+      // asıl sebebi bağlam katmanındaki varlık olumsuzlaması hatasıydı
+      // (bkz. context_analyzer.dart, `_existentialNegators`). Bu örüntü
+      // kuruluşu ayrıca adlandırır ve gerekçeyi doğru aileye bağlar.
+      id: 'otekilestirme.yer_yok',
+      pattern: _re(r'\b(senin|sizin) gibiler\w*' +
+          _bosluk(2) +
+          r'(yer|isi|yeri) yok\b'),
+      family: ImplicitFamily.otekilestirme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
+    ),
+    ImplicitPattern(
+      // "bu yazdığın tam senlik" — kişiye indirgeyen alay.
+      id: 'alayci.tam_senlik',
+      pattern: _re(r'\btam (senlik|sizlik)\b'
+          r'|\bsenden beklenen\w* (bu|buydu)\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.44,
+    ),
+    ImplicitPattern(
+      // "acıdım sana gerçekten" — acıma yoluyla aşağılama.
+      // Yakın-kaçış: samimi acıma da bu kalıba düşer. Şiddet bu yüzden
+      // KASITLI olarak dikkat düzeyinde tutuldu; öneri değil, sessiz ipucu.
+      id: 'alayci.acidim_sana',
+      pattern: _re(r'\b(acidim|aciyorum) (sana|size)\b'
+          r'|\b(sana|size) (acidim|aciyorum)\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.32,
+    ),
+    ImplicitPattern(
+      // "hadi canım sen de" — muhatabı ciddiye almama jesti.
+      id: 'alayci.hadi_canim_sen_de',
+      pattern: _re(r'\bhadi (canim|be) (sen|siz) de\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.35,
+    ),
+    ImplicitPattern(
+      // "bir de utanmadan savunuyorsun" — utandırma.
+      id: 'karakter.utanmadan',
+      pattern: _re(r'\b(bir de )?utanmadan\b' +
+          _bosluk(2) +
+          r'\w+(yorsun|yorsunuz|din|diniz)\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.44,
+    ),
+    ImplicitPattern(
+      // "kendini bir halt sanıyorsun" — kaba deyim, küfür sınırında.
+      id: 'karakter.bir_halt',
+      pattern: _re(r'\bkendini (bir sey|bir halt|adam) san\w+'
+          r'|\bhalt (yedin|yiyorsun|karistirdin)\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.hakaret,
+      severity: 0.52,
+    ),
+    ImplicitPattern(
+      // "adam gibi konuşmayı öğren" — terbiye etme kuruluşu.
+      // Yakın-kaçış: "adam gibi bir iş buldum" kalıba DÜŞMEZ; ikinci şahsa
+      // yönelik emir ya da öğrenme yüklemi şarttır.
+      id: 'karakter.adam_gibi',
+      pattern: _re(r'\badam gibi (konusmayi|davranmayi|yazmayi) ogren\w*'
+          r'|\badam gibi (konus|davran|yaz)(un|sana|sanize)?\b'
+          r'|\badam olmayi ogren\w*'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+    ),
+    ImplicitPattern(
+      // "kafanı kırarım" — sözlükte olmayan tehdit fiili ailesi.
+      id: 'tehdit.kafani_kirarim',
+      pattern: _re(r'\bkafa(ni|nizi) (kirarim|patlatirim|dagitirim|kopartirim)\b'
+          r'|\b(dislerini|kemiklerini) (kirarim|dokerim)\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.85,
+    ),
+    ImplicitPattern(
+      // "seni bulurum merak etme" — sözlükteki "bulurum seni" devrik hâli.
+      id: 'tehdit.seni_bulurum',
+      pattern: _re(r'\b(seni|sizi) bulurum\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.80,
+    ),
+
+    // ═══ İP-21 · DEYİM KAPSAMI (yapısal aileler) ═════════════════════════════
+    // İP-20 ölçümü, kaçakların çoğunun DEYİM olduğunu gösterdi. Buradaki
+    // yanıt "19 deyimi tek tek yazmak" DEĞİLDİR — o, ezberlemenin üçüncü
+    // turu olurdu. Onun yerine her aile, deyimin dayandığı YAPIYI hedefler
+    // ve o yapının kapalı bir sözvarlığıyla parametrelenir:
+    //
+    //   yapı                                sözvarlığı
+    //   ─────────────────────────────────   ─────────────────────────────
+    //   [2.şahıs]da [nitelik] mı var        soyut nitelik adları
+    //   [kapasite adı] bu kadar             kapasite adları
+    //   [kapasite adı]nı aşan               kapasite adları
+    //
+    // Sözvarlıkları soyut ad sınıflarıdır, cümle listesi değil: yeni bir
+    // deyim aynı yapıyı kullanıyorsa örüntü onu da görür.
+    //
+    // ⚠ MALİYET BEYANI: İP-20 kümesi bu onarımda kullanıldı ve YANDI.
+    //   Onarım sonrası dürüst ölçüm, dördüncü kümeye (İP-22) aittir.
+
+    ImplicitPattern(
+      // "haddini bil" — susturma emri. Sözlükten buraya taşındı (İP-22).
+      //
+      // Kritik ayrım SAĞ SINIRDIR: emir kipi işaretlenir, sıfat-fiil
+      // işaretlenMEZ. Sözlüğün ifade eşleşmesi bu ayrımı yapamıyordu,
+      // çünkü Türkçe eklemeli olduğu için ifade eşleşmesi kasıtlı olarak
+      // sağ sınır aramaz ("işe yaramaz" girdisi "işe yaramazsın"ı da
+      // görmek zorundadır). Bu terimde ise ek, anlamı TERSİNE çeviriyordu:
+      //
+      //   "haddini bil"            → susturma emri        ✓
+      //   "haddini bilen insanlar" → ÖVGÜ, işaretleniyordu ✗
+      id: 'susturma.haddini_bil',
+      pattern: _re(r'\bhadd(ini|inizi) bil\b|\bhaddinizi bilin\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.55,
+    ),
+    ImplicitPattern(
+      // "sende akıl mı var" · "sizde vicdan mı var" · "sende utanma yok"
+      //
+      // Muhatabın bir SOYUT NİTELİĞE sahip olduğunu reddeder. Ad sınıfı
+      // kapalıdır ve kasıtlı olarak yalnızca ahlaki/bilişsel nitelikleri
+      // içerir — somut ad girerse kalıp düşmez:
+      //   "sende kalem mi var"  → gerçek bir soru, işaretlenmez
+      id: 'kucumseme.nitelik_reddi',
+      pattern: _re(r'\b(sende|sizde)\b\s+'
+          r'(akil|vicdan|utanma|ar|haya|beyin|karakter|insaf|izan|edep|'
+          r'terbiye|saygi|onur|seref|gurur|mantik|ahlak|kafa|zeka)\w*\s+'
+          r'(mi|mu) (var|kalmis|kalmadi)\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+      neutralAlternative: 'bu yaklaşımı doğru bulmuyorum',
+    ),
+    ImplicitPattern(
+      // "senin çapın bu kadar" · "kapasiten bu kadar" · "seviyen o kadar"
+      //
+      // Muhatabın yetenek TAVANINI ilan eder. Kapasite adları kapalı bir
+      // sınıftır; "boyun bu kadar" fiziksel ölçü de olabileceği için
+      // `boy` bu kalıba ALINMADI (aşağıdaki `haddini_asan`da var).
+      id: 'kucumseme.kapasite_tavani',
+      pattern: _re(r'\b(senin |sizin )?'
+          r'(capin|capiniz|kapasiten|kapasiteniz|seviyen|seviyeniz|'
+          r'haddin|haddiniz|ayarin|ayariniz|tipin)\b\s+'
+          r'(bu|o|iste bu|ancak bu) kadar\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "boyunu aşan işlere karışma" · "haddini aşan bir laf"
+      //
+      // Muhatabın yetki sınırını ilan eder. `susturma.haddini_asma`nın
+      // sıfat-fiil hâli; o örüntü yalnızca yüklem biçimini görüyordu.
+      id: 'susturma.haddini_asan',
+      pattern: _re(r'\b(boyunu|boyunuzu|haddini|haddinizi|capini) as(an|arak)\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.46,
+    ),
+    ImplicitPattern(
+      // "iki çift laf edemiyorsun" · "bir yere varamazsın" · "bu işi
+      // beceremezsin"
+      //
+      // Türkçe YETERSİZLİK çekimi (-ama/-eme) ikinci şahısta muhatabın
+      // yapabilirliğini reddeder. Çekimin kendisi TEK BAŞINA yeterli
+      // DEĞİLDİR — "yarın gelemezsin" bir bilgi cümlesidir. Bu yüzden
+      // kalıp, çekimi bir DEĞERLENDİRME NESNESİNE bağlar: laf, iş,
+      // bir yere, hiçbir şey. Nesne yoksa bulgu da yok.
+      id: 'kucumseme.yetersizlik_cekimi',
+      pattern: _re(r'\b(laf|kelam|cumle|is|isin|bir yere|hicbir yere|'
+          'hicbir sey|adam)\\b${_bosluk(3)}'
+          r'\w*(?:[ae]m[ei]yorsun|[ae]mezsin|[ae]m[ei]yorsunuz|[ae]mezsiniz)\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+    ),
+    ImplicitPattern(
+      // "sen ne biçim insansın" · "sen ne ayaksın"
+      // KRİTİK: "sen ne güzelsin" bir iltifattır. Bu yüzden açık uçlu
+      // `sen ne \w+sin` ALINMADI; yalnızca "ne biçim" kuruluşu ve kapalı
+      // bir argo listesi alındı.
+      id: 'kucumseme.ne_bicim',
+      pattern: _re(r'\bne bicim (insan|adam|tip|birisin|birisiniz)\w*'
+          r'|\bsen ne (ayaksin|malsin|tipsin)\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "yazık sana yazık" — acıma yoluyla aşağılama, `alayci.acidim_sana`
+      // ailesinin ikinci sözcüğü.
+      id: 'alayci.yazik_sana',
+      pattern: _re(r'\byazik (sana|size)\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.34,
+    ),
+    ImplicitPattern(
+      // "hava atma bize" · "büyük konuşuyorsun" · "caka satma"
+      // Böbürlenme suçlaması: muhatabın söylediğini içeriğiyle değil,
+      // niyetiyle reddeder.
+      id: 'yoksayma.bobürlenme_suclamasi',
+      pattern: _re(r'\b(hava atma|caka satma|racon kesme)\b'
+          r'|\bbuyuk (konusuyorsun|konusma|konusuyorsunuz)\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "seninki de laf mı" — katkının tür olarak reddi.
+      id: 'yoksayma.seninki_de',
+      pattern: _re(r'\b(seninki|sizinki|bu dedigin|bu yazdigin) de '
+          r'(laf|fikir|yorum|is|soz) mi\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.44,
+    ),
+    ImplicitPattern(
+      // "senden bana fayda yok" · "sizden bize hayır yok"
+      id: 'yoksayma.fayda_yok',
+      pattern: _re(r'\b(senden|sizden)\b' +
+          _bosluk(2) +
+          r'(fayda|hayir|medet) yok\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.44,
+    ),
+    ImplicitPattern(
+      // "gözüm görmesin seni" — ortamdan çıkarma isteği (kimlik yuvasız).
+      id: 'otekilestirme.gozum_gormesin',
+      pattern: _re(r'\bgozum gormesin\b|\bgozume gorunme\b'),
+      family: ImplicitFamily.otekilestirme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+    ),
+    ImplicitPattern(
+      // "salağa yatma" · "aptala yatma" — muhatabı numara yapmakla suçlarken
+      // aynı anda o sıfatı yakıştırır.
+      id: 'karakter.salaga_yatma',
+      pattern: _re(r'\b(salaga|aptala|deliye|manyaga|kaz(a|i)ga) yat\w+'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.hakaret,
+      severity: 0.50,
     ),
 
     // ═══ İNKÂR KALIBI ════════════════════════════════════════════════════════

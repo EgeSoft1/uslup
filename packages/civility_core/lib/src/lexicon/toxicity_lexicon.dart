@@ -163,6 +163,13 @@ class ToxicityLexicon {
     'kopekb', 'kopekg',
     // "pislik" meşru kullanım (temizlik bağlamı) — düşük öncelikli
     'pisli',
+    // ── İP-17 ölçümüyle eklenenler ────────────────────────────────────────
+    // "psikopatoloji, psikopatolojik" → "psikopat" ile çakışır
+    'psikopatol',
+    // "parazitoloji" → "parazit" ile çakışır
+    'parazitolo',
+    // "değersizleştirme" (akademik terim) → "değersiz" ile çakışır
+    'degersizles',
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -197,6 +204,13 @@ class ToxicityLexicon {
     LexiconEntry(term: 'götveren', category: ToxicityCategory.kufur, severity: 0.95),
     LexiconEntry(term: 'ananı', category: ToxicityCategory.kufur, severity: 0.95),
     LexiconEntry(term: 'avradını', category: ToxicityCategory.kufur, severity: 0.95),
+    // İP-17 — çekişmeli taramada kaçtığı ölçülenler
+    LexiconEntry(term: 'kaltak', category: ToxicityCategory.kufur, severity: 0.92),
+    LexiconEntry(term: 'şıllık', category: ToxicityCategory.kufur, severity: 0.85),
+    LexiconEntry(term: 'puşt', category: ToxicityCategory.kufur, severity: 0.90),
+    LexiconEntry(term: 'ana avrat', category: ToxicityCategory.kufur, severity: 0.90),
+    // Meşru bağlamı vardır (gazetecilik, sosyoloji): yalnızca yöneltilince.
+    LexiconEntry(term: 'fahişe', category: ToxicityCategory.kufur, severity: 0.80, requiresDirection: true),
 
     // ═══ HAKARET ═════════════════════════════════════════════════════════════
     // Zekâ / karakter saldırıları. Ön ek eşleşmesi tüm çekimleri kapsar:
@@ -225,6 +239,55 @@ class ToxicityLexicon {
     LexiconEntry(term: 'ezik', category: ToxicityCategory.hakaret, severity: 0.50),
     LexiconEntry(term: 'zavallı', category: ToxicityCategory.hakaret, severity: 0.45),
     LexiconEntry(term: 'hıyar', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+
+    // ── İP-17 · DUYARLILIK GENİŞLETMESİ (24 Ağustos 2026) ────────────────────
+    // Aşağıdakiler, kimlik söz varlığı genişletilirken yapılan çekişmeli
+    // taramada bulundu: 41 yaygın Türkçe hakaretin 41'i de motorda KAÇIYORDU.
+    // Geliştirme kümesindeki %99,6'lık skor bunu göstermiyordu, çünkü küme
+    // sözlüğün kendisine bakılarak yazılmıştı — ezberleme payının doğrudan
+    // kanıtı budur ve ayrık kümedeki %84,2 ile arasındaki farkı açıklar.
+    //
+    // ⛔ DENETLENİP ALINMAYANLAR — davranış niteleyen sıfatlar:
+    //      "çirkin", "iğrenç"  → "çirkin bir davranış sergiledin" meşru bir
+    //      eleştiridir. İkinci şahıs yönelimi bu ikisini kurtarmaya yetmiyor;
+    //      eleştiriyi hakaret sayan bir katman, ürünün "sansür değil" iddiasını
+    //      çürütür. Kaçırılan duyarlılık bilinçli olarak kabul edilmiştir.
+
+    // Boşluklu yazım — sözlükte YALNIZCA bitişik biçim vardı ("gerizekalı").
+    // Türkçe'de standart yazım boşukludur; en yaygın hakaret tamamen kaçıyordu.
+    LexiconEntry(term: 'geri zekalı', category: ToxicityCategory.hakaret, severity: 0.70, neutralAlternative: 'yanlış'),
+    LexiconEntry(term: 'gerzek', category: ToxicityCategory.hakaret, severity: 0.65, neutralAlternative: 'yanlış'),
+    LexiconEntry(term: 'karaktersiz', category: ToxicityCategory.hakaret, severity: 0.70),
+    LexiconEntry(term: 'ahlaksız', category: ToxicityCategory.hakaret, severity: 0.68, requiresDirection: true),
+    LexiconEntry(term: 'soysuz', category: ToxicityCategory.hakaret, severity: 0.82),
+    LexiconEntry(term: 'hödük', category: ToxicityCategory.hakaret, severity: 0.60),
+    // İP-19 — ikinci ayrık küme ölçümünde kaçtı.
+    LexiconEntry(term: 'mankafa', category: ToxicityCategory.hakaret, severity: 0.62),
+    // İP-21 — "geri zekalı" ile aynı boşluklu kuruluş, farklı ad.
+    LexiconEntry(term: 'geri kafalı', category: ToxicityCategory.hakaret, severity: 0.66),
+    LexiconEntry(term: 'dar kafalı', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true),
+    LexiconEntry(term: 'kafasiz', category: ToxicityCategory.hakaret, severity: 0.60),
+    LexiconEntry(term: 'ruh hastası', category: ToxicityCategory.hakaret, severity: 0.68),
+    LexiconEntry(term: 'yüz karası', category: ToxicityCategory.hakaret, severity: 0.60),
+
+    // Çokanlamlı ya da meşru kullanımı olan kökler — yalnızca ikinci şahsa
+    // yöneltildiğinde hakarettir. ("asalak canlılar" ≠ "asalak herif")
+    LexiconEntry(term: 'aşağılık', category: ToxicityCategory.hakaret, severity: 0.68, requiresDirection: true),
+    LexiconEntry(term: 'değersiz', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'manyak', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+    LexiconEntry(term: 'terbiyesiz', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'edepsiz', category: ToxicityCategory.hakaret, severity: 0.52, requiresDirection: true),
+    LexiconEntry(term: 'saygısız', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'nankör', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'arsız', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'yüzsüz', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+    LexiconEntry(term: 'ödlek', category: ToxicityCategory.hakaret, severity: 0.48, requiresDirection: true),
+    LexiconEntry(term: 'dönek', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+    LexiconEntry(term: 'korkak', category: ToxicityCategory.hakaret, severity: 0.42, requiresDirection: true),
+    LexiconEntry(term: 'psikopat', category: ToxicityCategory.hakaret, severity: 0.62, requiresDirection: true),
+    LexiconEntry(term: 'şişko', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'asalak', category: ToxicityCategory.hakaret, severity: 0.68, requiresDirection: true),
+    LexiconEntry(term: 'parazit', category: ToxicityCategory.hakaret, severity: 0.60, requiresDirection: true),
 
     // Ölçümle eklendi: yetersizlik hakaretleri kümede kaçıyordu.
     // ("beceriksizin tekisin" → hiçbir eşleşme yoktu)
@@ -280,8 +343,21 @@ class ToxicityLexicon {
     // "sus payı vermişler" yanlış pozitif üretiyordu. Kalıp olarak
     // `implicit_patterns.dart` → `susturma.sus` içine taşındı.
     LexiconEntry(term: 'kapa çeneni', category: ToxicityCategory.asagilama, severity: 0.60),
-    LexiconEntry(term: 'haddini bil', category: ToxicityCategory.asagilama, severity: 0.55),
+    // ⛔ TAŞINDI (İP-22) — "haddini bil" ifadesi `susturma.haddini_bil`
+    // örüntüsüne geçti. Sebep: ifade eşleşmesi SAĞ SINIR denetlemez (Türkçe
+    // eklemeli olduğu için bilinçli bir tasarım: "işe yaramaz" girdisi
+    // "işe yaramazsın"ı da görmek zorundadır). Ama bu terimde ek anlamı
+    // TERSİNE ÇEVİRİYORDU:
+    //
+    //   "haddini bil"              → susturma emri        ✓
+    //   "haddini bilen insanlar"   → ÖVGÜ, işaretlendi    ✗
+    //
+    // Düzenli ifade sağ sınırı ifade edebilir, sözlük edemez.
     LexiconEntry(term: 'sen kimsin', category: ToxicityCategory.asagilama, severity: 0.35),
+    // İP-17 — kovma / değersizleştirme kalıpları
+    LexiconEntry(term: 'defol', category: ToxicityCategory.asagilama, severity: 0.60),
+    LexiconEntry(term: 'halta yaramaz', category: ToxicityCategory.asagilama, severity: 0.55),
+    LexiconEntry(term: 'yıkıl karşımdan', category: ToxicityCategory.asagilama, severity: 0.58),
 
     // ═══ NEFRET SÖYLEMİ ══════════════════════════════════════════════════════
     // ⚠ BURADA KİMLİK ADI YOKTUR — VE OLMAYACAKTIR.
@@ -303,11 +379,44 @@ class ToxicityLexicon {
     LexiconEntry(term: 'kıro', category: ToxicityCategory.nefret, severity: 0.72, matchMode: MatchMode.exact),
     LexiconEntry(term: 'ibne', category: ToxicityCategory.nefret, severity: 0.88),
     LexiconEntry(term: 'nonoş', category: ToxicityCategory.nefret, severity: 0.80),
+    // İP-17 — "ibne" ön eki bu yazım biçimini yakalamıyordu.
+    LexiconEntry(term: 'ipne', category: ToxicityCategory.nefret, severity: 0.88),
+    // İnanca yönelik düşmanlık epiteti. Kimlik ADI değildir — "Müslüman"
+    // sözlüğe girmez; "yobaz" tek işlevi aşağılamak olan bir sıfattır.
+    LexiconEntry(term: 'yobaz', category: ToxicityCategory.nefret, severity: 0.70),
     LexiconEntry(term: 'sapkın', category: ToxicityCategory.nefret, severity: 0.70),
-    // "X dölü" — kimliği kalıtsal bir kusur gibi kuran epitet.
-    // Ön ek eşleşmesi yerine ifade olarak: "döl" tek başına meşru bir
-    // biyoloji terimidir.
-    LexiconEntry(term: 'dölü', category: ToxicityCategory.nefret, severity: 0.85, matchMode: MatchMode.exact),
+    // ⛔ KALDIRILDI (İP-22, 24 Ağustos 2026) — "dölü" epiteti.
+    //
+    // Girdinin kendisi doğruydu: "X dölü", kimliği kalıtsal bir kusur gibi
+    // kuran gerçek bir nefret epitetidir. Kaldırılmasının sebebi anlam
+    // değil, MİMARİ:
+    //
+    //   Normalizasyon aksanları katlar:  ö → o,  ü → u
+    //   Dolayısıyla:  "dölü"  →  "dolu"      ve      "dolu"  →  "dolu"
+    //
+    // Katlamadan sonra iki kelime BİREBİR AYNIDIR. Tam eşleşme modundaki
+    // girdi bu yüzden Türkçe'nin en sık kelimelerinden birini nefret
+    // söylemi sayıyordu — ölçümle bulundu:
+    //
+    //   "bardak dolu"     → yüksek risk · nefret · 0,85   ✗
+    //   "programın dolu"  → yüksek risk · nefret · 0,85   ✗
+    //   "dolu yağdı"      → yüksek risk · nefret · 0,85   ✗
+    //
+    // Kusur dört ölçüm kümesinin hiçbirinde görünmedi çünkü hiçbirinde
+    // "dolu" kelimesi geçmiyordu. Yalnızca dördüncü ayrık kümede, bambaşka
+    // bir örüntüyü sınamak için yazılmış bir cümlede ("yarın gelemezsin
+    // galiba, programın dolu") ortaya çıktı.
+    //
+    // ── NEDEN ÖRÜNTÜYE TAŞINMADI ────────────────────────────────────────
+    // Kimlik yuvasıyla ("Ermeni dölü") kurtarmak da çalışmaz: katlamadan
+    // sonra "Suriyeli dölü" ile "Suriyeli dolu" da ayırt edilemez. Epiteti
+    // güvenilir biçimde görmenin tek yolu ham metne bakmaktır ve bu, tüm
+    // hattın normalize metin üzerinde çalışması ilkesini tek bir terim için
+    // delerdi.
+    //
+    // Karar: duyarlılık kaybı KABUL EDİLDİ. Yanlış pozitif, yanlış
+    // negatiften pahalıdır — ve buradaki yanlış pozitif, sıradan bir
+    // cümleyi nefret söylemi ilan ediyordu.
 
     // ═══ TACİZ ═══════════════════════════════════════════════════════════════
     LexiconEntry(term: 'seni becer', category: ToxicityCategory.taciz, severity: 0.95),
