@@ -26,7 +26,6 @@ dependencies:
   # UI / UX
   cupertino_icons: ^1.0.6
   flutter_animate: ^4.5.0
-  google_fonts: ^6.2.1
 
 # ── KALDIRILAN BAĞIMLILIKLAR (3 Ağustos 2026) ────────────────────────────────
 # Aşağıdakiler devralınan mesajlaşma altyapısından kalmıştı ve hiçbir yerde
@@ -38,6 +37,15 @@ dependencies:
 #                              etmiyordu, tamamen sahte bir modüldü
 #   web_socket_channel, uuid — yalnızca ölü WebSocket katmanında
 #   protobuf                 — sıfır import
+#
+# ── KALDIRILAN BAĞIMLILIK (9 Eylül 2026) ─────────────────────────────────────
+#   google_fonts — yazı tiplerini ÇALIŞMA ZAMANINDA fonts.gstatic.com'dan
+#                  indiriyordu. Ürünün "çalışma zamanında tek bir ağ çağrısı
+#                  yapılmaz" iddiası ilk açılışta sessizce çiğneniyordu ve bir
+#                  mahremiyet iddiası "neredeyse doğru" olamaz.
+#                  Outfit ve Inter değişken sürümleri assets/fonts/ altına
+#                  alındı (SIL OFL 1.1). Uygulama artık uçak modunda da doğru
+#                  yazı tipiyle açılıyor — jüri demosu uçak modunda yapılacak.
 #
 # ── KALDIRILAN BAĞIMLILIKLAR (24 Ağustos 2026) ───────────────────────────────
 # Devralınan mesajlaşma arayüzü (sohbet, arama, kişiler, kimlik doğrulama,
@@ -61,6 +69,18 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+
+  # Değişken (variable) yazı tipleri. Ağırlık, `wght` ekseninden gelir ve
+  # `app_theme.dart` içindeki appDisplay/appBody yardımcıları tarafından
+  # `fontVariations` ile sürülür — bu yüzden burada tek bir dosya yeterli,
+  # ağırlık başına ayrı dosya gerekmez.
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
 
 flutter_launcher_icons:
   android: "launcher_icon"

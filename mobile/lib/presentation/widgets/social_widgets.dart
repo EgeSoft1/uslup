@@ -45,11 +45,13 @@ class BrandMark extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.28),
       ),
       alignment: Alignment.center,
+      // Marka harfi başlık ailesindendir (Outfit). Varsayılan gövde
+      // ailesiyle çizilince işaret, bir logodan çok bir metin gibi duruyordu.
       child: Text(
         'Ü',
-        style: TextStyle(
+        style: appDisplay(
           color: Colors.white,
-          fontSize: size * 0.54,
+          fontSize: size * 0.56,
           fontWeight: FontWeight.w800,
           height: 1,
         ),
@@ -69,21 +71,21 @@ class BrandMark extends StatelessWidget {
           children: [
             Text(
               'Üslup',
-              style: TextStyle(
-                fontSize: size * 0.50,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+              style: appDisplay(
                 color: p.textPrimary,
-                height: 1.1,
+                fontSize: size * 0.56,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.9,
+                height: 1.08,
               ),
             ),
             Text(
               'PROTOTİP',
-              style: TextStyle(
-                fontSize: size * 0.22,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2.2,
+              style: appBody(
                 color: p.textTertiary,
+                fontSize: size * 0.215,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.4,
                 height: 1.2,
               ),
             ),

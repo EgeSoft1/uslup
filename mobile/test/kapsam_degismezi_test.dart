@@ -112,6 +112,10 @@ void main() {
       'Socket.connect': RegExp(r'\bSocket\s*\.\s*connect\s*\('),
       'package:http': RegExp(r'''package:http/'''),
       'package:dio': RegExp(r'''package:dio/'''),
+      // google_fonts, yazı tiplerini çalışma zamanında fonts.gstatic.com'dan
+      // indirir. Görünür bir ağ çağrısı yazmaya gerek yok — paketi import
+      // etmek yeterli. 9 Eylül'de kaldırıldı; geri gelirse burada yakalanır.
+      'package:google_fonts': RegExp(r'''package:google_fonts/'''),
     };
 
     test('ağ çağrısı üreten hiçbir kalıp lib/ altında yok', () {

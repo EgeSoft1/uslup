@@ -19,6 +19,7 @@
 // =============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/civility/civility_runtime.dart';
 import '../../core/theme/app_palette.dart';
@@ -98,69 +99,132 @@ class UslupPanelScreen extends StatelessWidget {
 
   // ─── Başlık ───────────────────────────────────────────────────────────────
 
+  /// Tam genişlikte marka başlığı.
+  ///
+  /// Koyu marka gradyanı (`heroGradient`) üzerinde beyaz metin — her iki
+  /// ucunda da en az 5,19:1 kontrast verir. Camgöbeğine kaçan `brandGradient`
+  /// burada KULLANILAMAZ; üzerine paragraf yazılamaz.
   Widget _header(BuildContext context, AppPalette p) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.base, AppSpacing.lg, AppSpacing.base, AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: p.surface,
-        border: Border(bottom: BorderSide(color: p.divider)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(gradient: p.heroGradient),
+      child: Stack(
         children: [
-          const BrandMark(size: 40, showWordmark: true),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            'Gönderilmeden önce müdahale eden, cihaz üzerinde çalışan '
-            'Türkçe sosyal yapay zekâ katmanı.',
-            style: TextStyle(
-              fontSize: 15,
-              color: p.textPrimary,
-              height: 1.45,
-              fontWeight: FontWeight.w600,
+          // Yüzeyi düz bir renk olmaktan çıkaran ışık halesi.
+          Positioned(
+            right: -70,
+            top: -60,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.09),
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              AppBadgePill(
-                label: 'cihaz üstü',
-                color: p.success,
-                icon: Icons.phonelink_lock_rounded,
-              ),
-              AppBadgePill(
-                label: 'sıfır ağ çağrısı',
-                color: p.info,
-                icon: Icons.wifi_off_rounded,
-              ),
-              AppBadgePill(
-                label: 'engellemez, önerir',
-                color: p.brandInk,
-                icon: Icons.how_to_reg_rounded,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: p.surfaceMuted,
-              borderRadius: AppRadius.mdAll,
-            ),
-            child: Row(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.base, AppSpacing.xl, AppSpacing.base, AppSpacing.lg),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.memory_rounded, size: 15, color: p.textTertiary),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    '${Civility.modelName}\n${Civility.olcumKapsami}',
-                    style: TextStyle(
-                        fontSize: 11.5, color: p.textTertiary, height: 1.5),
+                Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(13),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35)),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Ü',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w800,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Text(
+                      'Üslup',
+                      style: appDisplay(
+                        color: Colors.white,
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1.0,
+                        height: 1.05,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.base),
+                Text(
+                  'Gönderilmeden önce\nmüdahale eden katman.',
+                  style: appDisplay(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.9,
+                    height: 1.18,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Cihaz üzerinde çalışan, Türkçe\'ye özel sosyal yapay zekâ. '
+                  'Yazdığın metin telefonundan çıkmaz.',
+                  style: appBody(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontSize: 14,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.base),
+                const Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: [
+                    _HeroBadge(
+                        icon: Icons.phonelink_lock_rounded, label: 'cihaz üstü'),
+                    _HeroBadge(
+                        icon: Icons.wifi_off_rounded, label: 'sıfır ağ çağrısı'),
+                    _HeroBadge(
+                        icon: Icons.how_to_reg_rounded,
+                        label: 'engellemez, önerir'),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.base),
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.mdAll,
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.memory_rounded,
+                          size: 15, color: Colors.white),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          '${Civility.modelName}\n${Civility.olcumKapsami}',
+                          style: appBody(
+                            color: Colors.white.withValues(alpha: 0.92),
+                            fontSize: 11.5,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -168,7 +232,10 @@ class UslupPanelScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+    )
+        .animate()
+        .fadeIn(duration: 320.ms)
+        .slideY(begin: -0.03, end: 0, curve: AppCurves.standard);
   }
 
   // ─── İşlem hattı ──────────────────────────────────────────────────────────
@@ -590,6 +657,45 @@ class UslupPanelScreen extends StatelessWidget {
 }
 
 // ─── Alt bileşenler ──────────────────────────────────────────────────────────
+
+/// Başlık panelindeki yarı saydam rozet.
+///
+/// `AppBadgePill` burada kullanılamaz: o, paletten renk okur ve açık zemin
+/// varsayar. Bu rozet koyu gradyanın üzerinde durur; beyaz metin + saydam
+/// beyaz zemin, gradyanın her iki ucunda da okunur kalır.
+class _HeroBadge extends StatelessWidget {
+  const _HeroBadge({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: AppRadius.pill,
+        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: appBody(
+              color: Colors.white,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _MeasurementRow extends StatelessWidget {
   const _MeasurementRow({required this.row});

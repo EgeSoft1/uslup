@@ -330,6 +330,20 @@ class AppPalette extends ThemeExtension<AppPalette> {
             : const [AppColors.brandCyan, AppColors.brandIndigo],
       );
 
+  /// Tam genişlikte başlık panelleri için KOYU marka gradyanı.
+  ///
+  /// [brandGradient]den ayrı olması bir kontrast zorunluluğudur:
+  /// camgöbeği ucunda (#35C6EA) beyaz metin 1,9:1 verir ve WCAG 1.4.3'ün
+  /// çok altında kalır. Bu gradyanın iki ucu da beyaz metinle en az 5,19:1
+  /// sağlar, yani üzerine gerçek başlık ve paragraf yazılabilir.
+  LinearGradient get heroGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isDark
+            ? const [Color(0xFF1B3A7A), Color(0xFF10204A)]
+            : const [AppColors.brand, AppColors.brandDeep],
+      );
+
   @override
   AppPalette copyWith({
     bool? isDark,

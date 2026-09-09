@@ -13,7 +13,6 @@
 import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_palette.dart';
 
@@ -94,7 +93,7 @@ abstract final class AppTheme {
     final brightness = p.isDark ? Brightness.dark : Brightness.light;
     final base = ThemeData(brightness: brightness, useMaterial3: true);
 
-    final textTheme = _textTheme(p, base.textTheme);
+    final textTheme = _textTheme(p);
 
     return base.copyWith(
       scaffoldBackgroundColor: p.background,
@@ -154,7 +153,7 @@ abstract final class AppTheme {
         systemOverlayStyle: systemOverlayFor(p),
         iconTheme: IconThemeData(color: p.textPrimary, size: 24),
         actionsIconTheme: IconThemeData(color: p.textPrimary, size: 24),
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: appDisplay(
           color: p.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -179,7 +178,7 @@ abstract final class AppTheme {
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => GoogleFonts.inter(
+          (states) => appBody(
             fontSize: 11,
             fontWeight:
                 states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
@@ -196,9 +195,9 @@ abstract final class AppTheme {
         indicatorColor: p.brandInk,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
-        labelStyle: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700),
+        labelStyle: appBody(fontSize: 14, fontWeight: FontWeight.w700),
         unselectedLabelStyle:
-            GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500),
+            appBody(fontSize: 14, fontWeight: FontWeight.w500),
       ),
 
       cardTheme: CardThemeData(
@@ -225,8 +224,8 @@ abstract final class AppTheme {
         fillColor: p.surfaceMuted,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 16),
-        hintStyle: GoogleFonts.inter(color: p.textTertiary, fontSize: 15),
-        labelStyle: GoogleFonts.inter(color: p.textSecondary, fontSize: 15),
+        hintStyle: appBody(color: p.textTertiary, fontSize: 15),
+        labelStyle: appBody(color: p.textSecondary, fontSize: 15),
         prefixIconColor: p.textTertiary,
         suffixIconColor: p.textTertiary,
         // İP-16 · WCAG 1.4.11 — metin girdisinin sınırı işlevsel bilgidir,
@@ -272,7 +271,7 @@ abstract final class AppTheme {
           disabledForegroundColor: p.textTertiary,
           elevation: 0,
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
+          textStyle: appBody(fontSize: 16, fontWeight: FontWeight.w700),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: AppSpacing.xl),
           minimumSize: const Size(0, 52),
         ),
@@ -285,7 +284,7 @@ abstract final class AppTheme {
           disabledBackgroundColor: p.surfaceMuted,
           disabledForegroundColor: p.textTertiary,
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700),
+          textStyle: appBody(fontSize: 16, fontWeight: FontWeight.w700),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: AppSpacing.xl),
           minimumSize: const Size(0, 52),
         ),
@@ -296,7 +295,7 @@ abstract final class AppTheme {
           foregroundColor: p.textPrimary,
           side: BorderSide(color: p.border, width: 1.5),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-          textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
+          textStyle: appBody(fontSize: 16, fontWeight: FontWeight.w600),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: AppSpacing.xl),
           minimumSize: const Size(0, 52),
         ),
@@ -305,7 +304,7 @@ abstract final class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: p.brandInk,
-          textStyle: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: appBody(fontSize: 15, fontWeight: FontWeight.w600),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.smAll),
         ),
       ),
@@ -314,7 +313,7 @@ abstract final class AppTheme {
         backgroundColor: p.surface,
         selectedColor: p.brandSoft,
         side: BorderSide(color: p.border),
-        labelStyle: GoogleFonts.inter(
+        labelStyle: appBody(
           fontSize: 13,
           fontWeight: FontWeight.w500,
           color: p.textPrimary,
@@ -340,12 +339,12 @@ abstract final class AppTheme {
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
         elevation: 0,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: appDisplay(
           color: p.textPrimary,
           fontSize: 19,
           fontWeight: FontWeight.w700,
         ),
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: appBody(
           color: p.textSecondary,
           fontSize: 15,
           height: 1.45,
@@ -373,7 +372,7 @@ abstract final class AppTheme {
           borderRadius: AppRadius.mdAll,
           side: BorderSide(color: p.border),
         ),
-        textStyle: GoogleFonts.inter(
+        textStyle: appBody(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: p.textPrimary,
@@ -382,7 +381,7 @@ abstract final class AppTheme {
 
       snackBarTheme: SnackBarThemeData(
         backgroundColor: p.isDark ? p.surfaceMuted : p.textPrimary,
-        contentTextStyle: GoogleFonts.inter(
+        contentTextStyle: appBody(
           color: p.isDark ? p.textPrimary : p.background,
           fontSize: 14,
           fontWeight: FontWeight.w500,
@@ -412,7 +411,7 @@ abstract final class AppTheme {
           color: p.isDark ? p.surfaceMuted : p.textPrimary,
           borderRadius: AppRadius.xsAll,
         ),
-        textStyle: GoogleFonts.inter(
+        textStyle: appBody(
           fontSize: 12,
           color: p.isDark ? p.textPrimary : p.background,
         ),
@@ -441,43 +440,152 @@ abstract final class AppTheme {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Tipografi
+  // Tipografi ölçeği
   //
-  // Outfit → başlıklar (geniş, karakterli). Inter → gövde (ekranda en okunaklı
-  // nötr grotesk). İkisi de Türkçe'nin ğ/ş/ı/İ karakterlerini tam destekler.
+  // 9 Eylül'de yeniden ayarlandı. Önceki ölçek okunaklıydı ama SESSİZDİ:
+  // başlıklarla gövde arasındaki ağırlık farkı azdı, negatif harf aralığı
+  // zayıftı ve ekranlar birbirine benziyordu. Yeni ölçek üç şeyi değiştirir:
+  //
+  //   • Başlıklar büyüdü ve 800 ağırlığa çıktı — bir başlık, bir başlık gibi
+  //     görünmeli.
+  //   • Negatif harf aralığı arttı; Outfit sıkışınca karakterini gösteriyor.
+  //   • Gövde satır yüksekliği 1,5'e çıktı — Türkçe'nin uzun kelimeleri ve
+  //     ğ/ş/ç inen-çıkan kuyrukları nefes alacak yer istiyor.
+  //
+  // Kontrast değerleri değişmedi; ölçek büyüdüğü için erişilebilirlik
+  // yalnızca iyileşir (büyük metin eşiği daha düşüktür).
   // ───────────────────────────────────────────────────────────────────────────
-  static TextTheme _textTheme(AppPalette p, TextTheme base) {
-    return GoogleFonts.interTextTheme(base).copyWith(
-      displayLarge: GoogleFonts.outfit(
-          color: p.textPrimary, fontSize: 40, fontWeight: FontWeight.w800, letterSpacing: -1.2),
-      displayMedium: GoogleFonts.outfit(
-          color: p.textPrimary, fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: -1.0),
-      displaySmall: GoogleFonts.outfit(
-          color: p.textPrimary, fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -0.8),
-      headlineLarge: GoogleFonts.outfit(
-          color: p.textPrimary, fontSize: 28, fontWeight: FontWeight.w700, letterSpacing: -0.6),
-      headlineMedium: GoogleFonts.outfit(
-          color: p.textPrimary, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
-      headlineSmall: GoogleFonts.outfit(
-          color: p.textPrimary, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3),
-      titleLarge: GoogleFonts.inter(
-          color: p.textPrimary, fontSize: 17, fontWeight: FontWeight.w700, letterSpacing: -0.2),
-      titleMedium: GoogleFonts.inter(
-          color: p.textPrimary, fontSize: 15, fontWeight: FontWeight.w600),
-      titleSmall: GoogleFonts.inter(
-          color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w600),
-      bodyLarge: GoogleFonts.inter(
+  static TextTheme _textTheme(AppPalette p) {
+    return TextTheme(
+      displayLarge: appDisplay(
+          color: p.textPrimary, fontSize: 44, fontWeight: FontWeight.w800, letterSpacing: -1.6),
+      displayMedium: appDisplay(
+          color: p.textPrimary, fontSize: 37, fontWeight: FontWeight.w800, letterSpacing: -1.3),
+      displaySmall: appDisplay(
+          color: p.textPrimary, fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1.0),
+      headlineLarge: appDisplay(
+          color: p.textPrimary, fontSize: 29, fontWeight: FontWeight.w800, letterSpacing: -0.9),
+      headlineMedium: appDisplay(
+          color: p.textPrimary, fontSize: 25, fontWeight: FontWeight.w800, letterSpacing: -0.7),
+      headlineSmall: appDisplay(
+          color: p.textPrimary, fontSize: 21, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+      titleLarge: appBody(
+          color: p.textPrimary, fontSize: 17.5, fontWeight: FontWeight.w800, letterSpacing: -0.35),
+      titleMedium: appBody(
+          color: p.textPrimary, fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+      titleSmall: appBody(
+          color: p.textSecondary, fontSize: 13, fontWeight: FontWeight.w700),
+      bodyLarge: appBody(
           color: p.textPrimary, fontSize: 16, fontWeight: FontWeight.w400, height: 1.5),
-      bodyMedium: GoogleFonts.inter(
-          color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w400, height: 1.45),
-      bodySmall: GoogleFonts.inter(
-          color: p.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w400, height: 1.4),
-      labelLarge: GoogleFonts.inter(
-          color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w600),
-      labelMedium: GoogleFonts.inter(
-          color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.2),
-      labelSmall: GoogleFonts.inter(
-          color: p.textTertiary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.4),
+      bodyMedium: appBody(
+          color: p.textPrimary, fontSize: 14.5, fontWeight: FontWeight.w400, height: 1.5),
+      bodySmall: appBody(
+          color: p.textSecondary, fontSize: 12.5, fontWeight: FontWeight.w400, height: 1.45),
+      labelLarge: appBody(
+          color: p.textPrimary, fontSize: 14, fontWeight: FontWeight.w700),
+      labelMedium: appBody(
+          color: p.textSecondary, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.3),
+      // Bölüm etiketleri büyük harfle yazılıyor; harf aralığı olmadan
+      // büyük harf dizisi okunmaz bir blok hâline gelir.
+      labelSmall: appBody(
+          color: p.textTertiary, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
     );
   }
+}
+
+// ─── Yazı tipi aileleri ──────────────────────────────────────────────────────
+//
+// ── NEDEN google_fonts KALDIRILDI (9 Eylül 2026) ───────────────────────────
+// `google_fonts` paketi, yazı tipi dosyalarını ÇALIŞMA ZAMANINDA
+// fonts.gstatic.com üzerinden indirir ve cihaza önbellekler. Yani ürünün
+// "çalışma zamanında tek bir ağ çağrısı yapılmaz" iddiası, ilk açılışta
+// sessizce çiğneniyordu.
+//
+// Bu, metin göndermekten farklı bir sızıntıdır ama iddiayı yine de yanlış
+// kılar — ve bir mahremiyet iddiası "neredeyse doğru" olamaz. İki değişken
+// yazı tipi (`assets/fonts/`) depoya alındı, paket kaldırıldı.
+//
+// Kazanç yalnızca dürüstlük değil: uygulama artık ilk açılışta ağ beklemiyor
+// ve uçak modunda yazı tipleri yedek fonta düşmüyor. Jüri demosu uçak
+// modunda yapılacak (`docs/17`), yani bu fark ekranda görünürdü.
+//
+// Değişmez `test/kapsam_degismezi_test.dart` içinde korunuyor: `lib/`
+// altında `google_fonts` importu belirirse test kırılır.
+//
+// Lisans: her iki aile de SIL Open Font License 1.1 — `assets/fonts/OFL.txt`.
+
+/// Başlık ailesi — **Outfit**. Geniş, geometrik, sıkıştırıldığında karakterli.
+TextStyle appDisplay({
+  Color? color,
+  double? fontSize,
+  FontWeight? fontWeight,
+  double? letterSpacing,
+  double? height,
+  FontStyle? fontStyle,
+  List<FontFeature>? fontFeatures,
+  TextDecoration? decoration,
+}) =>
+    _familyStyle('Outfit',
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+        fontFeatures: fontFeatures,
+        decoration: decoration);
+
+/// Gövde ailesi — **Inter**. Ekranda en okunaklı nötr grotesk.
+/// Türkçe'nin ğ/ş/ı/İ/ç karakterlerini tam destekler.
+TextStyle appBody({
+  Color? color,
+  double? fontSize,
+  FontWeight? fontWeight,
+  double? letterSpacing,
+  double? height,
+  FontStyle? fontStyle,
+  List<FontFeature>? fontFeatures,
+  TextDecoration? decoration,
+}) =>
+    _familyStyle('Inter',
+        color: color,
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        letterSpacing: letterSpacing,
+        height: height,
+        fontStyle: fontStyle,
+        fontFeatures: fontFeatures,
+        decoration: decoration);
+
+TextStyle _familyStyle(
+  String family, {
+  Color? color,
+  double? fontSize,
+  FontWeight? fontWeight,
+  double? letterSpacing,
+  double? height,
+  FontStyle? fontStyle,
+  List<FontFeature>? fontFeatures,
+  TextDecoration? decoration,
+}) {
+  final weight = fontWeight ?? FontWeight.w400;
+  return TextStyle(
+    fontFamily: family,
+    color: color,
+    fontSize: fontSize,
+    fontWeight: weight,
+    // ── NEDEN HEM fontWeight HEM fontVariations ────────────────────────────
+    // Paketlenen dosyalar DEĞİŞKEN (variable) yazı tipleridir; gerçek ağırlık
+    // `wght` ekseninden gelir ve onu yalnızca `fontVariations` sürer.
+    // `fontWeight` tek başına verilirse bazı ortamlar sentetik kalınlaştırma
+    // yapar ve harfler şişer. İkisi birlikte verilince: ekseni destekleyen
+    // ortam gerçek ağırlığı çizer, desteklemeyen ortamda `fontWeight` yedek
+    // kalır — hiçbir ortamda ağırlık kaybolmaz.
+    fontVariations: [FontVariation('wght', weight.value.toDouble())],
+    letterSpacing: letterSpacing,
+    height: height,
+    fontStyle: fontStyle,
+    fontFeatures: fontFeatures,
+    decoration: decoration,
+  );
 }
