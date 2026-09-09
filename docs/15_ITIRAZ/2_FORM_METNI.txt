@@ -1,0 +1,42 @@
+Raporumuz 92,00 puan almış, kırılan 8 puan yedi alt kriterde toplanmıştır. Her kalemde,
+kriterin aradığı unsurun raporda sayfa numarasıyla mevcut olduğunu gösteriyor ve yeniden
+değerlendirme talep ediyoruz.
+
+7.1 İş Paketleri ve Zamanlama (4/5). Kriter hem iş paketlerini hem zamanlamayı istemektedir.
+S.30'da on bir tamamlanmış iş paketi içerik dökümüyle anlatılmakta; aynı sayfadaki Şekil 9
+zaman çizelgesi, tamamlananların yanı sıra planlanan beş iş paketini (İP-14 kullanılabilirlik
+testi, İP-15 bağımsız genelleme doğrulaması, İP-16 erişilebilirlik, İP-17 söz varlığı
+genişletmesi, İP-18 sunum) ve dört kilometre taşını 20 Eylül 2026'ya kadar tarihleriyle
+göstermektedir. Kriterin istediği ileriye dönük takvim belgede mevcuttur.
+
+4.1 Verimlilik ve Etkinlik (4/5). S.25-26'da çözümleme süresi ölçülmüş (87-193 mikrosaniye;
+60 FPS kare bütçesinin %1,2'si), platformun marjinal çıkarım maliyetinin sıfır olduğu
+gerekçelendirilmiş, moderasyon yükündeki azalma varsayımları açıkça yazılmış bir duyarlılık
+modeliyle dört senaryoda sayısallaştırılmış ve birincil etkinlik göstergesi (düzeltme oranı)
+hem tanımlanmış hem de ürüne ölçüm mekanizması olarak gömülmüştür.
+
+4.2 Hedef Kitle (4/5). S.26-27'de birincil kitle ve beş ikincil kitle tanımlanmış, büyüklük üç
+resmî kaynakla verilmiştir: TÜİK %92,3 internet kullanımı, DataReportal 62,3 milyon kullanıcı,
+UNFPA-KONDA beşte bir maruziyet. Dört persona s.24'te tanımlıdır ve bunlardan ikisi -mağdur ve
+kimliğinden söz eden kullanıcı- kod düzeyinde kabul testiyle korunmaktadır.
+
+2.2 Çözüm Fikri, Özgünlük ve Yerlilik (7/8). S.13-17'de yedi adımlı hattın her adımı özgün
+tasarım kararıyla anlatılmış; üç özgün katkının etkisi Şekil 7'de aynı küme üzerinde A/B ile
+ölçülmüştür: duyarlılık %44,0'ten %99,3'e çıkarken kesinlik %100,0'de sabit kalmıştır. Yerlilik
+bir beyan değil denetlenebilir olgudur; çekirdek paketin bağımlılık listesi boştur ve çalışma
+zamanında ağ çağrısı yapılmaz (s.17).
+
+1.2 Proje Kapsamı ve Yöntemi (7/8). S.4'te Tablo 3 kapsam içi/dışı ayrımını gerekçeleriyle,
+Tablo 2 ise şartname hedefleriyle eşlemeyi vermektedir. İzlenen teknik yöntem Şekil 1'deki
+yedi adımlı hat, akademik yöntem ise beş dilimli işlevsel test kurgusu ve kesinliği iki kat
+ağırlıklandıran F0.5 hedef fonksiyonudur.
+
+6.1 ve 6.2 (4/5 ve 3/5). Dört gelir kanalı müşterisi ve modeliyle tanımlanmış, pazar penceresi
+kaynağa bağlanmıştır (s.28). Sürdürülebilirlikte finansal dayanak sıfır altyapı gideri, teknik
+dayanak bağımlılıksız çekirdek ve 136 testlik regresyon kalkanıdır; sosyal boyut s.27-28'de
+mağdurun susturulmaması ve kimlik beyanının serbest kalması olarak somutlanmış, bu iki etik
+vaat kod düzeyinde yapısal testlerle kilitlenmiştir.
+
+Son olarak, raporun bütün sayısal iddiaları MIT lisanslı açık depoda tek komutla yeniden
+üretilebilir durumdadır; iddialarımız beyan değil, denetlenebilir ölçümlerdir. Puanımızın
+yeniden değerlendirilmesini saygıyla arz ederiz.

@@ -1,0 +1,101 @@
+===============================================================================
+DOSYA 3 — EK-1 (Dilekçenin 2. sayfası olarak Word'e yapıştır)
+Sayfa numaraları, 24.08.2026'da sisteme yüklenen raporun PDF sayfalarıdır.
+Doğrulandı: bu belge indirilip sayfa sayfa incelenerek hazırlanmıştır.
+===============================================================================
+
+
+EK-1 · PUAN KIRILAN ALT KRİTERLERİN RAPORDAKİ KARŞILIKLARI
+
+Aşağıdaki sayfa numaraları, 24.08.2026 tarihinde başvuru sistemine yüklenen
+Teknik Tasarım Raporu'nun PDF sayfa numaralarıdır.
+
+
+1) 7.1 İŞ PAKETLERİ VE ZAMANLAMA — verilen puan 4/5
+
+Kriter hem iş paketlerini hem de zamanlamayı istemektedir. Raporun 30. sayfasında
+on bir tamamlanmış iş paketi içerik dökümüyle anlatılmakta; aynı sayfada yer alan
+"Şekil 9 — Zaman çizelgesi: tamamlanan ve planlanan iş paketleri" başlıklı çizelge
+ise tamamlananların yanı sıra PLANLANAN beş iş paketini (İP-14 kullanılabilirlik
+testi, İP-15 bağımsız genelleme doğrulaması, İP-16 erişilebilirlik değerlendirmesi,
+İP-17 kimlik söz varlığı genişletmesi, İP-18 sunum ve demo videosu) ve dört
+kilometre taşını (teknik rapor teslimi, sonuç duyurusu, final sunumu teslimi,
+jüriye canlı sunum) 20 Eylül 2026'ya kadar tarihleriyle göstermektedir. Kriterin
+istediği ileriye dönük takvim belgede mevcuttur.
+
+
+2) 4.1 VERİMLİLİK VE ETKİNLİK — verilen puan 4/5
+
+Raporun 25-26. sayfalarında: çözümleme süresi ölçülmüştür (87-193 mikrosaniye;
+60 FPS kare bütçesinin %1,2'si). Çözümleme kullanıcının cihazında yapıldığı için
+platformun marjinal çıkarım maliyetinin sıfır olduğu ve kullanıcı sayısıyla
+artmadığı gerekçelendirilmiştir. Moderasyon yükündeki azalma, girdileri kaynağa
+bağlı (Türkçe içerikte saldırgan dil oranı %19 [4]; motorun ayrık kümede ölçülen
+duyarlılığı %80,0) ve varsayımları açıkça yazılmış bir duyarlılık modeliyle dört
+senaryoda sayısallaştırılmıştır. Ayrıca birincil etkinlik göstergesi (düzeltme
+oranı) hem tanımlanmış hem de ürüne mahremiyeti bozmayan bir ölçüm mekanizması
+olarak gömülmüştür.
+
+
+3) 4.2 HEDEF KİTLE — verilen puan 4/5
+
+Raporun 26-27. sayfalarında birincil hedef kitle ve beş ikincil hedef kitle ayrı
+ayrı tanımlanmıştır. Kitle büyüklüğü üç resmî kaynağa bağlanmıştır: TÜİK, 16-74
+yaş internet kullanımı %92,3 [1]; DataReportal, 62,3 milyon sosyal medya kullanıcı
+kimliği [2]; UNFPA-KONDA, dijital şiddete maruziyet beşte bir, 18-32 yaş grubunda
+üçte bir [3]. Dört kullanıcı personası 24. sayfada tanımlıdır ve bunlardan ikisi
+— tacize uğrayan kullanıcı ile kimliğinden söz eden kullanıcı — kod düzeyinde
+kabul testleriyle korunmaktadır.
+
+
+4) 2.2 ÇÖZÜM FİKRİ, ÖZGÜNLÜK VE YERLİLİK — verilen puan 7/8
+
+Raporun 13-17. sayfalarında yedi adımlı çözümleme hattının her adımı ayrı bir
+özgün tasarım kararıyla anlatılmıştır. Üç özgün katkının etkisi bir iddia değil
+ölçümdür: 11. sayfadaki "Şekil 7", aynı 256 örneklik küme üzerinde A/B
+karşılaştırmasıyla duyarlılığın %44,0'ten %99,3'e çıktığını, kesinliğin ise her
+iki yapılandırmada da %100,0'de kaldığını göstermektedir. Yerlilik bir beyan
+değil denetlenebilir bir olgudur: 17. sayfada belirtildiği üzere çekirdek paketin
+bağımlılık listesi boştur ve ürün çalışma zamanında tek bir ağ çağrısı yapmaz.
+
+
+5) 1.2 PROJE KAPSAMI VE YÖNTEMİ — verilen puan 7/8
+
+Raporun 4. sayfasında "Tablo 3 — Projenin kapsam sınırları" kapsam içi ve kapsam
+dışı unsurları gerekçeleriyle, "Tablo 2 — Şartname hedefleri ile Üslup'un
+karşılığı" ise şartname hedefleriyle birebir eşlemeyi vermektedir. İzlenen teknik
+yöntem, 8. sayfadaki Şekil 1'de gösterilen yedi adımlı çözümleme hattıdır;
+akademik yöntem ise beş dilimli işlevsel test kurgusu, yanlış pozitif tuzakları
+ve kesinliği iki kat ağırlıklandıran F0.5 hedef fonksiyonudur. Kapsam kararı
+ayrıca 5. sayfada, çalışır durumdayken kaldırılmış iki bileşenle belgelenmiştir.
+
+
+6) 6.1 TİCARİLEŞTİRME POTANSİYELİ VE İŞ MODELİ — verilen puan 4/5
+
+Raporun 28. sayfasında dört gelir kanalı, her biri için müşteri segmenti ve gelir
+modeliyle birlikte tanımlanmıştır: platform lisansı (aktif kullanıcı bandına göre
+yıllık kurumsal lisans), kurumsal iletişim (koltuk başına yıllık abonelik), eğitim
+(kurum lisansı) ve kamu (proje bazlı entegrasyon ve bakım). Pazar penceresi bir
+varsayım değil kaynağa bağlı bir olgudur: alanın en yaygın servisi olan Perspective
+API 31 Aralık 2026'da hizmete kapanmaktadır [14]. Katma değer, veri egemenliği ve
+KVKK uyumu üzerinden somutlanmıştır.
+
+
+7) 6.2 FİNANSAL, TEKNİK VE SOSYAL SÜRDÜRÜLEBİLİRLİK — verilen puan 3/5
+
+Raporun 29. sayfasında finansal dayanak açıkça verilmiştir: çıkarım cihazda
+yapıldığı için sunucu, GPU ve API kotası gideri yoktur; kullanıcı sayısının artması
+altyapı gideri doğurmaz; gelir dört kanala dağıtılarak tek müşteriye bağımlılık
+azaltılmıştır. Teknik dayanak, hiçbir harici pakete bağlı olmayan çekirdek ile 136
+test ve 336 örneklik ölçüm altyapısından oluşan regresyon kalkanıdır. Sosyal
+dayanak ise 27-28. sayfalarda somutlanmıştır: mağdurun susturulmaması ve kimlik
+beyanının serbest kalması. Bu iki etik vaat, ihlal edildiğinde test hattını kıran
+yapısal testlerle kod düzeyinde kilitlenmiştir.
+
+
+-------------------------------------------------------------------------------
+Raporun bütün sayısal sonuçları, Ek-3'teki açık depoda "dart test" ve
+"dart run bin/evaluate.dart --hepsi" komutlarıyla sıfırdan yeniden üretilebilir
+durumdadır. İtirazımız, raporda bulunmayan bir içeriğin sonradan eklenmesi talebi
+değildir; teslim edilen raporda hâlihazırda bulunan unsurların yeniden
+değerlendirilmesi talebidir.

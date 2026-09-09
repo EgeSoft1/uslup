@@ -1,0 +1,49 @@
+===============================================================================
+DOSYA 1 — İTİRAZ DİLEKÇESİ (Word'e yapıştır, PDF olarak kaydet, forma yükle)
+Sarı yerleri kendi bilgilerinle doldur: [AD SOYAD] ve [TC NO]
+===============================================================================
+
+
+05/09/2026
+
+
+TEKNOFEST YARIŞMALAR KOORDİNATÖRLÜĞÜ İTİRAZ KOMİSYONU
+
+
+Konu: 2026 NSosyal İnovasyon Yarışması Teknik Tasarım Raporu puanına itiraz hk.
+
+
+     Ben #5394579 başvuru ID'li, Aliz AI Takımının [AD SOYAD] isim soyisimli
+[TC NO] TC numaralı Kaptanı'yım. 05/09/2026 tarihinde açıklanan 2026 NSosyal
+İnovasyon Yarışmasından almış olduğumuz 92,00 Puanı; puan kırılan yedi alt kriterin her birinde ilgili kriterin aradığı
+unsurun raporumuzda sayfa numarasıyla gösterilebilir biçimde mevcut olması,
+özellikle 7.1 İş Paketleri ve Zamanlama kaleminde ileriye dönük iş paketleri ile
+kilometre taşlarının Şekil 9'daki zaman çizelgesinde tarihleriyle birlikte yer
+alması, 4.1 ve 4.2 kalemlerinde istenen niceliksel dayanakların ölçüm sonuçları
+ve resmî istatistik kaynaklarıyla verilmiş olması, 2.2 kaleminde ise özgünlük
+katkısının aynı veri kümesi üzerinde A/B karşılaştırmasıyla sayısallaştırılmış ve
+yerlilik iddiasının denetlenebilir kılınmış olması sebeplerinden dolayı yeterli
+olmadığını düşünmekteyiz. Bu sebepler doğrultusunda Teknik Tasarım Raporu
+sonucumuzun tekrar değerlendirilmesini talep etmekteyiz. Kalem bazlı
+gerekçelerimiz ve bunların rapordaki sayfa karşılıkları Ek-1'de sunulmuştur.
+İtirazım sonuçlandığında sonucum hakkında başka bir talepte bulunmayacağımı kabul
+ederim.
+
+                    Gereğinin yapılmasını tarafınızdan arz ederiz.
+
+
+
+                                                  Takım Kaptanı
+                                                  Adı Soyadı: [AD SOYAD]
+                                                  İmzası:
+
+
+
+Ek:
+Ek-1: Puan kırılan alt kriterlerin rapordaki sayfa ve kanıt eşlemesi (1 sayfa,
+      ilişikte)
+Ek-2: Proje Teknik Raporu — 24.08.2026 tarihinde başvuru sistemine yüklenen
+      sürüm (32 sayfa)
+Ek-3: Açık kaynak proje deposu — https://github.com/EgeSoft1/uslup
+      (MIT lisansı; rapordaki bütün metrikler bu depoda tek komutla yeniden
+      üretilebilir)
