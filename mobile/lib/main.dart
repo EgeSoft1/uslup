@@ -30,7 +30,7 @@ class NSosyalApp extends StatelessWidget {
         listenable: themeController,
         builder: (context, _) {
           return MaterialApp(
-            title: 'NSosyal — Nezaket Koçu',
+            title: 'Üslup — Sosyal Yapay Zekâ Katmanı',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
@@ -52,7 +52,3 @@ class NSosyalApp extends StatelessWidget {
     );
   }
 }
-
-/// Eski ad — dış referanslar bozulmasın diye korunuyor.
-@Deprecated('NSosyalApp kullanın')
-typedef MyApp = NSosyalApp;

@@ -61,14 +61,17 @@ class AboutScreen extends StatelessWidget {
           ).animate().scale(duration: 380.ms, curve: Curves.easeOutBack),
           const SizedBox(height: AppSpacing.base),
           Center(
-            child: Text('NSosyal — Nezaket Koçu',
+            child: Text('Üslup',
                 style: Theme.of(context).textTheme.headlineSmall),
           ).animate().fadeIn(delay: 80.ms),
           const SizedBox(height: 2),
           Center(
             child: Text(
-              'Sürüm 1.0.0 · Prototip',
-              style: TextStyle(fontSize: 13, color: p.textSecondary),
+              'Cihaz üstü Türkçe sosyal yapay zekâ katmanı\n'
+              'Sürüm 1.0.0 · Prototip · Takım Aliz AI',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 13, color: p.textSecondary, height: 1.45),
             ),
           ).animate().fadeIn(delay: 120.ms),
 
@@ -112,8 +115,16 @@ class AboutScreen extends StatelessWidget {
                 ),
                 _FeatureRow(
                   icon: Icons.science_rounded,
-                  label: 'Üçüncü ayrık küme ölçümü',
-                  detail: 'İP-20 · kesinlik %100 · duyarlılık %50',
+                  label: 'Dördüncü ayrık küme ölçümü',
+                  detail: 'İP-22 · kesinlik %90,5 · duyarlılık %54,3 · '
+                      'F1 %67,9 — raporlanan genelleme sayısı',
+                  status: FeatureStatus.working,
+                ),
+                _FeatureRow(
+                  icon: Icons.dynamic_feed_rounded,
+                  label: 'Katman her metin giriş noktasında',
+                  detail: 'Gönderi ve yorum kutusu aynı bileşen · '
+                      'yapısal testle korunuyor',
                   status: FeatureStatus.working,
                 ),
                 _FeatureRow(
@@ -202,13 +213,24 @@ class AboutScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
+                // DÜZELTİLDİ (9 Eylül 2026): bu paragraf, dört gün sonra
+                // kasıtlı olarak kaldırılan bulut yeniden yazma servisinden
+                // söz etmeye devam ediyordu — üstelik hemen üstündeki
+                // özellik listesi aynı servisi "kapsam dışı" ilan ederken.
+                // Ekranın kendi içinde çelişmesi, ölçülmüş iddiaların da
+                // güvenilirliğini düşürür.
                 Text(
-                  'Nezaket çözümlemesi tamamen cihazda çalışır; yazdığın metin '
-                  'varsayılan akışta telefonundan hiç çıkmaz. Bulut yeniden '
-                  'yazma yalnızca sen açıkça istediğinde ve onay verdiğinde '
-                  'devreye girer.\n\n'
-                  'Sistem hiçbir metni kendiliğinden değiştirmez veya engellemez. '
-                  'Öneri sunar; kararı sen verirsin.',
+                  'Çözümlemenin tamamı cihazda çalışır. Yazdığın metin '
+                  'telefonundan HİÇ çıkmaz — istisnası yoktur, çünkü ürünün '
+                  'hiçbir ağ çağrısı yoktur. Bu bir gizlilik politikası '
+                  'maddesi değil, mimarinin kendisidir ve bir testle '
+                  'korunmaktadır (`test/kapsam_degismezi_test.dart`).\n\n'
+                  'Sistem hiçbir metni kendiliğinden değiştirmez ve hiçbir '
+                  'gönderimi engellemez. Öneri sunar, gerekçesini yazar; '
+                  'kararı sen verirsin.\n\n'
+                  'Topluluk paneline giden sinyalde metin bulunmaz: sinyal '
+                  'sınıfının tek bir metin alanı yoktur ve toplulaştırma '
+                  'k-anonimlik eşiğiyle (k=5) yapılır.',
                   style: TextStyle(
                     fontSize: 13,
                     color: p.textSecondary,

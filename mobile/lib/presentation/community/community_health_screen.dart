@@ -68,7 +68,11 @@ class _CommunityHealthScreenState extends State<CommunityHealthScreen> {
       value: AppTheme.systemOverlayFor(p),
       child: Scaffold(
         backgroundColor: p.background,
-        appBar: const AppTopBar(title: 'Topluluk Sağlığı'),
+        // Sekme olarak açılır; geri gidilecek bir yer yok.
+        appBar: const AppTopBar(
+          title: 'Topluluk Sağlığı',
+          showBack: false,
+        ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(
               AppSpacing.base, AppSpacing.sm, AppSpacing.base, AppSpacing.xl),

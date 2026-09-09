@@ -1,5 +1,5 @@
 // =============================================================================
-// NSosyal / Türkiye Mesajlaşma — Tasarım Belirteçleri (Design Tokens)
+// Üslup · NSosyal — Tasarım Belirteçleri (Design Tokens)
 // Dosya: mobile/lib/core/theme/app_palette.dart
 //
 // TEK KAYNAK İLKESİ
@@ -9,11 +9,30 @@
 // Aynı öğe ekrandan ekrana farklı görünüyordu. Artık tüm renkler burada
 // tanımlanır ve `context.palette` üzerinden okunur.
 //
-// AÇIK/KOYU TEMA
-// --------------
+// ── MARKA DEĞİŞİKLİĞİ (9 Eylül 2026) ──────────────────────────────────────
+// Palet, devralınan "Türkiye Mesajlaşma" kırmızısından (#C8102E) NSosyal'in
+// görsel diline taşındı: soğuk nötr griler üzerine mavi aksan ve camgöbeği→
+// mavi gradyan. Gerekçe ürünseldir, estetik değildir — Üslup bir uygulama
+// değil, bir sosyal platformun içine DÜŞEN bir katmandır. Prototipin ev
+// sahibi kabuğu hedef platformun diliyle konuşmazsa, jüri katmanın kendi
+// ürününe nasıl oturduğunu göremez.
+//
+// NSosyal'in logosu, işaretleri ve tipografisi KOPYALANMAMIŞTIR; kopyalansaydı
+// prototip bir taklit olurdu. Alınan şey yerleşim ve renk ailesi düzeyindeki
+// tasarım dilidir, marka kimliği değil.
+//
+// ── AÇIK/KOYU TEMA ────────────────────────────────────────────────────────
 // Palet bir `ThemeExtension`'dır. `Theme.of(context)` hangi temayı taşıyorsa
 // aynı isim (örn. `palette.surface`) doğru rengi döndürür. Ekranlar koyu tema
 // için ayrıca kod yazmaz.
+//
+// ── KONTRAST ──────────────────────────────────────────────────────────────
+// Buradaki her değer `tool/erisilebilirlik_denetimi.dart` tarafından KAYNAK
+// OLARAK okunur ve WCAG 2.1 eşiklerine karşı ölçülür. Renk değiştiren biri
+// aracı çalıştırmak zorundadır; elle güncellenen bir tablo bayatlar, ölçüm
+// bayatlamaz.
+//
+//     cd mobile && dart run tool/erisilebilirlik_denetimi.dart
 // =============================================================================
 
 import 'package:flutter/material.dart';
@@ -22,70 +41,71 @@ import 'package:flutter/material.dart';
 ///
 /// Ekranlar bunları **doğrudan kullanmaz** — `context.palette` üzerinden
 /// okur; böylece koyu tema kendiliğinden çalışır. Buradaki sabitler yalnızca
-/// paletleri kurmak ve tema dışı bağlamlar (splash, bayrak) içindir.
+/// paletleri kurmak ve tema dışı bağlamlar (marka gradyanı) içindir.
 abstract final class AppColors {
   // ─── Marka ────────────────────────────────────────────────────────────────
-  /// Türk bayrağı kırmızısının koyu, ekranda göz yormayan tonu. Ana marka rengi.
-  static const Color brand = Color(0xFFC8102E);
-  static const Color brandDark = Color(0xFFA00D22);
-  static const Color brandDeep = Color(0xFF7D0A1B);
+  /// Ana marka mavisi. Beyaz metinle 5,19:1 verir — WCAG 1.4.3 AA (4,5:1)
+  /// eşiğini birincil butonlarda güvenle geçer.
+  static const Color brand = Color(0xFF2A63E8);
+  static const Color brandDark = Color(0xFF1E4CBF);
+  static const Color brandDeep = Color(0xFF16368A);
 
-  /// Bayrağın resmî kırmızısı — yalnızca bayrak/splash anlarında.
-  static const Color flagRed = Color(0xFFE30A17);
+  /// Gradyan uçları — camgöbeği → mavi. Yalnızca DOLGU olarak kullanılır
+  /// (buton zemini, avatar halkası); üzerine küçük metin konmaz, çünkü
+  /// camgöbeği ucunda beyaz metin 4,5:1'i karşılamaz.
+  static const Color brandCyan = Color(0xFF35C6EA);
+  static const Color brandIndigo = Color(0xFF4A6CF7);
 
-  /// Koyu tema için açılmış kırmızı: koyu zeminde metin/ikon olarak
-  /// WCAG AA kontrastını sağlar (#C8102E koyu zeminde okunmuyordu).
-  static const Color brandLifted = Color(0xFFFF6B7D);
-  static const Color brandLiftedFill = Color(0xFFD81E39);
+  /// Koyu temada metin/ikon olarak kullanılan açılmış mavi.
+  static const Color brandLifted = Color(0xFF7FA9FF);
+  static const Color brandLiftedFill = Color(0xFF2A63E8);
 
-  // ─── Açık tema nötrleri (sıcak krem ailesi) ───────────────────────────────
-  static const Color creamBackground = Color(0xFFFBF7F2);
-  static const Color creamSurface = Color(0xFFFFFFFF);
-  static const Color creamMuted = Color(0xFFF4EEE6);
-  static const Color creamBorder = Color(0xFFEBE2D6);
+  // ─── Açık tema nötrleri (soğuk gri-lavanta ailesi) ────────────────────────
+  static const Color coolBackground = Color(0xFFF1F2F6);
+  static const Color coolSurface = Color(0xFFFFFFFF);
+  static const Color coolMuted = Color(0xFFEFF1F6);
+  static const Color coolBorder = Color(0xFFE3E6ED);
 
   /// ETKİLEŞİMLİ bileşen kenarlığı — WCAG 2.1 §1.4.11 (3,0:1).
   ///
-  /// İP-16 denetimi `creamBorder`ın beyaz yüzeyde 1,28:1 verdiğini ölçtü.
-  /// Bu, dekoratif ayraçlar için sorun DEĞİLDİR: 1.4.11 yalnızca "bir arayüz
-  /// bileşenini tanımak için gerekli görsel bilgiyi" kapsar, süslemeyi değil.
-  /// Ama metin girdisinin sınırı dekoratif değildir — kullanıcı yazma
-  /// alanının nerede başladığını oradan anlar. Bu yüzden iki belirteç ayrıldı:
+  /// İP-16 denetimi dekoratif kenarlığın beyaz yüzeyde 1,3:1 civarında
+  /// kaldığını ölçtü. Bu, ayraçlar için sorun DEĞİLDİR: 1.4.11 yalnızca "bir
+  /// arayüz bileşenini tanımak için gerekli görsel bilgiyi" kapsar, süslemeyi
+  /// değil. Ama metin girdisinin sınırı dekoratif değildir — kullanıcı yazma
+  /// alanının nerede başladığını oradan anlar. Bu yüzden iki belirteç ayrıdır:
   ///
-  ///   creamBorder        → kart ayracı, liste çizgisi (dekoratif, muaf)
-  ///   creamBorderStrong  → metin girdisi, seçilebilir çip (3,75:1)
-  static const Color creamBorderStrong = Color(0xFF8F8271);
-  static const Color creamDivider = Color(0xFFF1EBE3);
+  ///   coolBorder        → kart ayracı, liste çizgisi (dekoratif, muaf)
+  ///   coolBorderStrong  → metin girdisi, seçilebilir çip (3,61:1)
+  static const Color coolBorderStrong = Color(0xFF808795);
+  static const Color coolDivider = Color(0xFFECEEF3);
 
-  static const Color inkPrimary = Color(0xFF1C1C1E);
-  // İP-16: 0xFF77726E kremde 4,46:1 veriyordu — WCAG 1.4.3 AA eşiği 4,5:1.
-  // Ölçümle 4,94:1'e çekildi (`tool/erisilebilirlik_denetimi.dart`).
-  static const Color inkSecondary = Color(0xFF706B67);
-  // İP-16: 0xFFA9A29C beyazda 2,52:1 veriyordu. Bu renk 11,5 px metinde
-  // kullanılıyor — yani "büyük metin" istisnası GEÇERSİZ, eşik 4,5:1.
-  // 4,90:1'e çekildi. Görsel hiyerarşi korunuyor: ana metin 17:1.
-  static const Color inkTertiary = Color(0xFF767068);
+  static const Color inkPrimary = Color(0xFF14171F);
+  /// Zeminde 5,48:1 · yüzeyde 6,13:1 — normal metin AA eşiğini geçer.
+  static const Color inkSecondary = Color(0xFF5A6272);
+  /// 11,5 px metinde kullanılır — yani "büyük metin" istisnası GEÇERSİZ,
+  /// eşik 4,5:1'dir. Ölçülen: 4,57:1.
+  static const Color inkTertiary = Color(0xFF6E7686);
 
-  // ─── Koyu tema nötrleri (sıcak kömür ailesi) ──────────────────────────────
-  // Saf siyah değil: OLED'de kontrast şoku yapar ve marka sıcaklığını öldürür.
-  static const Color charcoalBackground = Color(0xFF141110);
-  static const Color charcoalSurface = Color(0xFF1E1A19);
-  static const Color charcoalMuted = Color(0xFF272220);
-  static const Color charcoalBorder = Color(0xFF352E2B);
+  // ─── Koyu tema nötrleri (soğuk kömür ailesi) ──────────────────────────────
+  // Saf siyah değil: OLED'de kontrast şoku yapar ve yüzey hiyerarşisini
+  // (zemin / kart / yükseltilmiş kart) görünmez kılar.
+  static const Color charcoalBackground = Color(0xFF0E1116);
+  static const Color charcoalSurface = Color(0xFF161A21);
+  static const Color charcoalMuted = Color(0xFF1E232C);
+  static const Color charcoalBorder = Color(0xFF272D38);
 
-  /// Koyu temanın etkileşimli bileşen kenarlığı — 3,60:1. Gerekçe için
-  /// bkz. [creamBorderStrong].
-  static const Color charcoalBorderStrong = Color(0xFF7A7167);
-  static const Color charcoalDivider = Color(0xFF2A2523);
+  /// Koyu temanın etkileşimli bileşen kenarlığı — 4,39:1.
+  /// Gerekçe için bkz. [coolBorderStrong].
+  static const Color charcoalBorderStrong = Color(0xFF78808F);
+  static const Color charcoalDivider = Color(0xFF22272F);
 
-  static const Color snowPrimary = Color(0xFFF6F1EB);
-  static const Color snowSecondary = Color(0xFFA8A19B);
-  static const Color snowTertiary = Color(0xFF716A65);
+  static const Color snowPrimary = Color(0xFFE9EDF4);
+  static const Color snowSecondary = Color(0xFF9AA3B2);
+  static const Color snowTertiary = Color(0xFF7B8496);
 
   // ─── Durum renkleri ───────────────────────────────────────────────────────
-  // İP-16: 0xFF10B981 beyaz yüzeyde 2,54:1 — WCAG 1.4.11 (metin dışı
-  // kontrast) eşiği 3,0:1. Durum rengi bir BİLGİ TAŞIYICIDIR; ayırt
-  // edilemezse renk körü kullanıcı için sinyal kaybolur. 4,83:1.
+  // Durum rengi bir BİLGİ TAŞIYICIDIR; ayırt edilemezse renk körü kullanıcı
+  // için sinyal kaybolur. Hepsi WCAG 1.4.11 (3,0:1) eşiğine karşı ölçüldü.
   static const Color success = Color(0xFF0B8258);
   static const Color successLifted = Color(0xFF34D399);
   static const Color warning = Color(0xFFD97706);
@@ -94,16 +114,14 @@ abstract final class AppColors {
   static const Color dangerLifted = Color(0xFFF87171);
   static const Color info = Color(0xFF0284C7);
   static const Color infoLifted = Color(0xFF38BDF8);
-  static const Color gold = Color(0xFFD4AF37);
+  static const Color gold = Color(0xFFB4860B);
   static const Color goldLifted = Color(0xFFE8C55F);
-  static const Color turquoise = Color(0xFF007A99);
-  static const Color turquoiseLifted = Color(0xFF22B8D9);
 }
 
 /// Uygulamanın anlamsal renk paleti.
 ///
 /// İsimler *ne olduğunu* değil *ne işe yaradığını* söyler: `surface` bir
-/// karttır, `brandInk` kırmızı bir metindir. Bu sayede koyu temada değerler
+/// karttır, `brandInk` mavi bir metindir. Bu sayede koyu temada değerler
 /// değişse de anlam sabit kalır.
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
@@ -184,7 +202,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final Color shadow;
   final Color scrim;
 
-  // Sohbet baloncukları
+  // Alıntı / yorum baloncukları
   final Color bubbleIncoming;
   final Color bubbleIncomingText;
   final Color bubbleOutgoing;
@@ -193,22 +211,22 @@ class AppPalette extends ThemeExtension<AppPalette> {
   // ─── Açık tema ────────────────────────────────────────────────────────────
   static const AppPalette light = AppPalette(
     isDark: false,
-    background: AppColors.creamBackground,
-    surface: AppColors.creamSurface,
-    surfaceMuted: AppColors.creamMuted,
-    surfaceElevated: AppColors.creamSurface,
-    border: AppColors.creamBorder,
-    borderStrong: AppColors.creamBorderStrong,
-    divider: AppColors.creamDivider,
+    background: AppColors.coolBackground,
+    surface: AppColors.coolSurface,
+    surfaceMuted: AppColors.coolMuted,
+    surfaceElevated: AppColors.coolSurface,
+    border: AppColors.coolBorder,
+    borderStrong: AppColors.coolBorderStrong,
+    divider: AppColors.coolDivider,
     textPrimary: AppColors.inkPrimary,
     textSecondary: AppColors.inkSecondary,
     textTertiary: AppColors.inkTertiary,
     brand: AppColors.brand,
     brandOn: Color(0xFFFFFFFF),
     brandInk: AppColors.brand,
-    brandSoft: Color(0xFFFDECEE),
+    brandSoft: Color(0xFFE8EFFE),
     success: AppColors.success,
-    successSoft: Color(0xFFE7F8F1),
+    successSoft: Color(0xFFE6F6F0),
     warning: AppColors.warning,
     warningSoft: Color(0xFFFDF3E2),
     danger: AppColors.danger,
@@ -216,10 +234,10 @@ class AppPalette extends ThemeExtension<AppPalette> {
     info: AppColors.info,
     infoSoft: Color(0xFFE6F3FB),
     gold: AppColors.gold,
-    goldSoft: Color(0xFFFBF4E1),
-    shadow: Color(0xFF6B5B4E),
-    scrim: Color(0xFF1C1C1E),
-    bubbleIncoming: AppColors.creamSurface,
+    goldSoft: Color(0xFFFAF3E0),
+    shadow: Color(0xFF1B2440),
+    scrim: Color(0xFF0B0E14),
+    bubbleIncoming: AppColors.coolMuted,
     bubbleIncomingText: AppColors.inkPrimary,
     bubbleOutgoing: AppColors.brand,
     bubbleOutgoingText: Color(0xFFFFFFFF),
@@ -241,17 +259,17 @@ class AppPalette extends ThemeExtension<AppPalette> {
     brand: AppColors.brandLiftedFill,
     brandOn: Color(0xFFFFFFFF),
     brandInk: AppColors.brandLifted,
-    brandSoft: Color(0xFF33191D),
+    brandSoft: Color(0xFF16233F),
     success: AppColors.successLifted,
-    successSoft: Color(0xFF13291F),
+    successSoft: Color(0xFF10291F),
     warning: AppColors.warningLifted,
-    warningSoft: Color(0xFF2E2312),
+    warningSoft: Color(0xFF2C2412),
     danger: AppColors.dangerLifted,
-    dangerSoft: Color(0xFF321918),
+    dangerSoft: Color(0xFF2E1A1B),
     info: AppColors.infoLifted,
-    infoSoft: Color(0xFF14252E),
+    infoSoft: Color(0xFF11242E),
     gold: AppColors.goldLifted,
-    goldSoft: Color(0xFF2C2617),
+    goldSoft: Color(0xFF2A2517),
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
     bubbleIncoming: AppColors.charcoalMuted,
@@ -282,7 +300,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
         ),
       ];
 
-  /// Marka rengiyle renklendirilmiş gölge — kırmızı butonların altında.
+  /// Marka rengiyle renklendirilmiş gölge — mavi butonların altında.
   List<BoxShadow> get brandShadow => [
         BoxShadow(
           color: brand.withValues(alpha: isDark ? 0.35 : 0.28),
@@ -296,17 +314,20 @@ class AppPalette extends ThemeExtension<AppPalette> {
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
         colors: isDark
-            ? const [Color(0xFF1B1614), AppColors.charcoalBackground]
-            : const [Color(0xFFFFFCF8), AppColors.creamBackground],
+            ? const [Color(0xFF12161D), AppColors.charcoalBackground]
+            : const [Color(0xFFF7F8FB), AppColors.coolBackground],
       );
 
-  /// Marka gradyanı — birincil aksiyonlar ve başlıklar.
+  /// Marka gradyanı — birincil aksiyonlar, avatar halkaları, logo işareti.
+  ///
+  /// Camgöbeği→mavi. Üzerine küçük metin KONMAZ; büyük ikon ve beyaz
+  /// kalın etiket dışında kullanımı kontrast ölçütünü zorlar.
   LinearGradient get brandGradient => LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: isDark
-            ? const [Color(0xFFE23A52), Color(0xFFA81D33)]
-            : const [AppColors.brand, AppColors.brandDark],
+            ? const [Color(0xFF3DD0F0), Color(0xFF5B7BFF)]
+            : const [AppColors.brandCyan, AppColors.brandIndigo],
       );
 
   @override
@@ -420,7 +441,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
 /// `context.palette` — ekranlarda renk okumanın tek yolu.
 ///
-/// `Theme.of(context).extension<AppPalette>()` her seferinde yazmak yerine.
+/// `Theme.of(this).extension<AppPalette>()` her seferinde yazmak yerine.
 extension AppPaletteContext on BuildContext {
   AppPalette get palette =>
       Theme.of(this).extension<AppPalette>() ?? AppPalette.light;

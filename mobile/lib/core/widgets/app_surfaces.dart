@@ -23,12 +23,20 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
     this.subtitle,
     this.actions = const [],
     this.centerTitle = true,
+    this.showBack = true,
   });
 
   final String title;
   final String? subtitle;
   final List<Widget> actions;
   final bool centerTitle;
+
+  /// Geri düğmesi çizilsin mi?
+  ///
+  /// Bu çubuk hem itilen (push) ekranlarda hem de SEKME olarak açılan
+  /// ekranlarda kullanılıyor. Sekmede geri düğmesi, basıldığında hiçbir şey
+  /// yapmayan bir düğmedir — kullanıcıya yalan söyler.
+  final bool showBack;
 
   @override
   Size get preferredSize => const Size.fromHeight(58);
@@ -48,12 +56,15 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
           height: 58,
           child: Row(
             children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.arrow_back_rounded, size: 22),
-                color: p.textPrimary,
-                tooltip: 'Geri',
-              ),
+              if (showBack)
+                IconButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back_rounded, size: 22),
+                  color: p.textPrimary,
+                  tooltip: 'Geri',
+                )
+              else
+                const SizedBox(width: AppSpacing.base),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

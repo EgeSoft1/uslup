@@ -78,60 +78,17 @@ abstract final class AppTheme {
   static ThemeData get darkTheme => _build(AppPalette.dark);
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Sabit marka renkleri
+  // KALDIRILAN SABİTLER (9 Eylül 2026)
   //
-  // Giriş akışı (splash, kimlik doğrulama, profil oluşturma) tam ekran marka
-  // gradyanı üzerinde çalışır; orada zemin her iki temada da kırmızıdır, yani
-  // renkler temaya göre değişmez ve `const` kalabilir.
+  // Burada `primaryRed`, `splashGradient`, `surfaceMid` gibi 22 sabit vardı.
+  // Hepsi devralınan giriş akışından (splash, SMS doğrulama, profil kurulumu)
+  // kalmıştı; o akış 24 Ağustos'ta silindiğinde bunlar öksüz kaldı. Uygulama
+  // genelinde tek bir çağrı yeri bulunmadığı doğrulandıktan sonra kaldırıldı.
   //
-  // Uygulama içi ekranlar bunları KULLANMAZ — `context.palette` okur.
-  // Buradaki değerler artık tek kaynaktan (`AppColors`) gelir; önceden
-  // #C8102E ve #E30A17 diye iki ayrı "marka kırmızısı" dolaşıyordu.
+  // Ekranların renk okumasının tek yolu `context.palette`tir. İkinci bir
+  // kaynak, paletin değiştiği gün sessizce eskiyen bir kopya demektir —
+  // marka kırmızıdan maviye geçerken tam olarak bu yaşandı.
   // ───────────────────────────────────────────────────────────────────────────
-  static const Color primaryRed = AppColors.brand;
-  static const Color primaryRedDark = AppColors.brandDark;
-  static const Color primaryRedLight = Color(0xFFFDECEE);
-  static const Color accentTurquoise = AppColors.turquoise;
-  static const Color accentGold = AppColors.gold;
-  static const Color successGreen = AppColors.success;
-  static const Color warningAmber = AppColors.warning;
-  static const Color errorRed = AppColors.danger;
-  static const Color infoBlue = AppColors.info;
-  static const Color textPrimary = AppColors.inkPrimary;
-  static const Color textSecondary = AppColors.inkSecondary;
-  static const Color textTertiary = AppColors.inkTertiary;
-  static const Color textOnPrimary = Color(0xFFFFFFFF);
-  static const Color background = AppColors.creamBackground;
-  static const Color surface = AppColors.creamMuted;
-  static const Color surfaceContainer = AppColors.creamSurface;
-  static const Color dividerColor = AppColors.creamDivider;
-  static const Color borderColor = AppColors.creamBorder;
-
-  // Eski adlar — giriş akışındaki çağrı yerleri için.
-  static const Color backgroundLight = background;
-  static const Color backgroundDark = surface;
-  static const Color surfaceLight = surface;
-  static const Color surfaceDark = surfaceContainer;
-  static const Color surfaceMid = surfaceContainer;
-
-  /// Giriş akışının tam ekran gradyanı.
-  static const LinearGradient splashGradient = LinearGradient(
-    colors: [AppColors.flagRed, AppColors.brandDeep],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [AppColors.brand, AppColors.brandDark],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  static const LinearGradient goldGradient = LinearGradient(
-    colors: [Color(0xFFF1C40F), AppColors.gold],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
 
   static ThemeData _build(AppPalette p) {
     final brightness = p.isDark ? Brightness.dark : Brightness.light;
