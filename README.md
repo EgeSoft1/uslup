@@ -60,11 +60,58 @@ kimlik adı sızarsa test kırılır.
 
 ---
 
+## Ürün kabuğu — katman nereye takılıyor
+
+Üslup bir uygulama değil, bir sosyal platformun **metin giriş noktalarına
+düşen bir katmandır**. Bunu boş bir ekranda göstermek onu bir yazım
+denetleyicisine indirgerdi; bu yüzden prototip gerçek bir akış kabuğu taşır:
+
+| Yüzey | Katman burada çalışıyor mu |
+|---|---|
+| Akış · gönderi kartları · medya | — (okuma yüzeyi) |
+| **Yeni gönderi kutusu** | **Evet** |
+| **Gönderi altındaki yanıt kutusu** | **Evet** |
+| **Üslup panelindeki deneme kutusu** | **Evet** |
+| Keşfet arama kutusu | Hayır — yazılan metin kimseye ulaşmaz |
+| Bildirimler · profil · topluluk paneli | — |
+
+Üçü de **aynı** `CivilityComposer` bileşenidir. Yorum kutusuna ikinci bir kod
+yolu yazılsaydı, o yol test edilmediği için sessizce eskirdi.
+
+Yanıt kutusunun ayrıca olması ürünsel bir karardır: **insan boş bir kutuya
+oturup hakaret yazmaz, birinin söylediği bir şeye sinirlenip yazar.** Katman
+yalnızca gönderi kutusunda çalışsaydı, hedeflediği anın büyük bölümünü
+ıskalardı.
+
+### İki iddia, iki yapısal test
+
+`mobile/test/kapsam_degismezi_test.dart` kaynak kodu okur ve iki cümleyi
+kilitler:
+
+```
+1. "Katman her metin giriş noktasında çalışır."
+   → lib/ altındaki her ham TextField sayılır; izinli listede olmayan
+     bir tane bulunursa test kırılır.
+
+2. "Ürün çalışma zamanında tek bir ağ çağrısı yapmaz."
+   → Image.network, NetworkImage, HttpClient, WebSocket, package:http
+     aranır. Tek bir avatar görselini indirmek bu iddiayı çürütürdü.
+```
+
+Eksik olanı davranış testiyle yakalayamazsınız — kırılan bir şey yoktur,
+eksik olan bir şey vardır. Kaynağı okumak gerekir. Aynı yöntem sözlüğe
+kimlik adı sızmasını ve anonim sinyalin metin taşımasını engelleyen
+testlerde de kullanılıyor.
+
+Ayrıntı: [`docs/16_URUN_KABUGU.md`](docs/16_URUN_KABUGU.md)
+
+---
+
 ## Ölçülen sonuçlar
 
-Geçerli genelleme ölçümü, **üçüncü ayrık kümedir** (İP-20, 24 Ağustos 2026).
-Önceki iki ayrık küme yanmıştır — motor onlara bakılarak düzeltildiği için
-artık genelleme ölçemezler. Gerekçe ve tam geçmiş:
+Geçerli genelleme ölçümü, **dördüncü ayrık kümedir** (İP-22). Önceki üç ayrık
+küme yanmıştır — motor onlara bakılarak düzeltildiği için artık genelleme
+ölçemezler. Gerekçe ve tam geçmiş:
 [`docs/14_MENTORLUK_PENCERESI_SONUCLARI.md`](docs/14_MENTORLUK_PENCERESI_SONUCLARI.md)
 
 | Ölçüm | Değer |
@@ -161,7 +208,7 @@ flutter run
 | Dizin | İçerik |
 |---|---|
 | `packages/civility_core/` | **Nezaket motoru** — saf Dart, bağımlılıksız. Projenin çekirdeği. |
-| `mobile/` | Flutter istemci; canlı yazım ekranı ve topluluk sağlığı paneli |
+| `mobile/` | Flutter istemci — sosyal akış kabuğu, gönderi ve yanıt kutuları (katman burada çalışır), Üslup ölçüm paneli, topluluk sağlığı paneli |
 | `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Üründe çalışmaz; mimari kararı ölçmek içindir. |
 | `docs/` | Ürün tanımı, model değerlendirme, kullanıcı akışları, teknik rapor, erişilebilirlik denetimi |
 > **Not.** Bu depo, devralınan bir mesajlaşma platformu iskeletinin üzerine

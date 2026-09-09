@@ -51,8 +51,11 @@ void main(List<String> args) {
             ),
       )
       ..writeln('  ⚠  UYARI: Bu küme artık gerçek anlamda AYRIK DEĞİLDİR.')
-      ..writeln('     İlk (ve tek geçerli) genelleme ölçümü: F1 = %84,2.')
-      ..writeln('     Ayrıntı: docs/04_MODEL_DEGERLENDIRME.md §5')
+      ..writeln('     Bu kümedeki ilk ölçüm F1 = %84,2 idi; motor sonradan')
+      ..writeln('     bu kümeye bakılarak düzeltildiği için YANMIŞTIR.')
+      ..writeln('     Bugün geçerli olan genelleme ölçümü İP-22 kümesidir:')
+      ..writeln('     dart run bin/evaluate.dart --genelleme3')
+      ..writeln('     Ayrıntı: docs/04_MODEL_DEGERLENDIRME.md §5, docs/14 §5')
       ..writeln();
   }
 
@@ -69,6 +72,9 @@ void main(List<String> args) {
                   '${GeneralizationDataset.cases.length} örnek',
             ),
       )
+      ..writeln('  ⚠  UYARI: Bu küme YANMIŞTIR — İP-19 onarımı ona bakılarak')
+      ..writeln('     yapıldı. İlk (ve tek geçerli) ölçümü: F1 = %55,6,')
+      ..writeln('     duyarlılık %38,5. Aşağıdaki sayı genelleme DEĞİLDİR.')
       ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
       ..writeln("     (Cohen's kappa) henüz ölçülmemiştir. İkinci")
       ..writeln('     etiketleyici altyapısı: bin/annotate_export.dart')
@@ -76,8 +82,12 @@ void main(List<String> args) {
   }
 
   if (wantsGeneralization2) {
-    // İP-20 — Üçüncü ayrık küme. İP-19 onarımı TAMAMLANDIKTAN SONRA yazıldı;
-    // onarımın genelleşip genelleşmediğini ölçen tek geçerli sayı budur.
+    // İP-20 — Üçüncü ayrık küme. İP-19 onarımı TAMAMLANDIKTAN SONRA yazıldı
+    // ve o onarımın genelleşip genelleşmediğini ölçtü: F1 %66,7.
+    //
+    // SONRA YANDI. İP-21'in "yapısal aile" onarımı bu kümeye bakılarak
+    // yapıldı ve F1'i %97,3'e çıkardı. O sayı bir genelleme kanıtı değildir;
+    // geçerli ölçüm artık İP-22 kümesindedir.
     stdout
       ..write(
         evaluator
@@ -87,8 +97,10 @@ void main(List<String> args) {
                   '${Generalization2Dataset.cases.length} örnek',
             ),
       )
-      ..writeln('  ⓘ  Onarım sonrası tek geçerli genelleme ölçümü budur.')
-      ..writeln('     İP-15 kümesi onarımda kullanıldığı için YANMIŞTIR.')
+      ..writeln('  ⚠  UYARI: Bu küme de YANMIŞTIR — İP-21 onarımı ona')
+      ..writeln('     bakılarak yapıldı. İlk (ve tek geçerli) ölçümü:')
+      ..writeln('     F1 = %66,7, duyarlılık %50,0, kesinlik %100,0.')
+      ..writeln('     Geçerli genelleme ölçümü: --genelleme3 (İP-22)')
       ..writeln();
   }
 
