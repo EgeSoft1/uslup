@@ -7,7 +7,17 @@ plugins {
 android {
     namespace = "com.example.turkiye_mesajlasma"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+
+    // ── ndkVersion KASITLI OLARAK KALDIRILDI (9 Eylül 2026) ────────────────
+    // Şablon `ndkVersion = flutter.ndkVersion` koyar ve AGP bunu gördüğü an
+    // NDK'yı indirmeye başlar: ~1 GB indirme, ~3 GB disk, bu bağlantıda on
+    // dakika. Oysa bu projede NDK'ya ihtiyaç duyan tek bir şey yok —
+    // bağımlılıklar (flutter_animate, cupertino_icons) saf Dart'tır ve
+    // Flutter motorunun kendi yerel kütüphaneleri zaten derlenmiş gelir.
+    //
+    // Yerel kod gerektiren bir eklenti eklenirse (kamera, ses, ONNX Runtime
+    // gibi) bu satır geri konmalıdır. Yol haritasındaki BERTurk/ONNX adımı
+    // tam olarak böyle bir eklenti getirecektir.
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -15,8 +25,15 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.turkiye_mesajlasma"
+        // Paket adı, sahipliği doğrulanabilir bir ad alanından seçildi
+        // (depo: github.com/EgeSoft1/uslup). Şablonun `com.example.*`
+        // varsayılanı hiç kimseye ait değildir ve mağazaya kabul edilmez.
+        //
+        // `namespace` KASITLI olarak değiştirilmedi: manifestteki
+        // `.MainActivity` ona göre çözülür ve Kotlin kaynağının paket
+        // yolu onunla eşleşmek zorundadır. applicationId ise yalnızca
+        // kurulan paketin kimliğidir; ikisi bağımsızdır.
+        applicationId = "io.github.egesoft1.uslup"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

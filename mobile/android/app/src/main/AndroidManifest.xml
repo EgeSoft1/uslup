@@ -1,12 +1,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.CAMERA" />
-    <!-- Nezaket motoru ağ KULLANMAZ. Bu izin yalnızca demo verisindeki
-         avatar görselleri (cached_network_image) içindir.
-         Bkz. docs/02_TEKNIK_BORC.md — avatarlar yerelleştirilince bu izin
-         tamamen kaldırılabilir. -->
-    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- ═══════════════════════════════════════════════════════════════════
+         BU DOSYADA HİÇBİR İZİN YOK — VE BU, ÜRÜNÜN EN GÜÇLÜ KANITI
+
+         Burada iki izin vardı:
+
+           CAMERA   — QR ile kişi ekleme akışı içindi. O akış 24 Ağustos'ta
+                      devralınan mesajlaşma arayüzüyle birlikte silindi;
+                      izin öksüz kaldı.
+           INTERNET — avatar görsellerini indiren cached_network_image
+                      içindi. O paket de aynı gün kaldırıldı. Geriye kalan
+                      tek ağ tüketicisi google_fonts'tu (yazı tiplerini
+                      çalışma zamanında indiriyordu) ve o da 9 Eylül'de
+                      kaldırıldı.
+
+         Bugün uygulama çalışma zamanında tek bir ağ çağrısı yapmıyor.
+         Dolayısıyla INTERNET iznini İSTEMİYOR.
+
+         Bunun önemi şu: "metin cihazdan çıkmaz" iddiası artık bize
+         inanmayı gerektirmiyor. Kullanıcı telefonun Ayarlar > Uygulamalar
+         ekranından izinlere bakar ve görür — bu uygulamanın internete
+         çıkma yetkisi yok. Bir mahremiyet iddiasının işletim sistemi
+         tarafından doğrulanabilir olması, gizlilik politikası yazmaktan
+         başka bir şeydir.
+
+         Hata ayıklama ve profil sürümleri INTERNET iznini ayrı manifest
+         dosyalarından alır (src/debug, src/profile); Flutter'ın sıcak
+         yeniden yükleme aracı onu gerektirir. Kullanıcıya giden RELEASE
+         sürümü bu dosyadan üretilir ve izinsizdir.
+         ═══════════════════════════════════════════════════════════════════ -->
     <application
-        android:label="Nezaket Koçu"
+        android:label="Üslup"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

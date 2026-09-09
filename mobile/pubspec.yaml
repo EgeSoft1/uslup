@@ -83,7 +83,13 @@ flutter:
         - asset: assets/fonts/Inter-Variable.ttf
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  # `true` — varsayılan `ic_launcher` adını ÜZERİNE YAZAR.
+  #
+  # Önceden burada "launcher_icon" yazıyordu; araç `launcher_icon.png`
+  # üretiyor ama AndroidManifest `@mipmap/ic_launcher` gösteriyordu. Yani
+  # üretilen ikon hiç kullanılmıyordu ve telefonda Flutter'ın varsayılan
+  # mavi kuş logosu görünüyordu. İkonu üretmek yetmez, bağlamak gerekir.
+  android: true
   ios: true
   image_path: "assets/images/app_icon.png"
   min_sdk_android: 21
