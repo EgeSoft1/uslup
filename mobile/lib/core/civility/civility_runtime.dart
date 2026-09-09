@@ -42,6 +42,12 @@ abstract final class Civility {
   static const String olcumOzeti =
       'İP-22 ayrık küme · 65 örnek · kesinlik %90,5 · F1 %67,9';
 
+  /// 9 Eylül 2026'da ölçüldü: `dart test` → 258 geçti.
+  ///
+  /// Sabit 246'da kalmıştı; İP-24'te eklenen yeniden yazıcı kalite testleri
+  /// sayıyı büyütmüş ama burası güncellenmemişti. Ekranda gösterilen her
+  /// sayının bir çalıştırma karşılığı olmalı — yoksa raporun geri kalanı da
+  /// tahmin gibi okunur.
   static const String olcumKapsami =
-      'Beş küme · 581 etiketli örnek · 246 test';
+      'Beş küme · 581 etiketli örnek · 258 test';
 }
