@@ -31,7 +31,7 @@ class HybridOnnxClassifier implements ToxicityClassifier {
   void release() {}
 
   @override
-  String get modelName => '${_baseClassifier.modelName} · ONNX yok (web)';
+  String get modelName => _baseClassifier.modelName;
 
   @override
   CivilityAnalysis analyze(

@@ -91,7 +91,9 @@ class MatchContext {
     if (isNegated) return 'Olumsuz cümle — saldırı sayılmadı';
     if (isQuoted) return 'Alıntı/aktarım — başkasının sözü';
     if (isSelfDirected) return 'Kendine yönelik ifade — saldırı sayılmadı';
-    if (isDirected) return 'Doğrudan karşı tarafa yöneltilmiş';
+    // Kategori açıklamaları çoğu zaman "Doğrudan…" diye başlar; aynı kelimeyle
+    // başlayan bir gerekçe ekranda "Doğrudan … (Doğrudan …)" tekrarı üretiyordu.
+    if (isDirected) return 'karşıdaki kişiye yöneltilmiş';
     return null;
   }
 }

@@ -24,6 +24,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../core/civility/civility_runtime.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_surfaces.dart';
@@ -84,62 +85,64 @@ class AboutScreen extends StatelessWidget {
             icon: Icons.fact_check_rounded,
             padding: EdgeInsets.only(bottom: AppSpacing.md),
           ),
-          const AppCard(
-            padding: EdgeInsets.symmetric(
+          AppCard(
+            padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.base, vertical: AppSpacing.sm),
             child: Column(
               children: [
                 _FeatureRow(
                   icon: Icons.psychology_rounded,
                   label: 'Türkçe nezaket motoru',
-                  detail: 'Cihaz üzerinde · 159 µs (AOT, p50) · kesinlik %100',
+                  detail: 'Cihaz üzerinde · ${Civility.gecikmeP50} (AOT, p50) · '
+                      '${Civility.sozlukGirdisi} sözlük girdisi · '
+                      '${Civility.oruntuSayisi} örüntü',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.phonelink_lock_rounded,
                   label: 'Metin cihazdan çıkmaz',
                   detail: 'Çözümleme tamamen yerel',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.auto_fix_high_rounded,
                   label: 'Yerel yeniden yazma önerisi',
                   detail: 'Deterministik, ağ gerektirmez',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.insights_rounded,
                   label: 'Topluluk sağlığı paneli',
                   detail: 'Anonim sinyal · k-anonimlik (k=5)',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.science_rounded,
-                  label: 'Dördüncü ayrık küme ölçümü',
-                  detail: 'İP-22 · kesinlik %90,5 · duyarlılık %54,3 · '
-                      'F1 %67,9 — raporlanan genelleme sayısı',
+                  label: 'Ayrık küme ölçümü',
+                  detail: 'Son tam ilk geçiş İP-22 · kesinlik %90,5 · '
+                      'duyarlılık %54,3 — İP-27 ölçümde yandı',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.dynamic_feed_rounded,
                   label: 'Katman her metin giriş noktasında',
                   detail: 'Gönderi ve yorum kutusu aynı bileşen · '
                       'yapısal testle korunuyor',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.accessibility_new_rounded,
                   label: 'WCAG 2.1 AA kontrast denetimi',
                   detail: '30/30 çift eşiği geçiyor — İP-16',
                   status: FeatureStatus.working,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.groups_rounded,
                   label: 'Hakemler arası uyum (kappa)',
                   detail: 'Araçlar hazır, ikinci etiketleyici bekleniyor',
                   status: FeatureStatus.planned,
                 ),
-                _FeatureRow(
+                const _FeatureRow(
                   icon: Icons.cloud_off_rounded,
                   label: 'Bulut yeniden yazma servisi',
                   detail: 'Yazıldı, ölçüldü, kasıtlı olarak kaldırıldı',

@@ -56,7 +56,7 @@ void main() {
     //   zarar veremez; müdahale etmek kullanıcıyı sebepsiz kısıtlamak
     //   olurdu. Masaüstü kutusu da BU dosyada durur: izin listesini
     //   büyütmek, değişmezi zamanla anlamsızlaştırırdı.
-    // llm_chat_screen.dart   — motorun kendisiyle konuşulan deneme
+    // engine_chat_screen.dart — motorun kendisiyle konuşulan deneme
     //   ekranı. Buradaki kutu bir yayın yüzeyi DEĞİLDİR: yazılan cümle
     //   hiçbir yere gönderilmez, doğrudan motora verilir ve çıktısı
     //   (toksisite, bulgular, gerekçe, öneri) ekrana yazılır. Yani metin
@@ -67,7 +67,7 @@ void main() {
     const izinliDosyalar = <String>{
       'lib/presentation/compose/civility_composer.dart',
       'lib/presentation/explore/explore_screen.dart',
-      'lib/presentation/uslup/llm_chat_screen.dart',
+      'lib/presentation/uslup/engine_chat_screen.dart',
     };
 
     final girdiKaliplari = RegExp(
@@ -113,8 +113,8 @@ void main() {
 
     test('deneme ekranı istisnası motoru çağırdığı sürece geçerlidir', () {
       final chat = _libSources().firstWhere(
-        (f) => f.path.endsWith('lib/presentation/uslup/llm_chat_screen.dart'),
-        orElse: () => fail('llm_chat_screen.dart bulunamadı'),
+        (f) => f.path.endsWith('lib/presentation/uslup/engine_chat_screen.dart'),
+        orElse: () => fail('engine_chat_screen.dart bulunamadı'),
       );
 
       // İstisnanın GEREKÇESİ "metin zaten motora gidiyor"du. Gitmiyorsa
@@ -123,7 +123,7 @@ void main() {
       expect(
         chat.source.contains('Civility.engine.analyze'),
         isTrue,
-        reason: 'llm_chat_screen.dart motoru çağırmıyor; izinli listedeki '
+        reason: 'engine_chat_screen.dart motoru çağırmıyor; izinli listedeki '
             'gerekçesi düşmüş. Ya motoru çağırsın ya CivilityComposer '
             'kullansın.',
       );

@@ -37,11 +37,15 @@ import '../../core/civility/civility_runtime.dart';
 import '../../core/civility/civility_text_controller.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
+import '../uslup/demo_scenarios.dart';
 import '../widgets/social_widgets.dart';
 
 /// Yazım kutusunun kullanıldığı yer. Yalnızca metinleri değiştirir;
 /// çözümleme davranışı her yerde birebir aynıdır.
-enum ComposerSurface { gonderi, yanit, biyografi }
+///
+/// `deneme` — Üslup panelindeki canlı deneme kutusu. Gönderilecek bir yer
+/// yoktur; "Gönderi oluşturmak için…" ipucu orada yanıltıcıydı.
+enum ComposerSurface { gonderi, yanit, biyografi, deneme }
 
 /// Gönderim anında kutunun ürettiği sonuç.
 ///
@@ -141,12 +145,16 @@ class _CivilityComposerState extends State<CivilityComposer> {
 
   /// Yeniden girişi (re-entrancy) engelleyen bayrak.
   bool _analyzing = false;
-  
-  /// Nudge Teorisi: Mikro-Sürtünme gecikmesi
+
+  /// Uyarıya rağmen gönderimde kısa bir duraksama sürüyor mu?
+  ///
+  /// Dürtme (nudge) yaklaşımı: gönderim ENGELLENMEZ, yalnızca 1,5 saniye
+  /// ertelenir ve kullanıcıya nedeni söylenir. Açıklamasız bir bekleme
+  /// arızaya benzer; açıklamalı bir bekleme bir düşünme payıdır.
   bool _isFrictionDelaying = false;
 
-  /// VDS'deki LLM modeli şu an cümle üretiyor mu?
-  bool _isLlmThinking = false;
+  /// Yeniden yazma önerisi hazırlanıyor mu?
+  bool _suggestionPending = false;
 
   @override
   void initState() {
@@ -188,9 +196,9 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Her tuş vuruşunda çalışır.
   ///
   /// Gecikmeli tetikleme (debounce) KASITLI OLARAK YOKTUR. AOT derlemede
-  /// tipik çözümleme 159 µs; p99 bile (1459 µs) 16 ms'lik kare bütçesinin
-  /// %9,1'i. Geciktirmek yalnızca geri bildirimi yavaşlatırdı.
-  /// Ölçüm: `packages/civility_core/bin/benchmark.dart` (İP-23).
+  /// tipik çözümleme 357 µs; p99 bile (2.212 µs) 16 ms'lik kare bütçesinin
+  /// %13,8'i. Geciktirmek yalnızca geri bildirimi yavaşlatırdı.
+  /// Ölçüm: `packages/civility_core/bin/benchmark.dart` (13 Eylül 2026).
   void _onTextChanged() {
     if (_analyzing) return;
     _analyzing = true;
@@ -213,9 +221,9 @@ class _CivilityComposerState extends State<CivilityComposer> {
       if (warned) {
         _sawWarning = true;
         _reasonsExpanded = true;
-        _isLlmThinking = true;
+        _suggestionPending = true;
       } else {
-        _isLlmThinking = false;
+        _suggestionPending = false;
       }
     });
 
@@ -228,7 +236,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
       HapticFeedback.lightImpact();
       setState(() {
         _suggestion = suggestion;
-        _isLlmThinking = false;
+        _suggestionPending = false;
       });
     });
   }
@@ -286,11 +294,10 @@ class _CivilityComposerState extends State<CivilityComposer> {
       if (!mounted || proceed != true) return;
     }
     
-    // Nudge Teorisi: Uyarıya rağmen gönderiyorsa mikro-sürtünme (1.5 sn gecikme)
+    // Uyarıya rağmen gönderimde kısa, AÇIKLAMALI bir duraksama.
     if (_sawWarning && (risk == RiskLevel.riskli || risk == RiskLevel.yuksek)) {
       setState(() => _isFrictionDelaying = true);
       HapticFeedback.lightImpact();
-      // Dopamin döngüsünü kırmak için bekleme süresi
       await Future.delayed(const Duration(milliseconds: 1500));
       if (!mounted) return;
       setState(() => _isFrictionDelaying = false);
@@ -399,12 +406,14 @@ class _CivilityComposerState extends State<CivilityComposer> {
         ComposerSurface.gonderi => 'Gönderi oluşturmak için…',
         ComposerSurface.yanit => 'Yanıtını yaz…',
         ComposerSurface.biyografi => 'Kendini birkaç cümleyle anlat…',
+        ComposerSurface.deneme => 'Denemek için bir cümle yaz…',
       };
 
   String get _submitLabel => switch (widget.surface) {
         ComposerSurface.gonderi => 'Gönder',
         ComposerSurface.yanit => 'Yanıtla',
         ComposerSurface.biyografi => 'Kaydet',
+        ComposerSurface.deneme => 'Gönder',
       };
 
   @override
@@ -446,6 +455,23 @@ class _CivilityComposerState extends State<CivilityComposer> {
                 const SizedBox(height: AppSpacing.md),
                 _toolbar(p, risk, riskColor, hasText),
               ],
+              if (_isFrictionDelaying) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Icon(Icons.hourglass_top_rounded,
+                        size: 14, color: p.textTertiary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Göndermeden önce kısa bir düşünme payı — '
+                        'engellenmiyor, birazdan gönderilecek.',
+                        style: appBody(fontSize: 12, color: p.textSecondary),
+                      ),
+                    ),
+                  ],
+                ).animate().fadeIn(duration: 160.ms),
+              ],
             ],
           ),
         ),
@@ -455,13 +481,13 @@ class _CivilityComposerState extends State<CivilityComposer> {
           const SizedBox(height: AppSpacing.md),
           _reasonPanel(p, analysis),
         ],
-          if (_isLlmThinking) ...[
-            const SizedBox(height: AppSpacing.md),
-            _suggestionPendingCard(p),
-          ] else if (_suggestion != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            _suggestionCard(p, _suggestion!),
-          ],
+        if (_suggestionPending) ...[
+          const SizedBox(height: AppSpacing.md),
+          _suggestionPendingCard(p),
+        ] else if (_suggestion != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          _suggestionCard(p, _suggestion!),
+        ],
         if (analysis != null &&
             !analysis.hasFindings &&
             hasText &&
@@ -482,68 +508,10 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Aynı kelimenin bağlama göre nasıl farklı işlendiğini tek dokunuşla
   /// gösteren hazır cümleler.
   ///
-  /// Her senaryonun BEKLENTİSİ de yazılıdır. Beklentiyi göstermek, jürinin
-  /// motoru okumadan sonucu doğrulayabilmesini sağlar — "doğru çıktı" demek
-  /// yerine "doğrusu buydu, çıktı da bu" demek.
-  static const List<({String label, String text, String expectation})>
-      _scenarios = [
-    (
-      label: 'Doğrudan saldırı',
-      text: 'Sen tam bir aptalsın',
-      expectation: 'saldırı sayılır'
-    ),
-    (
-      label: 'Olumsuzlama',
-      text: 'Sen hiç aptal değilsin',
-      expectation: 'iltifat — işaretlenmez'
-    ),
-    (
-      label: 'Mağdur anlatısı',
-      text: 'Bana "aptal" dedi, çok üzüldüm',
-      expectation: 'şikâyet eden susturulmaz'
-    ),
-    (
-      label: 'Öz-ifade',
-      text: 'Kendimi çok aptal hissettim',
-      expectation: 'kişinin kendisi — işaretlenmez'
-    ),
-    (
-      label: 'Küfürsüz düşmanlık',
-      text: 'Senin gibilerden zaten bu beklenirdi',
-      expectation: 'örüntü katmanı yakalar'
-    ),
-    (
-      label: 'Yapısal aile',
-      text: 'Sende akıl mı var',
-      expectation: 'kapalı ad sınıfı — yakalanır'
-    ),
-    (
-      label: 'Gizleme denemesi',
-      text: r'sen $3r3fsizsin',
-      expectation: 'normalizasyon çözer'
-    ),
-    (
-      label: 'Kimlik beyanı',
-      text: 'Ben Kürtüm ve bununla gurur duyuyorum',
-      expectation: 'kimlik adı tetikleyici değil'
-    ),
-    (
-      label: 'Nefret söylemi',
-      text: 'Bütün Suriyeliler hırsızdır',
-      expectation: 'yuva + düşmanca kuruluş'
-    ),
-    (
-      label: 'Sert ama meşru',
-      text: 'Bu karar bence tamamen hatalı ve geri alınmalı',
-      expectation: 'eleştiri sansürlenmez'
-    ),
-    (
-      label: 'Masum tuzak',
-      text: 'Şikayet dilekçemi götürdüm, bardak dolu geldi',
-      expectation: 'yanlış pozitif olmamalı'
-    ),
-  ];
-
+  /// Her senaryonun BEKLENTİSİ de yazılıdır ve gerçek sonuçla yan yana
+  /// gösterilir: "doğru çıktı" demek yerine "doğrusu buydu, çıktı da bu".
+  /// Liste `demo_scenarios.dart` içindedir; panelin bağlam karnesi de aynı
+  /// listeyi okur.
   void _loadScenario(String text) {
     HapticFeedback.selectionClick();
     _controller.value = TextEditingValue(
@@ -555,6 +523,8 @@ class _CivilityComposerState extends State<CivilityComposer> {
 
   Widget _scenarioDeck(AppPalette p) {
     final current = _controller.text;
+    final flagged =
+        _analysis != null && _analysis!.risk != RiskLevel.temiz;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.base),
@@ -596,7 +566,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: [
-              for (final s in _scenarios)
+              for (final s in demoScenarios)
                 _ScenarioChip(
                   label: s.label,
                   selected: current == s.text,
@@ -604,26 +574,58 @@ class _CivilityComposerState extends State<CivilityComposer> {
                 ),
             ],
           ),
-          for (final s in _scenarios)
+          for (final s in demoScenarios)
             if (current == s.text)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.md),
-                child: Row(
-                  children: [
-                    Icon(Icons.arrow_forward_rounded,
-                        size: 13, color: p.textTertiary),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Beklenen: ${s.expectation}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: p.textSecondary,
-                          fontStyle: FontStyle.italic,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: (flagged == s.expectFlag ? p.success : p.danger)
+                        .withValues(alpha: p.isDark ? 0.18 : 0.08),
+                    borderRadius: AppRadius.smAll,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        flagged == s.expectFlag
+                            ? Icons.check_circle_rounded
+                            : Icons.cancel_rounded,
+                        size: 16,
+                        color:
+                            flagged == s.expectFlag ? p.success : p.danger,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Beklenen: ',
+                                style: appBody(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: p.textPrimary),
+                              ),
+                              TextSpan(text: '${s.expectation} · '),
+                              TextSpan(
+                                text: 'Sonuç: ',
+                                style: appBody(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: p.textPrimary),
+                              ),
+                              TextSpan(
+                                  text: _analysis?.risk.label ?? '—'),
+                            ],
+                          ),
+                          style: appBody(
+                              fontSize: 12.5, color: p.textSecondary),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
         ],
@@ -854,16 +856,6 @@ class _CivilityComposerState extends State<CivilityComposer> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ── KALDIRILDI: gizli VDS tetikleyici ──────────────────
-                  // Burada, uzun basınca sunucu senkronizasyonu başlatan
-                  // görünmez bir ikon vardı — hemen altındaki "metin
-                  // cihazdan çıkmadı" satırının yanında. İki sebeple
-                  // kaldırıldı: keşfedilemeyen bir jest kullanıcı arayüzü
-                  // değildir, ve ağa çıkan bir eylemin en az o satır kadar
-                  // görünür olması gerekir.
-                  //
-                  // İşlev kaybolmadı: aynı iki eylem Üslup panelinde
-                  // ADIYLA yazan bir düğmenin arkasında duruyor.
                   for (final finding in analysis.findings)
                     _FindingRow(
                       finding: finding,
@@ -877,8 +869,8 @@ class _CivilityComposerState extends State<CivilityComposer> {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          'Bu çözümleme telefonunda yapıldı. Metin cihazdan '
-                          'çıkmadı.',
+                          'Bu çözümleme bu cihazda yapıldı. Metin hiçbir '
+                          'yere gönderilmedi.',
                           style:
                               TextStyle(fontSize: 11, color: p.textTertiary),
                         ),
@@ -946,8 +938,8 @@ class _CivilityComposerState extends State<CivilityComposer> {
                     backgroundColor: p.success,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(0, 42),
-                    textStyle: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700),
+                    textStyle:
+                        appBody(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   // Karar KULLANICININ. Sistem asla kendiliğinden değiştirmez.
                   onPressed: () => _applySuggestion(suggestion),
@@ -1045,7 +1037,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
-              'Şimdi gönderilebilir. Uyarı kayda geçmedi.',
+              'Artık temiz görünüyor. Metin değişti, fikir yerinde kaldı.',
               style: TextStyle(fontSize: 13.5, color: p.textPrimary),
             ),
           ),

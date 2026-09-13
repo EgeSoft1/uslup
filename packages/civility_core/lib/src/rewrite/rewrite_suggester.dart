@@ -427,14 +427,29 @@ class LocalRewriteSuggester implements RewriteSuggester {
       return true;
     }
 
-    // 2. Karşılık bir öbek/cümle — kelime yuvasına sığmaz.
+    // 2. Tehdit — tehdit bir kelime değil bir konuşma edimidir. Fiili silmek
+    //    cümleyi onarmaz, yarım bırakır. Ölçülen hata:
+    //      "Seni gebertirim" → "Seni"
+    if (finding.category == ToxicityCategory.tehdit) return true;
+
+    // 3. Karşılık bir öbek/cümle — kelime yuvasına sığmaz.
     final replacement = finding.neutralAlternative;
     if (replacement != null && replacement.trim().contains(' ')) return true;
 
-    // 3. Örüntü bulgusu ve karşılığı yok — örüntüler cümle kuruluşunu
+    // 4. Örüntü bulgusu ve karşılığı yok — örüntüler cümle kuruluşunu
     //    tanımlar, tek kelimeyle onarılamazlar.
     if (finding.source == FindingSource.oruntu &&
         (replacement == null || replacement.isEmpty)) {
+      return true;
+    }
+
+    // 5. Örüntü BİRDEN FAZLA kelimeyi yakaladıysa tek kelimelik karşılık
+    //    yerine konamaz: eşleşmenin sonundaki ek karşılığa taşınır ve
+    //    kuruluşun ortası kesilir. Ölçülen hata (jüri demo senaryosu):
+    //      "Senin gibilerden zaten bu beklenirdi"
+    //        → "Senlerden zaten bu beklenirdi"
+    if (finding.source == FindingSource.oruntu &&
+        finding.matchedText.trim().contains(' ')) {
       return true;
     }
 

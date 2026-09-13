@@ -1,29 +1,39 @@
 // =============================================================================
-// Melez sınıflandırıcı — cihaz sürümü (Android · iOS · Windows · macOS · Linux)
+// ONNX ikinci görüş katmanı — cihaz sürümü (Android · iOS · masaüstü)
 // Dosya: mobile/lib/core/civility/onnx_classifier_io.dart
 //
-// Deterministik kural motoru KESİNLİK vetosu koyar, ONNX modeli DUYARLILIK
-// katkısı sağlar. Kesişim mantığı kasıtlıdır: model tek başına işaretleme
-// yapamaz. Kural motoru bir bulgu üretmediyse ONNX skoru ne olursa olsun
-// sonuç temizdir.
+// ── SÖZLEŞME: MODEL KARAR VERMEZ, YALNIZCA ŞİDDETİ TEYİT EDER ─────────────
+// Deterministik kural motoru "bu metin işaretlenmeli mi?" sorusunun TEK
+// sahibidir. ONNX modeli (ml/ altında eğitilen denetimli taban çizgisi)
+// yalnızca ZATEN işaretlenmiş bir metnin basamağını yükseltebilir:
 //
-// Bunun sebebi ürünün hedef fonksiyonunun F0.5 olması: yanlış pozitif,
-// yanlış negatiften pahalıdır. Modele veto hakkı verilseydi "Ben Kürtüm"
-// gibi cümlelerin işaretlenmesi bir eşik ayarı meselesine dönerdi — oysa
-// şu anda YAPISAL olarak imkânsız.
+//   kural motoru temiz      → model hiç çalışmaz, sonuç temiz
+//   kural motoru işaretledi → model aynı fikirdeyse şiddet artabilir,
+//                             ama ASLA düşmez ve temize dönmez
 //
-// Model yüklenemezse (dosya yok, bellek yetmedi, mimari desteklenmiyor)
-// sınıf sessizce temel motora düşer ve `modelName` bunu söyler.
+// Sebebi ölçümdür. Aynı ayrık kümede model, kural motorunun kaçırdığı
+// hiçbir örneği yakalamadı ve motorun yapmadığı altı yanlış pozitif üretti
+// (hepsi iltifat, olumsuzlama ya da mağduru savunan cümle — ml/README.md).
+// Modele temiz/işaretli kararı üzerinde söz hakkı vermek, raporlanan
+// kesinliği uygulamada geçersiz kılardı. Bu sözleşmeyle ölçülen kesinlik ve
+// duyarlılık, uygulamada da birebir geçerlidir.
+//
+// ── KALDIRILANLAR (13 Eylül 2026) ─────────────────────────────────────────
+// Önceki sürümde üç sorun vardı:
+//   1. `analyze` her TUŞ VURUŞUNDA çağrılıyor ama bir "kullanıcı sicili"
+//      bunu MESAJ sayıyordu; 20 temiz tuştan sonra eşik gevşiyordu.
+//   2. Yüksek skorlu metinlerin kendisi bellekte bir listede "karantina"
+//      adıyla biriktiriliyordu — ürünün hiçbir metni saklamama ilkesine
+//      aykırı; "şifreli kasa" diye anılan yapı düz bir listeydi.
+//   3. "haha", ":)" gibi ifadeler skoru düşürüyordu: "amk haha" yazmak
+//      şiddeti azaltmanın yolu hâline geliyordu.
+// Üçü de kaldırıldı. Eşik sabittir ve hiçbir metin saklanmaz.
 // =============================================================================
-
-import 'dart:io';
 
 import 'package:civility_core/civility_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:onnxruntime/onnxruntime.dart';
-
-import 'user_profile_manager.dart';
 
 class HybridOnnxClassifier implements ToxicityClassifier {
   HybridOnnxClassifier(this._baseClassifier);
@@ -33,8 +43,9 @@ class HybridOnnxClassifier implements ToxicityClassifier {
   OrtSession? _session;
   bool _isLoaded = false;
 
-  /// Temel (deterministik) motor — melez katman kapalıyken de erişilebilir
-  /// olmalı: yeniden yazıcı örüntü tablolarını bu motordan okur.
+  /// Modelin "saldırgan" dediği olasılık eşiği. Sabittir.
+  static const double _modelThreshold = 0.5;
+
   ToxicityClassifier get base => _baseClassifier;
 
   bool get isLoaded => _isLoaded;
@@ -42,52 +53,19 @@ class HybridOnnxClassifier implements ToxicityClassifier {
   /// ONNX oturumunu kurar. Uygulama açılışında bir kez çağrılır.
   ///
   /// Hiçbir hata yukarı fırlatılmaz: model yüklenemediğinde ürün çalışmaya
-  /// devam etmeli, yalnızca melez katman devre dışı kalmalıdır.
+  /// devam etmeli, yalnızca ikinci görüş katmanı devre dışı kalmalıdır.
   Future<void> init() async {
     try {
       OrtEnv.instance.init();
-
-      final bytes = await _loadModelBytes();
-      if (bytes == null) {
-        _isLoaded = false;
-        return;
-      }
-
-      _session = OrtSession.fromBuffer(bytes, OrtSessionOptions());
+      final asset = await rootBundle.load('assets/models/uslup_model.onnx');
+      _session = OrtSession.fromBuffer(
+        asset.buffer.asUint8List(),
+        OrtSessionOptions(),
+      );
       _isLoaded = true;
     } catch (e) {
-      debugPrint('ONNX yükleme hatası: $e');
+      debugPrint('ONNX ikinci görüş katmanı yüklenemedi: $e');
       _isLoaded = false;
-    }
-  }
-
-  /// Model baytları: önce cihazdaki OTA kopyası, sonra pakete gömülü kopya.
-  ///
-  /// OTA yolu yalnızca Android'de anlamlıdır (dosyayı oraya native katman
-  /// indirir). Diğer platformlarda dosya hiç bulunmaz ve doğrudan pakete
-  /// gömülü modele düşülür — bu bir hata değil, beklenen yoldur.
-  Future<Uint8List?> _loadModelBytes() async {
-    try {
-      if (Platform.isAndroid) {
-        final ota = File(
-          '/data/user/0/com.example.turkiye_mesajlasma/files/uslup_model_ota.onnx',
-        );
-        if (ota.existsSync() && ota.lengthSync() > 0) {
-          debugPrint('ONNX: cihazdaki güncel model (OTA) yüklendi');
-          return await ota.readAsBytes();
-        }
-      }
-    } catch (e) {
-      debugPrint('ONNX: OTA modeli okunamadı, pakete gömülü sürüme dönülüyor');
-    }
-
-    try {
-      final asset = await rootBundle.load('assets/models/uslup_model.onnx');
-      debugPrint('ONNX: pakete gömülü model yüklendi');
-      return asset.buffer.asUint8List();
-    } catch (e) {
-      debugPrint('ONNX: model varlığı okunamadı — melez katman kapalı: $e');
-      return null;
     }
   }
 
@@ -100,22 +78,8 @@ class HybridOnnxClassifier implements ToxicityClassifier {
 
   @override
   String get modelName => _isLoaded
-      ? '${_baseClassifier.modelName} + ONNX melez (cihaz üstü)'
-      : '${_baseClassifier.modelName} · ONNX katmanı kapalı';
-
-  /// Cümledeki duygu yükü — modelin skorunu ölçekleyen küçük bir düzeltme.
-  ///
-  /// Tek başına hiçbir şey işaretlemez; yalnızca modelin zaten ürettiği
-  /// skoru eşiğe göre biraz yukarı ya da aşağı iter.
-  double _sentimentModifier(String text) {
-    final lower = trKucultYerel(text);
-    const ofke = ['nefret', 'iğrenç', 'igrenc', 'yeter artık', 'bıktım'];
-    const saka = ['şaka', 'saka', 'haha', ':)', '🤣', '😅'];
-
-    if (ofke.any(lower.contains)) return 0.15;
-    if (saka.any(lower.contains)) return -0.20;
-    return 0.0;
-  }
+      ? '${_baseClassifier.modelName} + ONNX ikinci görüş'
+      : _baseClassifier.modelName;
 
   @override
   CivilityAnalysis analyze(
@@ -123,56 +87,26 @@ class HybridOnnxClassifier implements ToxicityClassifier {
     double? typingSpeedMs,
     double? backspaceRatio,
   }) {
-    // 1 · Deterministik motor her zaman çalışır ve kesinlik vetosunu koyar.
     final baseResult = _baseClassifier.analyze(
       text,
       typingSpeedMs: typingSpeedMs,
       backspaceRatio: backspaceRatio,
     );
 
-    if (!_isLoaded || _session == null || text.trim().isEmpty) {
-      return baseResult;
-    }
-
-    // Kural motoru hiçbir bulgu üretmediyse melez katman devreye GİRMEZ.
-    // Bu erken çıkış hem kesinlik vetosunu yapısal kılar hem de temiz
-    // metinlerde ONNX çıkarımının maliyetini tamamen ortadan kaldırır —
-    // kullanıcı yazdığı sürelerin çoğunda metin zaten temizdir.
-    if (baseResult.findings.isEmpty) {
-      UserProfileManager.instance.recordCleanMessage();
+    // Temiz/işaretli kararı kural motorunundur. Temiz bir metinde model
+    // hiç çalışmaz — hem sözleşme hem de maliyet gereği.
+    if (!_isLoaded || _session == null || baseResult.risk == RiskLevel.temiz) {
       return baseResult;
     }
 
     try {
-      final runOptions = OrtRunOptions();
-      final inputTensor =
-          OrtValueTensor.createTensorWithDataList([text], [1, 1]);
+      final modelRisk = _modelProbability(text);
+      if (modelRisk == null || modelRisk <= _modelThreshold) return baseResult;
 
-      final outputs = _session!.run(runOptions, {'input_text': inputTensor});
-      final probs = outputs.length > 1
-          ? outputs[1]?.value as List<List<double>>?
-          : null;
-
-      inputTensor.release();
-      runOptions.release();
-      for (final element in outputs) {
-        element?.release();
-      }
-
-      var mlRisk = 0.0;
-      if (probs != null && probs.isNotEmpty && probs.first.length > 1) {
-        mlRisk = probs.first[1];
-      }
-      mlRisk = (mlRisk + _sentimentModifier(text)).clamp(0.0, 1.0);
-
-      if (mlRisk <= UserProfileManager.instance.dynamicThreshold) {
-        return baseResult;
-      }
-
-      UserProfileManager.instance.recordToxicMessage(text, mlRisk);
-
-      final blended = ((baseResult.toxicity * 0.5) + (mlRisk * 0.5))
-          .clamp(0.0, 1.0);
+      // Model aynı fikirde: iki bağımsız yöntemin ortalaması, kural motorunun
+      // skorundan YÜKSEKSE kullanılır. Düşükse kural motorunun skoru kalır.
+      final blended = (baseResult.toxicity + modelRisk) / 2;
+      if (blended <= baseResult.toxicity) return baseResult;
 
       return CivilityAnalysis(
         text: baseResult.text,
@@ -182,31 +116,46 @@ class HybridOnnxClassifier implements ToxicityClassifier {
         findings: baseResult.findings,
         signals: baseResult.signals,
         elapsed: baseResult.elapsed,
+        typingSpeedMs: baseResult.typingSpeedMs,
+        backspaceRatio: baseResult.backspaceRatio,
       );
     } catch (e) {
       debugPrint('ONNX çıkarım hatası: $e');
-      return baseResult; // Kademeli bozulma: ürün çalışmaya devam eder.
+      return baseResult;
     }
   }
 
+  double? _modelProbability(String text) {
+    final runOptions = OrtRunOptions();
+    final inputTensor = OrtValueTensor.createTensorWithDataList([text], [1, 1]);
+    try {
+      final outputs = _session!.run(runOptions, {'input_text': inputTensor});
+      try {
+        final probs = outputs.length > 1
+            ? outputs[1]?.value as List<List<double>>?
+            : null;
+        if (probs == null || probs.isEmpty || probs.first.length < 2) {
+          return null;
+        }
+        return probs.first[1];
+      } finally {
+        for (final element in outputs) {
+          element?.release();
+        }
+      }
+    } finally {
+      inputTensor.release();
+      runOptions.release();
+    }
+  }
+
+  /// Kural motoruyla AYNI eşikler (`LexicalTurkishClassifier._riskFrom`).
+  /// Farklı eşik kullanmak, aynı skorun iki ekranda iki farklı basamak
+  /// göstermesine yol açardı.
   RiskLevel _riskFrom(double toxicity) {
-    if (toxicity < 0.30) return RiskLevel.temiz;
-    if (toxicity < 0.50) return RiskLevel.dikkat;
+    if (toxicity < 0.15) return RiskLevel.temiz;
+    if (toxicity < 0.40) return RiskLevel.dikkat;
     if (toxicity < 0.70) return RiskLevel.riskli;
     return RiskLevel.yuksek;
   }
-}
-
-/// Türkçe'ye duyarlı küçük harfe çevirme.
-///
-/// Dart'ın `toLowerCase()` işlevi "I" harfini "i" yapar; Türkçe'de karşılığı
-/// "ı"dır. Duygu sözcüklerini ararken bu fark eşleşmeyi kaçırır.
-String trKucultYerel(String value) {
-  const map = {'I': 'ı', 'İ': 'i', 'Ş': 'ş', 'Ğ': 'ğ', 'Ü': 'ü', 'Ö': 'ö', 'Ç': 'ç'};
-  final buffer = StringBuffer();
-  for (var i = 0; i < value.length; i++) {
-    final ch = value[i];
-    buffer.write(map[ch] ?? ch.toLowerCase());
-  }
-  return buffer.toString();
 }

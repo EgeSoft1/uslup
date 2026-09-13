@@ -64,6 +64,10 @@ vds_monitor.py
 # ml/ üretilen çıktılar (01_veri_cikar.py yeniden üretir)
 ml/*.json
 
+# Sunum ekran görüntüleri — `flutter test tool/ekran_goruntusu_test.dart`
+# her seferinde yeniden üretir; ~15 MB ikili dosyayı depoya koymaya gerek yok.
+docs/gorseller/ekranlar/
+
 # Python önbelleği (görsel üretim betikleri)
 __pycache__/
 *.pyc

@@ -46,6 +46,9 @@ void main() {
       'salak mısın nesin': 'Hatalı mısın nesin',
       'embesil misin gerçekten': 'Yanlış mısın gerçekten',
       'a.p.t.a.l mısın': 'Yanlış.yanlış.yanlış.yanlış.yanlış mısın',
+      // İP-29 · jüri demo senaryolarında ölçülenler
+      'Senin gibilerden zaten bu beklenirdi': 'Senlerden zaten bu beklenirdi',
+      'Seni gebertirim': 'Seni',
     };
 
     bozukVakalar.forEach((girdi, eskiBozukCikti) {
@@ -64,6 +67,23 @@ void main() {
             isNot(matches(
                 RegExp(r'\b(yanlış|yersiz|hatalı)\s+m[iıuü](sin|sın|sun|sün)?\b'))));
       });
+    });
+
+    test('öneri tek kelimeye ya da yarım cümleye düşmez', () async {
+      // "Seni gebertirim" → "Seni" doğrulama kapısından geçiyordu: toksisitesi
+      // sıfırdı. Temiz olmak, anlamlı olmak demek değildir.
+      for (final girdi in const [
+        'Seni gebertirim',
+        'Senin gibilerden zaten bu beklenirdi',
+        'Sen tam bir aptalsın',
+        'Bütün Suriyeliler hırsızdır',
+      ]) {
+        final sonuc = await rewrite(girdi);
+        expect(sonuc, isNotNull, reason: '"$girdi" için öneri yok.');
+        expect(sonuc!.trim().split(RegExp(r'\s+')).length,
+            greaterThanOrEqualTo(3),
+            reason: '"$girdi" → "$sonuc" yarım kalmış bir cümle.');
+      }
     });
 
     test('gizleme noktası yan cümle ayırıcısı sayılmaz', () async {

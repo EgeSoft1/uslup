@@ -140,9 +140,13 @@ void main(List<String> args) {
                   '${Generalization4Dataset.cases.length} örnek',
             ),
       )
-      ..writeln('  ⓘ  GEÇERLİ GENELLEME ÖLÇÜMÜ BUDUR.')
-      ..writeln('     Önceki dört küme onarımlarda kullanıldığı için')
-      ..writeln('     yanmıştır; tam geçmiş için docs/14.')
+      ..writeln('  ⚠  UYARI: Bu küme de YANMIŞTIR — İP-28 deyim katmanı,')
+      ..writeln('     bu kümenin ilk geçişte kaçırdığı 31 örneğe bakılarak')
+      ..writeln('     yazıldı (60 saldırgan örnekten 31 kaçak, duyarlılık')
+      ..writeln('     ≈%48). İlk geçiş kesinliği kayda geçmedi.')
+      ..writeln('     Son TAM ilk geçiş ölçümü: İP-22 · kesinlik %90,5 ·')
+      ..writeln('     duyarlılık %54,3. Yeni bir genelleme sayısı için')
+      ..writeln('     motora BAKILMADAN yazılmış yeni bir küme gerekir.')
       ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
       ..writeln("     (Cohen's kappa) henüz ölçülmemiştir.")
       ..writeln();

@@ -14,22 +14,22 @@
 // ── NEDEN `late` DEĞİL, TEMBEL VARSAYILAN ─────────────────────────────────
 // Alanlar önceden `late` idi ve yalnızca `main()` içindeki `Civility.init()`
 // onları dolduruyordu. Sonuç: `init()` çağırmayan her giriş noktası
-// çalışma zamanında `LateInitializationError` ile çöküyordu —
-// `flutter test` içindeki sekiz arayüz testi bu yüzden kırmızıydı ve
-// uygulama, `init()` tamamlanmadan bir kare çizilirse aynı hataya düşüyordu.
+// çalışma zamanında `LateInitializationError` ile çöküyordu.
 //
 // Artık erişim tembel: motor istendiğinde yoksa deterministik çekirdek
-// kendiliğinden kurulur. `init()` bunun ÜSTÜNE melez ONNX katmanını takar.
-// Yani `init()` bir ön koşul değil, bir iyileştirmedir; çağrılmadığında
-// ürün bozulmaz, yalnızca melez katmansız çalışır.
+// kendiliğinden kurulur. `init()` bunun ÜSTÜNE ONNX ikinci görüş katmanını
+// takar. Yani `init()` bir ön koşul değil, bir iyileştirmedir.
+//
+// ── KALDIRILANLAR (13 Eylül 2026) ─────────────────────────────────────────
+// Bu dosyada sunucuya metin gönderen isteğe bağlı bir yeniden yazıcı
+// (`VdsRewriteSuggester`) ve onu sarmalayan katman duruyordu. Hiçbir yerden
+// bağlanmıyordu, ama "metin cihazdan çıkmaz" iddiasının yanında, çağrılmayı
+// bekleyen bir metin ihracı yolu olarak duruyordu. Kaldırıldı; öneri üretimi
+// yalnızca cihaz üstü `LocalRewriteSuggester` ile yapılır.
 // =============================================================================
-
-import 'dart:async';
-import 'dart:convert';
 
 import 'package:civility_core/civility_core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 
 import 'onnx_classifier.dart';
 
@@ -45,11 +45,11 @@ abstract final class Civility {
   static ToxicityClassifier get engine =>
       _engine ??= LexicalTurkishClassifier();
 
-  /// Yeniden yazıcı — cihaz üstü öneri her zaman vardır.
+  /// Yeniden yazıcı — cihaz üstü, ağ yok.
   static RewriteSuggester get suggester =>
-      _suggester ??= LayeredRewriteSuggester(LocalRewriteSuggester(engine));
+      _suggester ??= LocalRewriteSuggester(engine);
 
-  /// Melez ONNX katmanı yüklendi mi? Şeffaflık panelinde gösterilir.
+  /// ONNX ikinci görüş katmanı yüklendi mi? Şeffaflık panelinde gösterilir.
   static bool get hybridReady => _hybridReady;
 
   /// Melez katmanı kurar. Hata fırlatmaz — kurulamazsa ürün deterministik
@@ -57,16 +57,15 @@ abstract final class Civility {
   static Future<void> init() async {
     final base = LexicalTurkishClassifier();
     _engine = base;
-    _suggester = LayeredRewriteSuggester(LocalRewriteSuggester(base));
+    // Yeniden yazıcı TEMEL motoru kullanır: öneri üretimi örüntü
+    // tablolarını okur, olasılık skoru değil.
+    _suggester = LocalRewriteSuggester(base);
 
     try {
       final hybrid = HybridOnnxClassifier(base);
       await hybrid.init();
       _engine = hybrid;
       _hybridReady = hybrid.isLoaded;
-      // Yeniden yazıcı TEMEL motoru kullanmaya devam eder: öneri üretimi
-      // örüntü tablolarını okur, olasılık skoru değil.
-      _suggester = LayeredRewriteSuggester(LocalRewriteSuggester(base));
     } catch (e) {
       debugPrint('Melez katman kurulamadı, deterministik çekirdek sürüyor: $e');
       _hybridReady = false;
@@ -87,98 +86,52 @@ abstract final class Civility {
   /// Şeffaflık panelinde gösterilen model adı.
   static String get modelName => engine.modelName;
 
-  /// Rapor edilen genelleme başarımı — arayüzde tek kaynaktan okunur.
+  // ─── Arayüzde gösterilen ölçümler — TEK KAYNAK ────────────────────────────
+  //
+  // Ekranda görünen her sayı buradan okunur. Bir sayı iki yerde elle
+  // yazılırsa biri er ya da geç bayatlar; bu dosyadaki önceki sürümde
+  // "92 sözlük girdisi" yazıyordu, motorda 250'den fazla girdi vardı.
+  //
+  // Sayılabilen her şey ÇALIŞMA ANINDA sayılır. Yalnızca motorun dışında
+  // ölçülen şeyler (ayrık küme ilk geçişi, AOT gecikmesi) sabit olarak
+  // yazılır ve kaynağı yanında belirtilir.
+
+  /// Sözlükteki girdi sayısı — çalışma anında sayılır.
+  static int get sozlukGirdisi => ToxicityLexicon.entries.length;
+
+  /// Edimbilimsel, deyim ve nefret örüntülerinin toplamı — çalışma anında.
+  static int get oruntuSayisi => ImplicitPatterns.all.length;
+
+  /// AOT derlenmiş motorun ölçülen gecikmesi.
   ///
-  /// Bu sayılar `docs/14_MENTORLUK_PENCERESI_SONUCLARI.md` §5'teki ölçüm
-  /// tablosundan gelir ve İP-22'nin İLK GEÇİŞİDİR. Kesinlik için düzeltme
-  /// sonrası bir sayı (%100) mevcuttur ama o küme artık yanmıştır; arayüzde
-  /// dürüst olanı, ilk geçişi göstermektir.
+  /// Kaynak: `packages/civility_core/bin/benchmark.dart`, 13 Eylül 2026,
+  /// 9 senaryo × 2000 tekrar. Önceki değer (159 µs) deyim katmanı ve sözlük
+  /// genişlemesinden ÖNCE ölçülmüştü ve bayatlamıştı; motor büyüdükçe
+  /// yeniden ölçülmeyen bir gecikme iddiası yanlışa döner.
+  static const String gecikmeP50 = '357 µs';
+  static const String gecikmeP99 = '2.212 µs';
+  static const String kareButcesiP99 = '%13,8';
+
+  /// Etiketli değerlendirme örneklerinin toplamı — çalışma anında sayılır.
+  static int get etiketliOrnek =>
+      GoldDataset.cases.length +
+      HoldoutDataset.cases.length +
+      GeneralizationDataset.cases.length +
+      Generalization2Dataset.cases.length +
+      Generalization3Dataset.cases.length +
+      Generalization4Dataset.cases.length;
+
+  /// Son kayda geçmiş İLK GEÇİŞ genelleme ölçümü.
+  ///
+  /// Kaynak: docs/14 §5, İP-22. Sonraki küme (İP-27) ilk geçişte 60 saldırgan
+  /// örneğin 31'ini kaçırdı; deyim katmanı o kaçaklara bakılarak yazıldığı
+  /// için İP-27 de yanmıştır ve kesinliği ilk geçişte kayda geçmemiştir.
+  /// Yanmış bir kümenin bugünkü %100'ünü göstermek ezberi başarı diye
+  /// sunmak olurdu.
   static const String olcumOzeti =
-      'İP-22 ayrık küme · 65 örnek · kesinlik %90,5 · F1 %67,9';
+      'Son ilk geçiş ölçümü (İP-22) · kesinlik %90,5 · duyarlılık %54,3';
 
-  /// 9 Eylül 2026'da ölçüldü: `dart test` → 258 geçti.
-  static const String olcumKapsami =
-      'Beş küme · 581 etiketli örnek · 258 test';
-}
-
-// ─── Yeniden yazıcı katmanı ──────────────────────────────────────────────────
-
-/// Cihaz üstü öneriyi TABAN alan, sunucu önerisini yalnızca İYİLEŞTİRME
-/// olarak kabul eden yeniden yazıcı.
-///
-/// ── NEDEN SIRA BÖYLE ──────────────────────────────────────────────────────
-/// Önceki sürüm önce VDS'e gidiyor, cevap gelmezse sabit bir cümleye
-/// düşüyordu: *"Bu cümlenin üslubunu yumuşatmak daha sağlıklı bir iletişim
-/// kurmanı sağlayabilir."* Bunun iki sonucu vardı:
-///
-///   1. Jüri demosu UÇAK MODUNDA yapılıyor (`docs/17` §0). Yani demoda
-///      gösterilen her öneri, cümleye özel yeniden yazım değil, o tek
-///      genel cümle olacaktı — sunumun en güçlü anı boşa çıkıyordu.
-///   2. `suggest()` her tuş vuruşunda çağrılır. Ağ önce denendiğinde bu,
-///      tuş başına bir ağ turu demekti.
-///
-/// Şimdi: yerel öneri her zaman üretilir ve hemen döner. Sunucu önerisi
-/// isteğe bağlıdır, kısa bir zaman aşımıyla denenir ve yalnızca gerçekten
-/// daha iyi bir metin döndürürse tercih edilir. Ağ yokken davranış
-/// bozulmaz — yalnızca iyileştirme gelmez.
-class LayeredRewriteSuggester implements RewriteSuggester {
-  LayeredRewriteSuggester(this._local, {RewriteSuggester? remote})
-      : _remote = remote;
-
-  final RewriteSuggester _local;
-  final RewriteSuggester? _remote;
-
-  @override
-  Future<RewriteSuggestion?> suggest(CivilityAnalysis analysis) async {
-    final local = await _local.suggest(analysis);
-    final remote = _remote;
-    if (remote == null) return local;
-
-    try {
-      final enhanced = await remote
-          .suggest(analysis)
-          .timeout(const Duration(milliseconds: 900));
-      if (enhanced != null && enhanced.text.trim().isNotEmpty) return enhanced;
-    } catch (_) {
-      // Ağ yok, yavaş ya da kapalı: yerel öneri zaten hazır.
-    }
-    return local;
-  }
-}
-
-/// Sunucudaki yeniden yazma servisine giden isteğe bağlı katman.
-///
-/// ── AÇIKÇA: BU KATMAN METNİ CİHAZDAN ÇIKARIR ──────────────────────────────
-/// Varsayılan olarak KURULU DEĞİLDİR (`Civility.init` onu bağlamaz) ve
-/// bağlanmadığı sürece üründe tek bir ağ çağrısı yoktur. Bağlanacaksa,
-/// kullanıcıya bunun ne anlama geldiği söylenmeden bağlanmamalıdır:
-/// "metin cihazdan çıkmaz" cümlesi, bu katman açıkken doğru değildir.
-class VdsRewriteSuggester implements RewriteSuggester {
-  const VdsRewriteSuggester({required this.host});
-
-  static const MethodChannel _channel = MethodChannel('uslup/ime');
-
-  final String host;
-
-  @override
-  Future<RewriteSuggestion?> suggest(CivilityAnalysis analysis) async {
-    final response = await _channel.invokeMethod<String>('llmRewrite', {
-      'ip': host,
-      'text': analysis.text,
-    });
-    if (response == null) return null;
-
-    final data = jsonDecode(response) as Map<String, dynamic>;
-    if (data['status'] != 'success') return null;
-
-    final text = data['suggestion'] as String?;
-    if (text == null || text.trim().isEmpty) return null;
-
-    final model = data['model'] as String? ?? 'VDS';
-    return RewriteSuggestion(
-      text: text,
-      source: 'Sunucu · $model',
-      projectedCivilityScore: 100,
-    );
-  }
+  /// Kapsam satırı — sayılar çalışma anında hesaplanır.
+  static String get olcumKapsami =>
+      '6 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
 }

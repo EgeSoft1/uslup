@@ -258,11 +258,14 @@ class _NavItem extends StatelessWidget {
                     color: color, size: 22),
               ),
               const SizedBox(height: 3),
+              // `AnimatedDefaultTextStyle` üst stili BİRLEŞTİRMEZ, değiştirir:
+              // yazı tipi ailesi burada verilmezse etiketler Inter yerine
+              // platformun varsayılan yazı tipiyle çiziliyordu.
               AnimatedDefaultTextStyle(
                 duration: AppDurations.fast,
-                style: TextStyle(
+                style: appBody(
                   color: color,
-                  fontSize: 10,
+                  fontSize: 10.5,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
                 child: Text(
