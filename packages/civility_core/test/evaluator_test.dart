@@ -185,6 +185,36 @@ void main() {
 
     checkIntegrity('geliştirme kümesi', GoldDataset.cases);
     checkIntegrity('ayrık küme', HoldoutDataset.cases);
+    checkIntegrity('İP-29 altıncı ayrık küme', Generalization5Dataset.cases);
+
+    test('İP-29 hiçbir önceki kümeyle örtüşmez', () {
+      // Motor çalıştırılmaz; yalnızca metinler karşılaştırılır. Önceki bir
+      // kümede geçen cümle, ayrık kümede ezber ölçer.
+      final previous = {
+        for (final c in [
+          ...GoldDataset.cases,
+          ...HoldoutDataset.cases,
+          ...GeneralizationDataset.cases,
+          ...Generalization2Dataset.cases,
+          ...Generalization3Dataset.cases,
+          ...Generalization4Dataset.cases,
+        ])
+          c.text.toLowerCase(),
+      };
+      final overlap = Generalization5Dataset.cases
+          .where((c) => previous.contains(c.text.toLowerCase()))
+          .map((c) => c.text)
+          .toList();
+      expect(overlap, isEmpty, reason: 'Örtüşen örnekler: $overlap');
+    });
+
+    test('İP-29 üç eşit parçadan oluşur (30 · 30 · 30)', () {
+      final cases = Generalization5Dataset.cases;
+      expect(cases, hasLength(90));
+      expect(cases.sublist(0, 30).every((c) => c.shouldFlag), isTrue);
+      expect(cases.sublist(30, 60).every((c) => !c.shouldFlag), isTrue);
+      expect(cases.sublist(60, 90).every((c) => c.shouldFlag), isTrue);
+    });
 
     test('iki küme birbiriyle örtüşmez', () {
       final devTexts = GoldDataset.cases.map((c) => c.text).toSet();

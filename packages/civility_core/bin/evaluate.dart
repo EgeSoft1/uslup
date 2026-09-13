@@ -8,7 +8,8 @@
 //   dart run bin/evaluate.dart --genelleme     → İP-15 ikinci küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme2    → İP-20 üçüncü küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme3    → İP-22 dördüncü küme (YANMIŞ)
-//   dart run bin/evaluate.dart --genelleme4    → İP-27 beşinci ayrık küme ✅
+//   dart run bin/evaluate.dart --genelleme4    → İP-27 beşinci küme (YANMIŞ)
+//   dart run bin/evaluate.dart --genelleme5    → İP-29 altıncı ayrık küme ✅
 //   dart run bin/evaluate.dart --karsilastir   → katman katkısı (A/B)
 //   dart run bin/evaluate.dart --hepsi         → hepsi birden
 //
@@ -18,6 +19,20 @@
 import 'dart:io';
 
 import 'package:civility_core/civility_core.dart';
+
+/// Bir parçanın özet satırı: saldırgan parçada duyarlılık, masum parçada
+/// özgüllük anlamlıdır — diğeri tanımsız kalır.
+String _parca(Evaluator evaluator, ToxicityClassifier engine,
+    List<GoldCase> cases) {
+  final m = evaluator.run(engine, cases).overall;
+  String yuzde(double v) =>
+      '%${(v * 100).toStringAsFixed(1).replaceAll('.', ',')}';
+  return m.actualPositives > 0
+      ? '${m.truePositive}/${m.actualPositives} yakalandı · '
+          'duyarlılık ${yuzde(m.recall)}'
+      : '${m.trueNegative}/${m.actualNegatives} temiz kaldı · '
+          'özgüllük ${yuzde(m.specificity)}';
+}
 
 void main(List<String> args) {
   const evaluator = Evaluator();
@@ -29,13 +44,15 @@ void main(List<String> args) {
   final wantsGeneralization2 = wantsAll || args.contains('--genelleme2');
   final wantsGeneralization3 = wantsAll || args.contains('--genelleme3');
   final wantsGeneralization4 = wantsAll || args.contains('--genelleme4');
+  final wantsGeneralization5 = wantsAll || args.contains('--genelleme5');
   final wantsDev = wantsAll ||
       (!wantsHoldout &&
           !wantsCompare &&
           !wantsGeneralization &&
           !wantsGeneralization2 &&
           !wantsGeneralization3 &&
-          !wantsGeneralization4);
+          !wantsGeneralization4 &&
+          !wantsGeneralization5);
 
   if (wantsDev) {
     stdout.write(
@@ -147,6 +164,30 @@ void main(List<String> args) {
       ..writeln('     Son TAM ilk geçiş ölçümü: İP-22 · kesinlik %90,5 ·')
       ..writeln('     duyarlılık %54,3. Yeni bir genelleme sayısı için')
       ..writeln('     motora BAKILMADAN yazılmış yeni bir küme gerekir.')
+      ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
+      ..writeln("     (Cohen's kappa) henüz ölçülmemiştir.")
+      ..writeln();
+  }
+
+  if (wantsGeneralization5) {
+    // İP-29 — Altıncı ayrık küme. İP-28 tamamlandıktan SONRA, motor bu
+    // kümeye karşı hiç çalıştırılmadan yazıldı ve ölçümden önce commit edildi.
+    final cases = Generalization5Dataset.cases;
+    final engine = LexicalTurkishClassifier();
+    stdout
+      ..write(evaluator.run(engine, cases).format(
+            title: 'İP-29 · ALTINCI AYRIK KÜME — ${cases.length} örnek',
+          ))
+      ..writeln('  PARÇALARA GÖRE')
+      ..writeln('    1. bilinen yeteneklerin yeni örnekleri : '
+          '${_parca(evaluator, engine, cases.sublist(0, 30))}')
+      ..writeln('    2. yakın-kaçış ve bağlam tuzakları    : '
+          '${_parca(evaluator, engine, cases.sublist(30, 60))}')
+      ..writeln('    3. serbest düşmanca ifadeler          : '
+          '${_parca(evaluator, engine, cases.sublist(60, 90))}')
+      ..writeln()
+      ..writeln('  ⓘ  GEÇERLİ GENELLEME ÖLÇÜMÜ BUDUR — ilk geçiş, düzeltilmeden.')
+      ..writeln('     Bu kümeye bakılarak motor değiştirilirse küme yanar.')
       ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
       ..writeln("     (Cohen's kappa) henüz ölçülmemiştir.")
       ..writeln();
