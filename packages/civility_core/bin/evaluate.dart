@@ -73,8 +73,8 @@ void main(List<String> args) {
       ..writeln('  ⚠  UYARI: Bu küme artık gerçek anlamda AYRIK DEĞİLDİR.')
       ..writeln('     Bu kümedeki ilk ölçüm F1 = %84,2 idi; motor sonradan')
       ..writeln('     bu kümeye bakılarak düzeltildiği için YANMIŞTIR.')
-      ..writeln('     Bugün geçerli olan genelleme ölçümü İP-22 kümesidir:')
-      ..writeln('     dart run bin/evaluate.dart --genelleme3')
+      ..writeln('     Bugün geçerli olan genelleme ölçümü İP-29 kümesidir:')
+      ..writeln('     dart run bin/evaluate.dart --genelleme5')
       ..writeln('     Ayrıntı: docs/04_MODEL_DEGERLENDIRME.md §5, docs/14 §5')
       ..writeln();
   }
@@ -120,7 +120,7 @@ void main(List<String> args) {
       ..writeln('  ⚠  UYARI: Bu küme de YANMIŞTIR — İP-21 onarımı ona')
       ..writeln('     bakılarak yapıldı. İlk (ve tek geçerli) ölçümü:')
       ..writeln('     F1 = %66,7, duyarlılık %50,0, kesinlik %100,0.')
-      ..writeln('     Geçerli genelleme ölçümü: --genelleme3 (İP-22)')
+      ..writeln('     Geçerli genelleme ölçümü: --genelleme5 (İP-29)')
       ..writeln();
   }
 
@@ -141,7 +141,7 @@ void main(List<String> args) {
       ..writeln('     bakılarak yapıldı. İlk (ve tek geçerli) ölçümü:')
       ..writeln('     kesinlik %90,5, duyarlılık %54,3, F1 %67,9.')
       ..writeln('     Aşağıdaki sayı genelleme DEĞİLDİR — ezber ölçüsüdür.')
-      ..writeln('     Geçerli genelleme ölçümü: --genelleme4 (İP-27)')
+      ..writeln('     Geçerli genelleme ölçümü: --genelleme5 (İP-29)')
       ..writeln();
   }
 
@@ -161,9 +161,9 @@ void main(List<String> args) {
       ..writeln('     bu kümenin ilk geçişte kaçırdığı 31 örneğe bakılarak')
       ..writeln('     yazıldı (60 saldırgan örnekten 31 kaçak, duyarlılık')
       ..writeln('     ≈%48). İlk geçiş kesinliği kayda geçmedi.')
-      ..writeln('     Son TAM ilk geçiş ölçümü: İP-22 · kesinlik %90,5 ·')
-      ..writeln('     duyarlılık %54,3. Yeni bir genelleme sayısı için')
-      ..writeln('     motora BAKILMADAN yazılmış yeni bir küme gerekir.')
+      ..writeln('     Geçerli genelleme ölçümü: --genelleme5 (İP-29) —')
+      ..writeln('     bu kümeden SONRA, motora bakılmadan yazıldı.')
+      ..writeln('     Kayıt: docs/18_IP29_ILK_GECIS.md')
       ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
       ..writeln("     (Cohen's kappa) henüz ölçülmemiştir.")
       ..writeln();

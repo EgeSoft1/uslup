@@ -975,8 +975,8 @@ class UslupDetailsScreen extends StatelessWidget {
         title: 'Bağlam ağırlıklandırma',
         detail: 'Aynı sözcük saldırı, iltifat, şikâyet ve öz-ifade '
             'eksenlerinde yeniden ağırlıklandırılır. Yumuşatma bir çarpan '
-            'DEĞİL bir tavandır — mağdurun uyarı alması yapısal olarak '
-            'imkânsızdır.'
+            'DEĞİL bir tavandır: aktarılan bir hakaret, şiddeti ne olursa '
+            'olsun eşiğin altında kalır.'
       ),
       (
         title: 'Skor birleştirme ve öneri',
@@ -1105,8 +1105,9 @@ class UslupDetailsScreen extends StatelessWidget {
         kesinlik: '%90,5',
         duyarlilik: '%54,3',
         f1: '%67,9',
-        durum: 'Son kayda geçmiş TAM ilk geçiş — raporlanan sayı budur',
-        vurgu: true,
+        durum: 'İlk geçiş. Sonraki genişletme bu kümeye bakılarak yapıldı — '
+            'yandı',
+        vurgu: false,
       ),
       (
         kume: '5. ayrık küme (İP-27)',
@@ -1115,8 +1116,18 @@ class UslupDetailsScreen extends StatelessWidget {
         duyarlilik: '≈%48',
         f1: '—',
         durum: 'İlk geçişte 60 saldırgan örneğin 31\'i kaçtı. Deyim katmanı '
-            'bu kaçaklara bakılarak yazıldı — küme yandı',
+            'bu kaçaklara bakılarak yazıldı — yandı',
         vurgu: false,
+      ),
+      (
+        kume: '6. ayrık küme (İP-29)',
+        boyut: '90',
+        kesinlik: '%96,4',
+        duyarlilik: '%45,0',
+        f1: '%61,4',
+        durum: 'GEÇERLİ — bugünkü motor, ölçümden önce kilitlenmiş küme. '
+            'Açık saldırı %83, örtük saldırı %32, masum 30\'da 29 temiz',
+        vurgu: true,
       ),
     ];
 
@@ -1294,9 +1305,10 @@ class UslupDetailsScreen extends StatelessWidget {
       (
         icon: Icons.shield_moon_rounded,
         title: 'Mağdur susturulmaz',
-        body: 'Tacize uğradığını anlatan kullanıcı uyarı ALMAZ. Yumuşatma '
-            'bir çarpan değil bir tavandır; terimin taban şiddeti ne olursa '
-            'olsun eşiğin altında kalır.',
+        body: 'Tacize uğradığını anlatan kullanıcı uyarı almaz: aktarılan '
+            'hakaretin şiddeti ne olursa olsun yumuşatma bir tavandır. '
+            'Bilinen boşluk: tırnak içinde kınanarak aktarılan küfürsüz bir '
+            'kalıp, ölçümde bir kez işaretlendi (İP-29).',
       ),
       (
         icon: Icons.badge_outlined,

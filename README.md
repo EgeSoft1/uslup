@@ -109,14 +109,25 @@ Ayrıntı: [`docs/16_URUN_KABUGU.md`](docs/16_URUN_KABUGU.md)
 
 ## Ölçülen sonuçlar
 
-Raporlanan genelleme ölçümü, **son TAM ilk geçiş olan dördüncü ayrık kümedir**
-(İP-22). Beş ayrık kümenin beşi de yanmıştır — motor her birine bakılarak
-düzeltildiği için artık genelleme ölçemezler. Beşinci küme (İP-27) ilk geçişte
-60 saldırgan örneğin 31'ini kaçırdı; deyim katmanı bu kaçaklara bakılarak
-yazıldı ve ilk geçiş kesinliği kayda geçmedi. Gerekçe ve tam geçmiş:
+Geçerli genelleme ölçümü **altıncı ayrık kümedir (İP-29)** — bugünkü motor,
+hiç görmediği 90 cümle, küme ölçümden ÖNCE commit edildi (`9179ee4`), sonuç
+düzeltilmeden raporlanıyor. Kayıt:
+[`docs/18_IP29_ILK_GECIS.md`](docs/18_IP29_ILK_GECIS.md)
+
+| İP-29 ilk geçiş | Değer |
+|---|---|
+| **Kesinlik** | **%96,4** — 30 masum cümlenin 29'u temiz kaldı |
+| **Duyarlılık** | **%45,0** |
+| **F0.5** — ürünün hedef fonksiyonu | **%78,5** |
+| Açık saldırı · örtük saldırı (duyarlılık) | %83,3 · %32,4 |
+| Bilinen yeteneklerin yeni kuruluşları | 16/30 (%53,3) |
+| Serbest düşmanca ifadeler (deyim, lanet, cinsiyet/yaş hedefli) | 11/30 (%36,7) |
+
+Önceki beş ayrık kümenin beşi de yanmıştır — motor her birine bakılarak
+düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); tam geçmiş:
 [`docs/14_MENTORLUK_PENCERESI_SONUCLARI.md`](docs/14_MENTORLUK_PENCERESI_SONUCLARI.md)
 
-| Ölçüm | Değer |
+| İP-22 (geçmiş kayıt) | Değer |
 |---|---|
 | Kesinlik (İP-22 ilk geçiş) | %90,5 → **%100,0** (iki kusur düzeltildikten sonra) |
 | F0.5 — ürünün hedef fonksiyonu | %79,8 → **%85,6** |
@@ -133,8 +144,9 @@ yazıldı ve ilk geçiş kesinliği kayda geçmedi. Gerekçe ve tam geçmiş:
 | 1. ayrık | 80 | %98,0 | %100 | %99,0 | Yanmış (ilk ölçüm F1 %84,2) |
 | 2. ayrık (İP-15) | 100 | %100 | %38,5 | %55,6 | Yanmış (İP-19 onarımında kullanıldı) |
 | 3. ayrık (İP-20) | 80 | %100 | %50,0 | %66,7 | Yanmış (İP-21 onarımında kullanıldı) |
-| **4. ayrık (İP-22)** | **65** | **%90,5** | **%54,3** | **%67,9** | **Raporlanan — son tam ilk geçiş** |
+| 4. ayrık (İP-22) | 65 | %90,5 | %54,3 | %67,9 | Yanmış (İP-26 genişletmesinde kullanıldı) |
 | 5. ayrık (İP-27) | 90 | kayıt yok | ≈%48 | — | Yanmış (İP-28 deyim katmanında kullanıldı) |
+| **6. ayrık (İP-29)** | **90** | **%96,4** | **%45,0** | **%61,4** | **Geçerli — ilk geçiş, ölçümden önce kilitlendi** |
 
 ### Duyarlılık sayısı neyin cevabı
 
@@ -263,10 +275,18 @@ packages/civility_core/lib/src/
 - Metrikler **tek etiketleyicilidir**; hakemler arası uyum (kappa) ölçülmemiştir.
   Ölçüm altyapısı hazırdır — `bin/annotate_export.dart` kör etiketleme dosyası
   üretir, `bin/kappa.dart` Cohen's kappa'yı hesaplar; eksik olan ikinci insandır.
-- **Duyarlılık, yazılmış yapı ailesi sayısıyla sınırlıdır.** Taze ayrık
-  kümede toplam %54,3; ama yazılmış bir ailenin hiç görülmemiş örneklerinde
-  %90,0. Yazılmamış ailelerde ~%7. Kural tabanlı bir katman Türkçe deyim
-  uzayını kapsayamaz.
+- **Duyarlılık sınırlıdır ve örtük saldırıda düşüktür.** Geçerli ayrık
+  kümede (İP-29) toplam %45,0: açık saldırıda %83,3, örtük saldırıda %32,4.
+  İP-22'de ölçülen "yazılmış ailenin yeni örneklerinde %90" genellenmedi —
+  devrik sıra, araya giren zamir ya da farklı kip kalıbın dışına düşüyor
+  (İP-29 birinci parça: %53,3). Kural tabanlı bir katman Türkçe deyim ve
+  kuruluş uzayını kapsayamaz.
+- **Cinsiyet, yaş, engellilik ve göç statüsü hedefli genellemeler
+  yakalanmıyor.** Kimlik söz varlığı etnik köken, inanç ve yönelim
+  ağırlıklıdır (İP-29 üçüncü parça).
+- **Alıntılanan örüntüde mağdur koruması eksik.** Sözlük bulgularında alıntı
+  ve aktarım yumuşatılıyor; örüntü bulgusu tırnak içinde kınanarak
+  aktarıldığında yumuşatma çalışmadı (İP-29'un tek yanlış pozitifi).
 - **"dölü" epiteti kaldırıldı** — aksan katlaması onu "dolu" ile birebir
   aynı hâle getiriyor ve ayırt etmenin normalize metin üzerinde yolu yok.
 - Öncülsüz gönderge **kasıtlı olarak** kaçırılır — hedefin kim olduğu metinden

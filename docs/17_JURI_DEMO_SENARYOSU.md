@@ -109,8 +109,13 @@ Sırayla dokunun: `Olumsuzlama` → `Mağdur anlatısı` → `Öz-ifade`.
 
 > "Dördünde de aynı kelime var: aptal. Bir kelime listesi dördünü de
 > işaretler. Üçüncüsüne dikkat: 'Bana aptal dedi, çok üzüldüm.' Bu, tacize
-> uğradığını ANLATAN kişi. Bizde bu kişinin uyarı alması yapısal olarak
-> imkânsız — yumuşatma bir çarpan değil, bir tavan."
+> uğradığını ANLATAN kişi. Mevcut filtreler onu susturuyor. Bizde aktarılan
+> bir hakaretin yumuşatılması bir çarpan değil, bir tavan: kelime ne kadar
+> ağır olursa olsun uyarı eşiğinin altında kalıyor."
+>
+> *(Sorulursa: bu koruma sözlükteki hakaretlerde sağlam; küfürsüz bir kalıbın
+> tırnak içinde aktarıldığı bir cümlede son ölçümde bir kez işaretleme oldu —
+> docs/18.)*
 
 **④ Kimlik adı tetikleyici değil (45 sn)** — `Kimlik beyanı` → Temiz ✓,
 sonra `Nefret söylemi` → **Yüksek risk ✓**.
@@ -149,17 +154,22 @@ yanıt kutusunda da aynı çalıştığını gösterir.)*
 `masaustu_11_sistem_detaylari.png`): normalizasyon → sözlük → örüntü →
 nefret → gönderge → bağlam → öneri.
 
-**Slayt 5 — ölçüm tablosu.** Söylenecek:
+**Slayt 5 — ölçüm tablosu** (`docs/18_IP29_ILK_GECIS.md`). Söylenecek:
 > "Geliştirme kümesinde kesinlik %100, duyarlılık %99. Bu bir genelleme
 > kanıtı DEĞİL — kümeyi de örüntüleri de biz yazdık. Bu yüzden her
-> onarımdan sonra motora hiç göstermediğimiz yeni bir küme yazdık. Beş ayrık
-> kümenin beşi de 'yandı': motor her birine bakılarak düzeltildi. Raporladığımız
-> sayı en iyisi değil, son tam ilk geçiş: **kesinlik %90,5, duyarlılık %54,3.**"
+> onarımdan sonra motora hiç göstermediğimiz yeni bir küme yazdık. Önceki
+> beş kümenin beşi de 'yandı': motor her birine bakılarak düzeltildi."
 >
-> "Duyarlılık düşük görünüyor, çünkü ölçümü ayrıştırdık: yazdığımız bir
-> yapının hiç görülmemiş örneklerinde %90 yakalıyoruz; hiç yazmadığımız
-> deyimlerde yakalayamıyoruz. Bu, kural tabanlı bir katmanın tavanı ve yol
-> haritamızın gerekçesi."
+> "Bugünkü motoru ölçmek için altıncı bir küme yazdık ve **ölçümden önce
+> depoya kilitledik** — commit zamanı ortada. Hiç görmediği 90 cümlede:
+> **kesinlik %96, duyarlılık %45.** Masum cümlelerin 30'da 29'unu rahat
+> bıraktı. Açık saldırının %83'ünü, örtük saldırının yalnızca üçte birini
+> yakaladı."
+>
+> "Beklentimizi de ölçümden önce yazmıştık ve bir kısmı tutmadı: bildiğimiz
+> yapıların yeni kuruluşlarında %80 bekliyorduk, %53 çıktı. Bunu
+> düzeltmedik — düzeltirsek küme yanar. Kural tabanlı bir katmanın tavanı
+> bu, ve yol haritamızdaki öğrenen modelin gerekçesi de bu ölçüm."
 
 > *Jüri bu bölümü sever. Ölçmeyi bilen bir ekip olduğunuzu gösteren tek şey,
 > kötü sayıyı da göstermenizdir.*
@@ -201,12 +211,20 @@ bitirmeyi** hedefleyin.
 
 ## 3. Beklenen sorular — hazır cevaplar
 
-**"Duyarlılık %54 düşük değil mi?"**
-> Evet, gizlemiyoruz. O sayı "motor ne kadar iyi" değil, "kaç yapı ailesi
-> yazıldı" sorusunun cevabı. Yazılmış bir ailenin yeni örneklerinde %90;
-> hiç yazılmamış deyimlerde çok düşük. Ürünün hedefi F0.5 — yanlış pozitif,
-> yanlış negatiften pahalı: mağduru susturmaktansa bir hakareti kaçırmayı
-> tercih ediyoruz.
+**"Duyarlılık %45 düşük değil mi?"**
+> Evet, gizlemiyoruz. Ürünün hedefi F0.5 — yanlış pozitif, yanlış
+> negatiften pahalı: mağduru ya da sert ama meşru eleştiriyi susturmaktansa
+> bir hakareti kaçırmayı tercih ediyoruz. Bu yüzden kesinlik %96. Açık
+> saldırıda %83 yakalıyoruz; zayıf olduğumuz yer küfürsüz, örtük
+> düşmanlık (%32) ve cinsiyet/yaş hedefli genellemeler. Hangi cümlelerin
+> kaçtığı tek tek kayıtlı (`docs/18`).
+
+**"Bu sayıya neden güvenelim?"**
+> Küme ölçümden önce ayrı bir commit olarak depoya girdi; beklentilerimizi
+> de ölçümden önce dosyanın başına yazdık. Sonuç beklentimizin altında
+> kaldığı hâlde düzeltmedik. Tek komutla yeniden üretilir:
+> `dart run bin/evaluate.dart --genelleme5`. Tek zayıflık: tek
+> etiketleyiciliyiz, kappa henüz yok.
 
 **"Bu bir yapay zekâ mı, yoksa kelime listesi mi?"**
 > Kelime listesi değil: aynı kelime dört bağlamda dört farklı sonuç veriyor
@@ -232,7 +250,7 @@ bitirmeyi** hedefleyin.
 > katılımcı ve ikinci etiketleyici.
 
 **"Sayıyı yeniden üretebilir miyiz?"**
-> `cd packages/civility_core && dart run bin/evaluate.dart --hepsi` — tek komut.
+> `cd packages/civility_core && dart run bin/evaluate.dart --genelleme5` — tek komut.
 
 **"Bu arayüz NSosyal'in kopyası mı?"**
 > Hayır. Logo, işaret ve tipografi kopyalanmadı. Katmanın bir platforma
@@ -313,11 +331,12 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 |---|---|---|
 | Sözlük girdisi | 256 | çalışma anında sayılır |
 | Örüntü ve deyim | 209 | çalışma anında sayılır |
-| Etiketli örnek | 671 (6 küme) | çalışma anında sayılır |
+| Etiketli örnek | 761 (7 küme) | çalışma anında sayılır |
 | Tipik çözümleme (p50) | 357 µs | `bin/benchmark.dart`, AOT |
 | En kötü %1 (p99) | 2.212 µs · kare bütçesinin %13,8'i | aynı |
-| Son tam ilk geçiş (İP-22) | kesinlik %90,5 · duyarlılık %54,3 · F1 %67,9 | docs/14 §5 |
-| İP-27 ilk geçiş | 60 saldırgan örnekten 31 kaçak — sonra yandı | idiom_patterns.dart |
+| **Geçerli ayrık küme (İP-29)** | **kesinlik %96,4 · duyarlılık %45,0 · F0.5 %78,5** | docs/18 · `--genelleme5` |
+| İP-29 dilimleri | açık saldırı %83,3 · örtük %32,4 · masum 30'da 29 temiz | docs/18 |
+| Önceki kayıt (İP-22) | kesinlik %90,5 · duyarlılık %54,3 — yandı | docs/14 §5 |
 | Geliştirme kümesi | kesinlik %100 · duyarlılık %99,2 | `evaluate.dart` |
 | Katman katkısı | duyarlılık %45,1 → %99,2, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |
 | Demo senaryoları | 12/12 beklendiği gibi | Üslup Paneli → Bağlam karnesi |

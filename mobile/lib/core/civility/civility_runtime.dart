@@ -119,19 +119,18 @@ abstract final class Civility {
       GeneralizationDataset.cases.length +
       Generalization2Dataset.cases.length +
       Generalization3Dataset.cases.length +
-      Generalization4Dataset.cases.length;
+      Generalization4Dataset.cases.length +
+      Generalization5Dataset.cases.length;
 
-  /// Son kayda geçmiş İLK GEÇİŞ genelleme ölçümü.
+  /// Geçerli genelleme ölçümü — bugünkü motorun hiç görmediği küme.
   ///
-  /// Kaynak: docs/14 §5, İP-22. Sonraki küme (İP-27) ilk geçişte 60 saldırgan
-  /// örneğin 31'ini kaçırdı; deyim katmanı o kaçaklara bakılarak yazıldığı
-  /// için İP-27 de yanmıştır ve kesinliği ilk geçişte kayda geçmemiştir.
-  /// Yanmış bir kümenin bugünkü %100'ünü göstermek ezberi başarı diye
-  /// sunmak olurdu.
+  /// Kaynak: docs/18, İP-29 ilk geçiş. Küme ölçümden önce commit edildi
+  /// (`9179ee4`) ve sonuç düzeltilmeden raporlanıyor. Önceki raporlanan
+  /// sayı (İP-22 · %90,5 / %54,3) iki genişletmeden önceki motora aitti.
   static const String olcumOzeti =
-      'Son ilk geçiş ölçümü (İP-22) · kesinlik %90,5 · duyarlılık %54,3';
+      'Geçerli ayrık küme (İP-29) · kesinlik %96,4 · duyarlılık %45,0';
 
   /// Kapsam satırı — sayılar çalışma anında hesaplanır.
   static String get olcumKapsami =>
-      '6 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
+      '7 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
 }
