@@ -263,8 +263,10 @@ class _FeedScreenState extends State<FeedScreen>
     return Container(
       color: p.surface,
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      // Sabit 84 px, 1,3× yazı ölçeğinde etiket satırını 3 px taşırıyordu.
+      // Avatar sabit, etiket yazı ölçeğiyle büyür; yükseklik de onunla büyür.
       child: SizedBox(
-        height: 84,
+        height: 66 + MediaQuery.textScalerOf(context).scale(18),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),

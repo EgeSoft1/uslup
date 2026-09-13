@@ -570,10 +570,13 @@ class _ScorecardRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              SizedBox(
-                width: 86,
+              // Sabit genişlik DEĞİL, alt sınır: satırlar hizalı durur ama
+              // "Yüksek risk" büyük yazı ölçeğinde (1,3×) kutuyu taşırmaz.
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 86),
                 child: Align(
                   alignment: Alignment.centerRight,
+                  widthFactor: 1,
                   child: AppBadgePill(
                     label: analysis.risk.label,
                     color: riskColor,

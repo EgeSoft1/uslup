@@ -218,13 +218,19 @@ class AppBadgePill extends StatelessWidget {
             Icon(icon, size: 11, color: fg),
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              color: fg,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              height: 1.25,
+          // Dar bir yuvaya düşerse satırı taşırmak yerine kısalır.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: fg,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                height: 1.25,
+              ),
             ),
           ),
         ],
@@ -387,15 +393,15 @@ class _MeshPainter extends CustomPainter {
 
     const step = 26.0;
     for (var x = 0.0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x + size.height * 0.4, size.height),
-          paint);
+      canvas.drawLine(
+          Offset(x, 0), Offset(x + size.height * 0.4, size.height), paint);
     }
     final glow = Paint()
       ..shader = RadialGradient(
         colors: [Colors.white.withValues(alpha: 0.22), Colors.transparent],
-      ).createShader(
-          Rect.fromCircle(center: Offset(size.width * 0.28, size.height * 0.3),
-              radius: size.width * 0.5));
+      ).createShader(Rect.fromCircle(
+          center: Offset(size.width * 0.28, size.height * 0.3),
+          radius: size.width * 0.5));
     canvas.drawRect(Offset.zero & size, glow);
   }
 
@@ -494,8 +500,7 @@ class _PollRow extends StatelessWidget {
             SizedBox(
               height: 38,
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                 child: Row(
                   children: [
                     Expanded(
@@ -584,7 +589,9 @@ class PostActionBar extends StatelessWidget {
         ),
         Expanded(
           child: _ActionButton(
-            icon: post.liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            icon: post.liked
+                ? Icons.favorite_rounded
+                : Icons.favorite_border_rounded,
             label: kisaSayi(post.likeCount),
             semantic: '${post.likeCount} beğeni',
             color: post.liked ? const Color(0xFFE0245E) : null,
@@ -647,25 +654,32 @@ class _ActionButton extends StatelessWidget {
           borderRadius: AppRadius.pill,
           child: Padding(
             // Dokunma hedefi 44 px'in altına inmiyor (WCAG 2.5.5 / iOS HIG).
-            padding: EdgeInsets.symmetric(
-                vertical: dense ? 8 : 10, horizontal: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: dense ? 16 : 17.5, color: tint),
-                if (label.isNotEmpty) ...[
-                  const SizedBox(width: 5),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: dense ? 11.5 : 12.5,
-                      fontWeight: FontWeight.w600,
-                      color: tint,
-                      fontFeatures: const [FontFeature.tabularFigures()],
+            padding:
+                EdgeInsets.symmetric(vertical: dense ? 8 : 10, horizontal: 6),
+            // 360 px genişlikte ve 1,3× yazı ölçeğinde dört sayı yan yana
+            // sığmıyor, satır 6–17 px taşıyordu. Sayıyı kesmek ("2,…")
+            // okunmaz; sığmadığında içerik orantılı olarak küçülür.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, size: dense ? 16 : 17.5, color: tint),
+                  if (label.isNotEmpty) ...[
+                    const SizedBox(width: 5),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: dense ? 11.5 : 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: tint,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

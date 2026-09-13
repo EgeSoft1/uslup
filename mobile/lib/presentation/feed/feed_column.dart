@@ -76,7 +76,7 @@ class FeedColumn extends StatelessWidget {
       itemCount: posts.length + 2,
       itemBuilder: (context, index) {
         if (index == 0) return const _ComposerCard();
-        if (index == 1) return _highlights(p);
+        if (index == 1) return _highlights(context, p);
 
         final post = posts[index - 2];
         return Padding(
@@ -92,15 +92,17 @@ class FeedColumn extends StatelessWidget {
     );
   }
 
-  Widget _highlights(AppPalette p) {
+  Widget _highlights(BuildContext context, AppPalette p) {
     const hesaplar = SeedData.suggested;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: _Card(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        // Yükseklik yazı ölçeğiyle büyür; sabit 84 px 1,3×'te taşıyordu
+        // (mobil akıştaki `_oneCikanlar` ile aynı düzeltme).
         child: SizedBox(
-          height: 84,
+          height: 66 + MediaQuery.textScalerOf(context).scale(18),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
