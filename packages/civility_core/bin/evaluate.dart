@@ -11,6 +11,7 @@
 //   dart run bin/evaluate.dart --genelleme4    → İP-27 beşinci küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme5    → İP-29 altıncı ayrık küme ✅
 //   dart run bin/evaluate.dart --gundelik      → İP-30 gündelik metin (yanlış alarm)
+//   dart run bin/evaluate.dart --yonelim       → İP-31 somut adlar + ikinci şahıs
 //   dart run bin/evaluate.dart --karsilastir   → katman katkısı (A/B)
 //   dart run bin/evaluate.dart --hepsi         → hepsi birden
 //
@@ -47,6 +48,7 @@ void main(List<String> args) {
   final wantsGeneralization4 = wantsAll || args.contains('--genelleme4');
   final wantsGeneralization5 = wantsAll || args.contains('--genelleme5');
   final wantsEveryday = wantsAll || args.contains('--gundelik');
+  final wantsDirection = wantsAll || args.contains('--yonelim');
   final wantsDev = wantsAll ||
       (!wantsHoldout &&
           !wantsCompare &&
@@ -55,7 +57,8 @@ void main(List<String> args) {
           !wantsGeneralization3 &&
           !wantsGeneralization4 &&
           !wantsGeneralization5 &&
-          !wantsEveryday);
+          !wantsEveryday &&
+          !wantsDirection);
 
   if (wantsDev) {
     stdout.write(
@@ -222,6 +225,37 @@ void main(List<String> args) {
       ..writeln()
       ..writeln('  ⓘ  Hata sınıfları fark edildikten SONRA, düzeltmelerden ÖNCE')
       ..writeln('     yazıldı; o sınıflar için kör değildir. Kayıt: docs/20.')
+      ..writeln();
+  }
+
+  if (wantsDirection) {
+    // İP-31 — Somut adlar ve ikinci şahıs. A parçası masum, B parçası saldırı.
+    final cases = DirectionDataset.cases;
+    final engine = LexicalTurkishClassifier();
+    final hatalar = [
+      for (final c in cases)
+        if (engine.analyze(c.text) case final a
+            when (a.risk != RiskLevel.temiz) != c.shouldFlag)
+          '    ${c.shouldFlag ? "KAÇTI      " : "YANLIŞ ALARM"} '
+              '${a.risk.label.padRight(12)} ${c.text}  '
+              '[${a.findings.map((f) => f.term).join(", ")}]',
+    ];
+    stdout
+      ..writeln('═' * 78)
+      ..writeln('İP-31 · YÖNELİM KÜMESİ — ${cases.length} örnek')
+      ..writeln('═' * 78)
+      ..writeln('  A. somut anlam, ikinci şahıs yüklem/hitap dışı : '
+          '${_parca(evaluator, engine, cases.sublist(0, 30))}')
+      ..writeln('  B. yüklem · hitap · soru · benzetme          : '
+          '${_parca(evaluator, engine, cases.sublist(30, 50))}')
+      ..writeln();
+    for (final satir in hatalar) {
+      stdout.writeln(satir);
+    }
+    stdout
+      ..writeln()
+      ..writeln('  ⓘ  Hata sınıfı bilindikten SONRA, düzeltmeden ÖNCE yazıldı.')
+      ..writeln('     Kayıt: docs/21.')
       ..writeln();
   }
 
