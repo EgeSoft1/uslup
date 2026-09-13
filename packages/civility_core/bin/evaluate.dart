@@ -10,6 +10,7 @@
 //   dart run bin/evaluate.dart --genelleme3    → İP-22 dördüncü küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme4    → İP-27 beşinci küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme5    → İP-29 altıncı ayrık küme ✅
+//   dart run bin/evaluate.dart --gundelik      → İP-30 gündelik metin (yanlış alarm)
 //   dart run bin/evaluate.dart --karsilastir   → katman katkısı (A/B)
 //   dart run bin/evaluate.dart --hepsi         → hepsi birden
 //
@@ -45,6 +46,7 @@ void main(List<String> args) {
   final wantsGeneralization3 = wantsAll || args.contains('--genelleme3');
   final wantsGeneralization4 = wantsAll || args.contains('--genelleme4');
   final wantsGeneralization5 = wantsAll || args.contains('--genelleme5');
+  final wantsEveryday = wantsAll || args.contains('--gundelik');
   final wantsDev = wantsAll ||
       (!wantsHoldout &&
           !wantsCompare &&
@@ -52,7 +54,8 @@ void main(List<String> args) {
           !wantsGeneralization2 &&
           !wantsGeneralization3 &&
           !wantsGeneralization4 &&
-          !wantsGeneralization5);
+          !wantsGeneralization5 &&
+          !wantsEveryday);
 
   if (wantsDev) {
     stdout.write(
@@ -190,6 +193,35 @@ void main(List<String> args) {
       ..writeln('     Bu kümeye bakılarak motor değiştirilirse küme yanar.')
       ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
       ..writeln("     (Cohen's kappa) henüz ölçülmemiştir.")
+      ..writeln();
+  }
+
+  if (wantsEveryday) {
+    // İP-30 — Gündelik metin. Tamamı masum; tek anlamlı metrik özgüllük.
+    // Yanlış alarmların listesi de basılır: sayıdan çok HANGİ cümlenin
+    // işaretlendiği önemlidir.
+    final cases = EverydayDataset.cases;
+    final engine = LexicalTurkishClassifier();
+    final alarmlar = [
+      for (final c in cases)
+        if (engine.analyze(c.text) case final a when a.risk != RiskLevel.temiz)
+          '    ${a.risk.label.padRight(12)} ${c.text}  '
+              '[${a.findings.map((f) => f.term).join(", ")}]',
+    ];
+    stdout
+      ..writeln('═' * 78)
+      ..writeln('İP-30 · GÜNDELİK METİN KÜMESİ — ${cases.length} masum cümle')
+      ..writeln('═' * 78)
+      ..writeln('  ${_parca(evaluator, engine, cases)}')
+      ..writeln('  Yanlış alarm: ${alarmlar.length}')
+      ..writeln();
+    for (final satir in alarmlar) {
+      stdout.writeln(satir);
+    }
+    stdout
+      ..writeln()
+      ..writeln('  ⓘ  Hata sınıfları fark edildikten SONRA, düzeltmelerden ÖNCE')
+      ..writeln('     yazıldı; o sınıflar için kör değildir. Kayıt: docs/20.')
       ..writeln();
   }
 
