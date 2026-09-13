@@ -172,12 +172,31 @@ class _FeedScreenState extends State<FeedScreen>
 
     return ListView.separated(
       padding: const EdgeInsets.only(bottom: AppSpacing.xxxl),
-      itemCount: posts.length + 2,
+      itemCount: posts.isEmpty ? 3 : posts.length + 2,
       separatorBuilder: (context, index) =>
           index == 0 ? const SizedBox.shrink() : Divider(height: 1, color: p.divider),
       itemBuilder: (context, index) {
         if (index == 0) return _composerShortcut(p);
         if (index == 1) return _oneCikanlar(p);
+        
+        if (posts.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 64),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.edit_note_rounded, size: 64, color: p.textTertiary),
+                  const SizedBox(height: AppSpacing.md),
+                  Text('Henüz gönderi yok', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: p.textSecondary)),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('İlk gönderiyi sen oluştur!', style: TextStyle(fontSize: 13, color: p.textTertiary)),
+                ],
+              ),
+            ),
+          );
+        }
+
         final post = posts[index - 2];
         return PostCard(
           post: post,

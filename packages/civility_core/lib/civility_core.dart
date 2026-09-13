@@ -29,3 +29,4 @@ export 'src/eval/holdout_dataset.dart';
 export 'src/eval/generalization_dataset.dart';
 export 'src/eval/generalization2_dataset.dart';
 export 'src/eval/generalization3_dataset.dart';
+export 'src/eval/generalization4_dataset.dart';

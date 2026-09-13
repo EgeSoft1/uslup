@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // NSosyal Sosyal YZ — Türkçe Metin Normalizasyon Katmanı
 // Dosya: packages/civility_core/lib/src/normalization/turkish_normalizer.dart
 //
@@ -103,7 +103,28 @@ class TurkishNormalizer {
   };
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 2. AKSAN KATLAMA (diacritic folding)
+  // 2. EŞYAZIMLI (HOMOGLYPH) DİRENCİ
+  //
+  // Görsel olarak Latin harflerine benzeyen Kiril (Cyrillic) ve Yunanca (Greek)
+  // karakterlerin Latin karşılıklarına dönüştürülmesi.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Map<String, String> _homoglyphMap = {
+    // Kiril (Cyrillic)
+    'а': 'a',
+    'е': 'e',
+    'о': 'o',
+    'р': 'p',
+    'с': 'c',
+    'у': 'y',
+    'х': 'x',
+    // Yunanca (Greek)
+    'α': 'a',
+    'ε': 'e',
+    'ο': 'o',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 3. AKSAN KATLAMA (diacritic folding)
   //
   // "şerefsiz" ve "serefsiz" aynı sözlük girdisine düşmeli. Türkçe klavyesi
   // olmayan kullanıcılar (ve filtreden kaçmaya çalışanlar) aksansız yazar.
@@ -122,7 +143,7 @@ class TurkishNormalizer {
   };
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 3. LEETSPEAK / RAKAM İKAMESİ
+  // 4. LEETSPEAK / RAKAM İKAMESİ
   //
   // "4pt4l" → "aptal", "$erefsiz" → "serefsiz", "0rospu" → "orospu"
   //
@@ -142,16 +163,63 @@ class TurkishNormalizer {
     '9': 'g',
     '@': 'a',
     '\$': 's',
+    '€': 'e',
+    '#': 'h',
+    '|': 'l',
+    'ß': 'b',
   };
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 4. KELİME İÇİ AYIRICILAR
+  // 4b. TÜRK ALFABESİNDE BULUNMAYAN HARFLER  (q · w · x)
+  //
+  // Türk alfabesinde q, w, x YOKTUR. Bir Türkçe kelimenin içinde geçtiklerinde
+  // iki olasılık vardır: yabancı bir özel ad, ya da KASITLI GİZLEME.
+  //
+  // Gizleme tarafı ölçüldü ve katmanın en büyük tek açığıydı:
+  //
+  //   "salak"  → yakalanıyordu        "salaq"  → temiz (0.00)   ✗
+  //   "siktir" → yakalanıyordu        "siqtir" → temiz (0.00)   ✗
+  //   "yavşak" → yakalanıyordu        "yavşaq" → temiz (0.00)   ✗
+  //
+  // Bu, leetspeak'ten (4pt4l) çok daha yaygın bir kaçıştır çünkü hiç
+  // "hacklenmiş" görünmez: Türkçe klavyede q tuşu zaten vardır ve yazılan
+  // kelime okunurluğunu tamamen korur. Filtre atlatmanın en ucuz yolu budur.
+  //
+  // ── NEDEN YANLIŞ POZİTİF ÜRETMEZ ─────────────────────────────────────────
+  // Dönüşüm ancak ortaya çıkan kelime SÖZLÜKTE varsa bir şey değiştirir.
+  // Yabancı kelimeler zararsız karşılıklara iner ve hiçbiri sözlükte yoktur:
+  //
+  //   "Qatar" → "katar"    "web" → "veb"      "Xbox" → "ksboks"
+  //   "IQ"    → "ik"       "www" → "vvv"      "fax"  → "faks"
+  //
+  // TEK İSTİSNA sözlüğün kendisinden gelir: katlanan harfi TERİMİN içinde
+  // taşıyan girdi ("aq") katlanınca meşru bir kelimeye ("ak") iner ve o
+  // kelimeyi yakalar. Bu girdiler motor tarafında harfin orijinal metinde
+  // fiilen yazılmış olmasını şart koşar — bkz.
+  // `LexicalTurkishClassifier._surfaceLetterEvidence`.
+  //
+  // ── x NEDEN İKİ HARF ─────────────────────────────────────────────────────
+  // q→k ve w→v birebirdir; x ise Türkçe'de "ks" sesine karşılık gelir
+  // ("taxi" → "taksi"). Tek harfe indirmek "sixiym" gibi bir kaçışı yine
+  // kaçırırdı. Bu, normalizasyonun tek 1→2 dönüşümüdür ve indeks haritası
+  // buna göre iki giriş üretir; `value` ile `aggressive` aynı dönüşümü
+  // aldığı için uzunluk eşitliği değişmezi korunur.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Map<String, String> _foreignLetters = {
+    'q': 'k',
+    'w': 'v',
+    'x': 'ks',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 5. KELİME İÇİ AYIRICILAR
   //
   // "s.e.r.e.f.s.i.z" veya "a*m*k" gibi harf arası noktalama ile yapılan
   // gizleme. Harfler arasında geçtiğinde silinir.
   // ───────────────────────────────────────────────────────────────────────────
   static const Set<String> _innerSeparators = {
     '.', '*', '-', '_', "'", '`', '^', '~', '·', '•', ',', '|', '/', '\\',
+    '!', '?', ';', '"', '(', ')', '[', ']', '{', '}', '<', '>', '=',
   };
 
   /// Bir karakterin Türkçe dâhil harf olup olmadığı.
@@ -167,15 +235,32 @@ class TurkishNormalizer {
     return turkish.contains(ch);
   }
 
+  /// Emojileri tespit eder.
+  static bool _isEmoji(String ch) {
+    if (ch.isEmpty) return false;
+    final int cp = ch.runes.first;
+    if (cp >= 0x1F600 && cp <= 0x1F64F) return true; // Yüzler
+    if (cp >= 0x1F300 && cp <= 0x1F5FF) return true; // Semboller ve Piktogramlar
+    if (cp >= 0x1F680 && cp <= 0x1F6FF) return true; // Ulaşım ve Harita
+    if (cp >= 0x1F900 && cp <= 0x1F9FF) return true; // Ek Emojiler
+    if (cp >= 0x2600 && cp <= 0x26FF) return true;   // Çeşitli Semboller
+    if (cp >= 0x2700 && cp <= 0x27BF) return true;   // Dingbats
+    if (cp >= 0xFE00 && cp <= 0xFE0F) return true;   // Varyasyon Seçiciler (VS1-VS16)
+    if (cp == 0x200D) return true;                   // ZWJ (Sıfır genişlikli birleştirici)
+    return false;
+  }
+
   /// Ham metni kanonik forma indirger.
   ///
   /// Aşamalar (tek geçişte, sırayla):
+  ///   0. Sıfır genişlikli (zero-width) temizliği
   ///   1. Türkçe küçük harf
-  ///   2. Leet ikamesi (yalnızca harf komşuluğunda)
-  ///   3. Aksan katlama
-  ///   4. Kelime içi ayırıcı temizliği
-  ///   5. Tekrar eden harf daraltma ("çoookk" → "cok")
-  ///   6. Boşluk sadeleştirme
+  ///   2. Eşyazımlı (Homoglyph) dönüşümü
+  ///   3. Leet ikamesi (yalnızca harf komşuluğunda)
+  ///   4. Aksan katlama
+  ///   5. Kelime içi ayırıcı ve emoji temizliği
+  ///   6. Tekrar eden harf daraltma ("çoookk" → "cok")
+  ///   7. Boşluk sadeleştirme
   NormalizedText normalize(String input) {
     if (input.isEmpty) {
       return NormalizedText(
@@ -186,7 +271,21 @@ class TurkishNormalizer {
       );
     }
 
-    // ── Ön geçiş (Aşama 5): Tekrar eden harf daraltma ───────────────────────
+    // ── Ön geçiş 0: Sıfır genişlikli karakter (zero-width) temizliği ──────────
+    // Görünmez karakterlerle yapılan filtre atlatmalarını engeller.
+    final cleanInput = StringBuffer();
+    final cleanIndices = <int>[];
+    for (int i = 0; i < input.length; i++) {
+      final code = input.codeUnitAt(i);
+      if (code == 0x200B || code == 0x200C || code == 0x200D || code == 0xFEFF || code == 0x00AD) {
+        continue;
+      }
+      cleanInput.writeCharCode(code);
+      cleanIndices.add(i);
+    }
+    final cleaned = cleanInput.toString();
+
+    // ── Ön geçiş 1: Tekrar eden harf daraltma ───────────────────────
     // "çoookkk" → "cok", "aptaaaalsın" → "aptalsın"
     //
     // Kural: 3 VEYA DAHA FAZLA ardışık aynı harf → tek harfe iner.
@@ -200,11 +299,11 @@ class TurkishNormalizer {
     final collapsedIndices = <int>[];
 
     int scan = 0;
-    while (scan < input.length) {
-      final ch = input[scan];
+    while (scan < cleaned.length) {
+      final ch = cleaned[scan];
 
       int runEnd = scan;
-      while (runEnd + 1 < input.length && input[runEnd + 1] == ch) {
+      while (runEnd + 1 < cleaned.length && cleaned[runEnd + 1] == ch) {
         runEnd++;
       }
 
@@ -213,7 +312,7 @@ class TurkishNormalizer {
 
       for (int k = 0; k < keepCount; k++) {
         collapsed.write(ch);
-        collapsedIndices.add(scan + k);
+        collapsedIndices.add(cleanIndices[scan + k]);
       }
 
       scan = runEnd + 1;
@@ -228,14 +327,27 @@ class TurkishNormalizer {
 
     String lastEmitted = '';
 
-    for (int i = 0; i < source.length; i++) {
-      final raw = source[i];
+    int i = 0;
+    while (i < source.length) {
+      final int cp = source.codeUnitAt(i);
+      int charLen = 1;
+      if (cp >= 0xD800 && cp <= 0xDBFF && i + 1 < source.length) {
+        final int cp2 = source.codeUnitAt(i + 1);
+        if (cp2 >= 0xDC00 && cp2 <= 0xDFFF) {
+          charLen = 2;
+        }
+      }
+      final raw = source.substring(i, i + charLen);
 
       // ── Aşama 1: Türkçe küçük harf ──
       String ch = _turkishLower[raw] ?? raw.toLowerCase();
       String aggressiveCh = ch;
 
-      // ── Aşama 2: Leet ikamesi (iki varyant) ──
+      // ── Aşama 2: Homoglyph (Eşyazımlı) Direnci ──
+      ch = _homoglyphMap[ch] ?? ch;
+      aggressiveCh = _homoglyphMap[aggressiveCh] ?? aggressiveCh;
+
+      // ── Aşama 3: Leet ikamesi (iki varyant) ──
       // Temkinli: yalnızca komşularından biri harfse çevir → "4pt4l" düzelir,
       //           "2026" bozulmaz.
       // Agresif : koşulsuz çevir → "$3r3fsiz" yakalanır.
@@ -244,45 +356,64 @@ class TurkishNormalizer {
         aggressiveCh = leetReplacement;
 
         final prevIsLetter = i > 0 && _isLetter(source[i - 1]);
-        final nextIsLetter = i + 1 < source.length && _isLetter(source[i + 1]);
+        final nextIsLetter = i + charLen < source.length && _isLetter(source[i + charLen]);
         if (prevIsLetter || nextIsLetter) {
           ch = leetReplacement;
         }
       }
 
-      // ── Aşama 3: Aksan katlama ──
+      // ── Aşama 4: Aksan katlama ──
       ch = _foldDiacritics[ch] ?? ch;
       aggressiveCh = _foldDiacritics[aggressiveCh] ?? aggressiveCh;
 
-      // ── Aşama 4: Kelime içi ayırıcı temizliği ──
-      if (_innerSeparators.contains(ch)) {
+      // ── Aşama 4b: Türk alfabesinde bulunmayan harfler (q · w · x) ──
+      // İki varyanta da AYNI dönüşüm uygulanır; uzunluk eşitliği böyle korunur.
+      ch = _foreignLetters[ch] ?? ch;
+      aggressiveCh = _foreignLetters[aggressiveCh] ?? aggressiveCh;
+
+      // ── Aşama 5: Kelime içi ayırıcı ve Emoji temizliği ──
+      if (_innerSeparators.contains(ch) || _isEmoji(raw)) {
         final prevIsLetter = i > 0 && _isLetter(source[i - 1]);
-        final nextIsLetter = i + 1 < source.length && _isLetter(source[i + 1]);
+        final nextIsLetter = i + charLen < source.length && _isLetter(source[i + charLen]);
 
         // İki harf arasındaysa gizleme hilesidir → at.
-        if (prevIsLetter && nextIsLetter) continue;
+        if (prevIsLetter && nextIsLetter) {
+          i += charLen;
+          continue;
+        }
 
         // Değilse normal noktalama; boşluğa indirge (cümle sınırı korunur).
         ch = ' ';
         aggressiveCh = ' ';
       }
 
-      // ── Aşama 6a: Boşluk sadeleştirme ──
+      // ── Aşama 6: Boşluk sadeleştirme ──
       if (ch.trim().isEmpty) {
         // Ardışık boşlukları tek boşluğa indir, baştaki boşluğu at.
-        if (buffer.isEmpty || lastEmitted == ' ') continue;
+        if (buffer.isEmpty || lastEmitted == ' ') {
+          i += charLen;
+          continue;
+        }
         buffer.write(' ');
         aggressiveBuffer.write(' ');
         indices.add(collapsedIndices[i]);
         lastEmitted = ' ';
+        i += charLen;
         continue;
       }
 
-      // Aşama 5 (tekrar daraltma) yukarıdaki ön geçişte tamamlandı.
+      // Tekrar daraltma yukarıdaki ön geçişte tamamlandı.
       buffer.write(ch);
       aggressiveBuffer.write(aggressiveCh);
-      indices.add(collapsedIndices[i]);
-      lastEmitted = ch;
+      // `ch` bir karakterden uzun olabilir (yalnızca x → "ks"). Her çıktı
+      // karakteri, geldiği ORİJİNAL karaktere işaret etmelidir; aksi hâlde
+      // vurgulama aralığı kayar ve kullanıcıya yanlış harflerin altı çizilir.
+      for (int k = 0; k < ch.length; k++) {
+        indices.add(collapsedIndices[i]);
+      }
+      lastEmitted = ch.substring(ch.length - 1);
+
+      i += charLen;
     }
 
     // Sondaki boşluğu kırp. Her iki varyant da aynı uzunlukta olduğu için

@@ -7,9 +7,10 @@
 //   dart run bin/evaluate.dart --ayrik         → birinci ayrık küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme     → İP-15 ikinci küme (YANMIŞ)
 //   dart run bin/evaluate.dart --genelleme2    → İP-20 üçüncü küme (YANMIŞ)
-//   dart run bin/evaluate.dart --genelleme3    → İP-22 dördüncü ayrık küme
+//   dart run bin/evaluate.dart --genelleme3    → İP-22 dördüncü küme (YANMIŞ)
+//   dart run bin/evaluate.dart --genelleme4    → İP-27 beşinci ayrık küme ✅
 //   dart run bin/evaluate.dart --karsilastir   → katman katkısı (A/B)
-//   dart run bin/evaluate.dart --hepsi         → üçü birden
+//   dart run bin/evaluate.dart --hepsi         → hepsi birden
 //
 // Çıktı doğrudan teknik rapora yapıştırılabilir.
 // =============================================================================
@@ -27,12 +28,14 @@ void main(List<String> args) {
   final wantsGeneralization = wantsAll || args.contains('--genelleme');
   final wantsGeneralization2 = wantsAll || args.contains('--genelleme2');
   final wantsGeneralization3 = wantsAll || args.contains('--genelleme3');
+  final wantsGeneralization4 = wantsAll || args.contains('--genelleme4');
   final wantsDev = wantsAll ||
       (!wantsHoldout &&
           !wantsCompare &&
           !wantsGeneralization &&
           !wantsGeneralization2 &&
-          !wantsGeneralization3);
+          !wantsGeneralization3 &&
+          !wantsGeneralization4);
 
   if (wantsDev) {
     stdout.write(
@@ -117,9 +120,31 @@ void main(List<String> args) {
                   '${Generalization3Dataset.cases.length} örnek',
             ),
       )
-      ..writeln('  ⓘ  Geçerli genelleme ölçümü budur.')
-      ..writeln('     İP-15 ve İP-20 kümeleri onarımlarda kullanıldığı için')
-      ..writeln('     YANMIŞTIR; geçmiş için docs/14.')
+      ..writeln('  ⚠  UYARI: Bu küme de YANMIŞTIR — İP-26 genişletmesi ona')
+      ..writeln('     bakılarak yapıldı. İlk (ve tek geçerli) ölçümü:')
+      ..writeln('     kesinlik %90,5, duyarlılık %54,3, F1 %67,9.')
+      ..writeln('     Aşağıdaki sayı genelleme DEĞİLDİR — ezber ölçüsüdür.')
+      ..writeln('     Geçerli genelleme ölçümü: --genelleme4 (İP-27)')
+      ..writeln();
+  }
+
+  if (wantsGeneralization4) {
+    // İP-27 — Beşinci ayrık küme. İP-26 genişletmesi TAMAMLANDIKTAN SONRA
+    // yazıldı. Bugün geçerli olan tek genelleme ölçümü budur.
+    stdout
+      ..write(
+        evaluator
+            .run(LexicalTurkishClassifier(), Generalization4Dataset.cases)
+            .format(
+              title: 'İP-27 · BEŞİNCİ AYRIK KÜME — '
+                  '${Generalization4Dataset.cases.length} örnek',
+            ),
+      )
+      ..writeln('  ⓘ  GEÇERLİ GENELLEME ÖLÇÜMÜ BUDUR.')
+      ..writeln('     Önceki dört küme onarımlarda kullanıldığı için')
+      ..writeln('     yanmıştır; tam geçmiş için docs/14.')
+      ..writeln('  ⓘ  Bu küme TEK ETİKETLEYİCİLİDİR; hakemler arası uyum')
+      ..writeln("     (Cohen's kappa) henüz ölçülmemiştir.")
       ..writeln();
   }
 

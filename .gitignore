@@ -49,6 +49,10 @@ server/.dart_tool/
 *.jks
 *.keystore
 secrets/
+# Sunucu erişim betikleri — içlerinde düz metin root şifresi var.
+# Depo herkese açık; bu dosyalar hiçbir koşulda commit edilmemeli.
+deploy_to_vds.py
+vds_monitor.py
 
 # ── Model yapıtları (büyük ikili dosyalar) ────────────────────────────────────
 # ONNX modelleri Git LFS ile veya sürüm eklerinde dağıtılır, depoda tutulmaz.

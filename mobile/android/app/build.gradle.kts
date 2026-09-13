@@ -6,18 +6,11 @@ plugins {
 
 android {
     namespace = "com.example.turkiye_mesajlasma"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
 
-    // ── ndkVersion KASITLI OLARAK KALDIRILDI (9 Eylül 2026) ────────────────
-    // Şablon `ndkVersion = flutter.ndkVersion` koyar ve AGP bunu gördüğü an
-    // NDK'yı indirmeye başlar: ~1 GB indirme, ~3 GB disk, bu bağlantıda on
-    // dakika. Oysa bu projede NDK'ya ihtiyaç duyan tek bir şey yok —
-    // bağımlılıklar (flutter_animate, cupertino_icons) saf Dart'tır ve
-    // Flutter motorunun kendi yerel kütüphaneleri zaten derlenmiş gelir.
-    //
-    // Yerel kod gerektiren bir eklenti eklenirse (kamera, ses, ONNX Runtime
-    // gibi) bu satır geri konmalıdır. Yol haritasındaki BERTurk/ONNX adımı
-    // tam olarak böyle bir eklenti getirecektir.
+    // ── ndkVersion GERİ EKLENDİ (Eylül 2026) ────────────────
+    // ONNX Runtime Android entegrasyonu için NDK gereklidir.
+    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -37,7 +30,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

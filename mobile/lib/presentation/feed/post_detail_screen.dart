@@ -132,6 +132,8 @@ class PostDetailScreen extends StatelessWidget {
           );
           CommunityHealthStore.instance.record(result.analysis, result.outcome);
 
+          FocusScope.of(context).unfocus();
+
           messenger
             ..hideCurrentSnackBar()
             ..showSnackBar(

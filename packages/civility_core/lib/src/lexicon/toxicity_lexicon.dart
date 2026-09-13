@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // NSosyal Sosyal YZ — Türkçe Toksisite Sözlüğü
 // Dosya: packages/civility_core/lib/src/lexicon/toxicity_lexicon.dart
 //
@@ -92,9 +92,20 @@ enum MatchMode {
   /// "aptalsın", "aptallığın" hepsini yakalar.
   prefix,
 
-  /// Tam eşleşme: token birebir bu terime eşitse eşleşir.
+  /// Tam eşleşme: token bu terime eşitse ya da terim + DAR bir çekim eki
+  /// listesinden oluşuyorsa eşleşir ("mal" → "malsın").
   /// Kısa veya çokanlamlı terimler için — yanlış pozitifi engeller.
   exact,
+
+  /// Birebir eşleşme: token terime eşit olmalıdır; HİÇBİR ek kabul edilmez.
+  ///
+  /// Kısaltmalar ve ünsüz iskeletleri içindir ("amk", "aq", "sktr"). Bunlar
+  /// kelime değil harf dizisidir ve Türkçe'de çekime girmez; çekim denemek
+  /// yalnızca masum kelimelere uydurma bir kök yakıştırır. Ölçülen hata:
+  ///
+  ///   "aq" → normalize → "ak"   ·   "ağı" = "ak" + yumuşama + "ı"  → küfür ✗
+  ///   "mk" + "a" → "mka"        ·   ünlüsüz kökte uyum denetimi boşa düşer ✗
+  verbatim,
 }
 
 /// Tek bir sözlük girdisi.
@@ -170,6 +181,27 @@ class ToxicityLexicon {
     'parazitolo',
     // "değersizleştirme" (akademik terim) → "değersiz" ile çakışır
     'degersizles',
+    // ── İP-26 ölçümüyle eklenenler ────────────────────────────────────────
+    // "kansızlık" (tıbbi terim, anemi) → "kansız" ile çakışır
+    'kansizl',
+    // "omurgasızlar" (biyoloji) → "omurgasız" ile çakışır
+    'omurgasizl',
+    // "kenevir" → "kene" ile çakışır
+    'kenev',
+    // "çakallık" meşru değil ama "çakal kuyruğu" doğa yazısı olabilir;
+    // asıl çakışma "Çakalburnu" gibi yer adlarıdır
+    'cakalb',
+    // "yılanbalığı", "yılankavi" → "yılan" ile çakışır
+    'yilanb', 'yilank',
+    // "sülüklü" (yer adı), "sülün" ayrı kök ama tarayıcı ön eki karıştırmasın
+    'sulukl',
+    // "avarage"/"avara" denizcilik terimi ile çakışmayı önler
+    'avarya',
+    // "palavracılık" hakaret, "palavra kule" (mimari) değil
+    'palavrak',
+    // "tembellik etmek" bir davranış eleştirisidir, kişi hakareti değil;
+    // "tembel" girdisi yönelim şartıyla korunuyor, bu ek güvence
+    'tembelh',
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -180,11 +212,12 @@ class ToxicityLexicon {
   // ───────────────────────────────────────────────────────────────────────────
   static const List<LexiconEntry> entries = [
     // ═══ KÜFÜR ═══════════════════════════════════════════════════════════════
-    // Kısaltmalar tam eşleşme ister — 2-3 harfli oldukları için ön ek
-    // eşleşmesinde çok fazla meşru kelimeyi yakalarlar.
-    LexiconEntry(term: 'amk', category: ToxicityCategory.kufur, severity: 0.95, matchMode: MatchMode.exact),
-    LexiconEntry(term: 'aq', category: ToxicityCategory.kufur, severity: 0.90, matchMode: MatchMode.exact),
-    LexiconEntry(term: 'mk', category: ToxicityCategory.kufur, severity: 0.75, matchMode: MatchMode.exact),
+    // Kısaltmalar BİREBİR eşleşme ister — 2-3 harfli oldukları için ön ek
+    // eşleşmesinde çok fazla meşru kelimeyi yakalarlar, çekim denemesinde
+    // ise masum kelimelere kök yakıştırırlar (bkz. `MatchMode.verbatim`).
+    LexiconEntry(term: 'amk', category: ToxicityCategory.kufur, severity: 0.95, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'aq', category: ToxicityCategory.kufur, severity: 0.90, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'mk', category: ToxicityCategory.kufur, severity: 0.75, matchMode: MatchMode.verbatim),
     LexiconEntry(term: 'oç', category: ToxicityCategory.kufur, severity: 0.95, matchMode: MatchMode.exact),
 
     LexiconEntry(term: 'siktir', category: ToxicityCategory.kufur, severity: 0.95),
@@ -211,6 +244,20 @@ class ToxicityLexicon {
     LexiconEntry(term: 'ana avrat', category: ToxicityCategory.kufur, severity: 0.90),
     // Meşru bağlamı vardır (gazetecilik, sosyoloji): yalnızca yöneltilince.
     LexiconEntry(term: 'fahişe', category: ToxicityCategory.kufur, severity: 0.80, requiresDirection: true),
+    LexiconEntry(term: 'amcık', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'amına koyayım', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'amına koyim', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'orospu çocuğu', category: ToxicityCategory.kufur, severity: 0.98),
+    LexiconEntry(term: 'dalyarak', category: ToxicityCategory.kufur, severity: 0.92),
+    LexiconEntry(term: 'hassiktir', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'götoş', category: ToxicityCategory.kufur, severity: 0.88),
+    LexiconEntry(term: 'yarram', category: ToxicityCategory.kufur, severity: 0.90),
+    LexiconEntry(term: 'taşşak', category: ToxicityCategory.kufur, severity: 0.70, requiresDirection: true),
+    LexiconEntry(term: 'taşak', category: ToxicityCategory.kufur, severity: 0.70, requiresDirection: true),
+    LexiconEntry(term: 'sik', category: ToxicityCategory.kufur, severity: 0.90, matchMode: MatchMode.exact, requiresDirection: true),
+    LexiconEntry(term: 'am', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.exact, requiresDirection: true),
+    LexiconEntry(term: 'bok', category: ToxicityCategory.kufur, severity: 0.60, matchMode: MatchMode.exact, requiresDirection: true),
+    LexiconEntry(term: 'boktan', category: ToxicityCategory.kufur, severity: 0.65),
 
     // ═══ HAKARET ═════════════════════════════════════════════════════════════
     // Zekâ / karakter saldırıları. Ön ek eşleşmesi tüm çekimleri kapsar:
@@ -229,7 +276,13 @@ class ToxicityLexicon {
     LexiconEntry(term: 'haysiyetsiz', category: ToxicityCategory.hakaret, severity: 0.85),
     LexiconEntry(term: 'namussuz', category: ToxicityCategory.hakaret, severity: 0.88),
     LexiconEntry(term: 'onursuz', category: ToxicityCategory.hakaret, severity: 0.80),
-    LexiconEntry(term: 'rezil', category: ToxicityCategory.hakaret, severity: 0.55),
+    // "rezil" tek başına bir hakaret DEĞİLDİR — Türkçe'de bir durumu,
+    // havayı, maçı ya da yemeği niteleyen sıradan bir sıfattır. İP-27
+    // ölçümü bunu bir yanlış pozitifle gösterdi: "rezil bir hava vardı,
+    // yağmur dinmedi" 0.55 ile işaretleniyordu. Yönelim şartı eklendi;
+    // kişiye söylenmiş hâlleri ("rezil ettin kendini", "rezil oldun")
+    // ayrıca `alayci.rezil_ettin` kalıbında durur.
+    LexiconEntry(term: 'rezil', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
     LexiconEntry(term: 'çirkef', category: ToxicityCategory.hakaret, severity: 0.70),
     LexiconEntry(term: 'dallama', category: ToxicityCategory.hakaret, severity: 0.72),
     LexiconEntry(term: 'keriz', category: ToxicityCategory.hakaret, severity: 0.55),
@@ -266,7 +319,6 @@ class ToxicityLexicon {
     // İP-21 — "geri zekalı" ile aynı boşluklu kuruluş, farklı ad.
     LexiconEntry(term: 'geri kafalı', category: ToxicityCategory.hakaret, severity: 0.66),
     LexiconEntry(term: 'dar kafalı', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true),
-    LexiconEntry(term: 'kafasiz', category: ToxicityCategory.hakaret, severity: 0.60),
     LexiconEntry(term: 'ruh hastası', category: ToxicityCategory.hakaret, severity: 0.68),
     LexiconEntry(term: 'yüz karası', category: ToxicityCategory.hakaret, severity: 0.60),
 
@@ -422,5 +474,206 @@ class ToxicityLexicon {
     LexiconEntry(term: 'seni becer', category: ToxicityCategory.taciz, severity: 0.95),
     LexiconEntry(term: 'yatağa', category: ToxicityCategory.taciz, severity: 0.45, requiresDirection: true),
     LexiconEntry(term: 'vücudun', category: ToxicityCategory.taciz, severity: 0.40, requiresDirection: true),
+
+    // ═══ İP-26 · SÖZ VARLIĞI GENİŞLETMESİ (12 Eylül 2026) ════════════════════
+    //
+    // Seçim ölçütü, İP-17'dekiyle aynı: Türkçe'de YAYGIN, sözlükte YOK ve
+    // eklendiğinde masum bir cümleyi yakalamayacak terimler. Çokanlamlı ya
+    // da meşru kullanımı olan her kök `requiresDirection: true` ile korundu —
+    // yani yalnızca ikinci şahsa yöneltildiğinde bulgu üretir.
+    //
+    // ⛔ DENETLENİP ALINMAYANLAR:
+    //   "hırsız", "yalancı", "sahtekâr" → bunlar SUÇLAMADIR, hakaret değil.
+    //     "Bu kişi hırsız" cümlesi bir iddiadır; doğru ya da yanlış olabilir
+    //     ama susturulacak bir şey değildir. Kimlik yuvasıyla birleştiğinde
+    //     zaten nefret katmanı yakalıyor ("Bütün X'ler hırsızdır").
+    //   "terörist" → aynı gerekçe, ayrıca siyasi tartışmanın merkezinde.
+    //   "çirkin", "iğrenç" → İP-17'de de alınmamıştı; davranış niteleyen
+    //     sıfatlardır ve eleştiriyi hakaret saymak ürünün iddiasını çürütür.
+
+    // ── Zekâ / yetkinlik ekseni ──────────────────────────────────────────
+    LexiconEntry(term: 'akılsız', category: ToxicityCategory.hakaret, severity: 0.58, neutralAlternative: 'düşüncesiz'),
+    LexiconEntry(term: 'şuursuz', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'şapşal', category: ToxicityCategory.hakaret, severity: 0.35, requiresDirection: true),
+    LexiconEntry(term: 'aval', category: ToxicityCategory.hakaret, severity: 0.45, matchMode: MatchMode.exact, requiresDirection: true),
+    LexiconEntry(term: 'sünepe', category: ToxicityCategory.hakaret, severity: 0.48, requiresDirection: true),
+    LexiconEntry(term: 'pısırık', category: ToxicityCategory.hakaret, severity: 0.42, requiresDirection: true),
+    LexiconEntry(term: 'zibidi', category: ToxicityCategory.hakaret, severity: 0.55),
+    LexiconEntry(term: 'zübük', category: ToxicityCategory.hakaret, severity: 0.55),
+    LexiconEntry(term: 'lavuk', category: ToxicityCategory.hakaret, severity: 0.62),
+    LexiconEntry(term: 'ibiş', category: ToxicityCategory.hakaret, severity: 0.50),
+    LexiconEntry(term: 'godoş', category: ToxicityCategory.kufur, severity: 0.85),
+
+    // ── Karakter ekseni ──────────────────────────────────────────────────
+    LexiconEntry(term: 'seviyesiz', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'hadsiz', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'küstah', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'densiz', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+    LexiconEntry(term: 'hayasız', category: ToxicityCategory.hakaret, severity: 0.60, requiresDirection: true),
+    LexiconEntry(term: 'utanmaz', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'omurgasız', category: ToxicityCategory.hakaret, severity: 0.62, requiresDirection: true),
+    LexiconEntry(term: 'ciğersiz', category: ToxicityCategory.hakaret, severity: 0.60, requiresDirection: true),
+    LexiconEntry(term: 'kansız', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true),
+    LexiconEntry(term: 'sütü bozuk', category: ToxicityCategory.hakaret, severity: 0.75),
+    LexiconEntry(term: 'iki yüzlü', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'yalaka', category: ToxicityCategory.hakaret, severity: 0.52, requiresDirection: true),
+    LexiconEntry(term: 'dalkavuk', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'miskin', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'tembel', category: ToxicityCategory.hakaret, severity: 0.38, requiresDirection: true, neutralAlternative: 'bu işte yavaş ilerliyor'),
+    LexiconEntry(term: 'ukala', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+
+    // ── Hayvan benzetmesi (yönelim şartlı) ───────────────────────────────
+    LexiconEntry(term: 'çakal', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'yılan', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'sırtlan', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true),
+    LexiconEntry(term: 'kene', category: ToxicityCategory.hakaret, severity: 0.60, requiresDirection: true),
+    LexiconEntry(term: 'sülük', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'keçi', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'kaz', category: ToxicityCategory.hakaret, severity: 0.45, matchMode: MatchMode.exact, requiresDirection: true),
+
+    // ── İçeriği değersizleştirme (aşağılama) ─────────────────────────────
+    LexiconEntry(term: 'zırva', category: ToxicityCategory.asagilama, severity: 0.40, requiresDirection: true),
+    LexiconEntry(term: 'palavra', category: ToxicityCategory.asagilama, severity: 0.38, requiresDirection: true),
+    LexiconEntry(term: 'saçma sapan', category: ToxicityCategory.asagilama, severity: 0.38),
+    LexiconEntry(term: 'gevezelik', category: ToxicityCategory.asagilama, severity: 0.35, requiresDirection: true),
+
+    // ── Tehdit (deyimsel, öbek olarak) ───────────────────────────────────
+    // Hepsi ÖBEK: tek kelimelik biçimleri meşru bağlamda geçer
+    // ("rekoru kırarım", "ateşi yakarım").
+    LexiconEntry(term: 'canını yakarım', category: ToxicityCategory.tehdit, severity: 0.90),
+    LexiconEntry(term: 'kemiklerini kırarım', category: ToxicityCategory.tehdit, severity: 0.95),
+    LexiconEntry(term: 'ayağını kırarım', category: ToxicityCategory.tehdit, severity: 0.90),
+    LexiconEntry(term: 'kolunu kırarım', category: ToxicityCategory.tehdit, severity: 0.90),
+    LexiconEntry(term: 'yakarım seni', category: ToxicityCategory.tehdit, severity: 0.88),
+    LexiconEntry(term: 'seni bitiririm', category: ToxicityCategory.tehdit, severity: 0.88),
+    LexiconEntry(term: 'gününü göstereceğim', category: ToxicityCategory.tehdit, severity: 0.85),
+
+    // ═══ İP-28 · GİZLEME VARYANTLARI ═════════════════════════════════════════
+    //
+    // ── NEDEN AYRI BİR BLOK ──────────────────────────────────────────────────
+    // Gizleme kaçışlarının BÜYÜK ÇOĞUNLUĞU artık normalizasyon katmanında
+    // çözülüyor ve sözlüğe hiçbir şey eklemeyi gerektirmiyor:
+    //
+    //   "salaq" → q→k dönüşümü      → "salak"      (mevcut girdi yakalar)
+    //   "$3r3fsiz" → leet çevirimi  → "serefsiz"   (mevcut girdi yakalar)
+    //   "oros pu" → birleştirme     → "orospu"     (mevcut girdi yakalar)
+    //   "a m k" → tek-harf birleşimi→ "amk"        (mevcut girdi yakalar)
+    //
+    // Geriye TEK bir sınıf kalıyor: SESLİ HARF DÜŞÜRME. "siktir" → "sktr".
+    // Bu, algoritmayla çözülmesi TEHLİKELİ olan tek sınıftır; her kelimenin
+    // ünsüz iskeletini üretip aramak, kısaltmaları ve özel adları toplu
+    // hâlde yanlış pozitife çevirirdi (parti kısaltmaları, kurum adları,
+    // "TRT", "MHP" gibi üç harfli diziler).
+    //
+    // Bu yüzden ünsüz iskeletleri ÜRETİLMEZ, tek tek YAZILIR. Yazılan her
+    // biçim, Türkçe'de yalnızca ve yalnızca o küfrün yerine kullanılan bir
+    // dizidir; masum bir okuması yoktur. Kök eşleşmesi bunları kelime
+    // başlangıcı sayıp uzun kelimeleri yakalardı. Ünlüsüz iskeletler
+    // (sktr, skym, pzvnk) ayrıca BİREBİR kiptedir: ünlü içermeyen bir kökte
+    // ünlü uyumu denetimi hiçbir şeyi eleyemez ve her ek "geçerli" görünür.
+    LexiconEntry(term: 'sktr', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'sktir', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.exact),
+    LexiconEntry(term: 'sikiym', category: ToxicityCategory.kufur, severity: 0.90, matchMode: MatchMode.exact),
+    LexiconEntry(term: 'sixiym', category: ToxicityCategory.kufur, severity: 0.90, matchMode: MatchMode.exact),
+    LexiconEntry(term: 'skym', category: ToxicityCategory.kufur, severity: 0.88, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'orspu', category: ToxicityCategory.kufur, severity: 0.92, matchMode: MatchMode.exact),
+    LexiconEntry(term: 'pzvnk', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'amnkoyim', category: ToxicityCategory.kufur, severity: 0.95, matchMode: MatchMode.exact),
+
+    // ═══ İP-28 · SÖZ VARLIĞI GENİŞLETMESİ ════════════════════════════════════
+    //
+    // Ölçüt İP-17 ve İP-26'dakiyle aynı: Türkçe'de YAYGIN, sözlükte YOK,
+    // ve eklendiğinde masum bir cümleyi yakalamayan terimler. Çokanlamlı ya
+    // da meşru kullanımı olan her kök `requiresDirection: true` ile korundu.
+
+    // ── Hakaret · zekâ ve yetkinlik ──────────────────────────────────────
+    LexiconEntry(term: 'malak', category: ToxicityCategory.hakaret, severity: 0.55, neutralAlternative: 'düşüncesiz'),
+    LexiconEntry(term: 'yontulmamış', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'görgüsüz', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+    LexiconEntry(term: 'nobran', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    // "kaba saba bir masa" — eşya ve üslup betimlemesi; yalnızca yöneltilince.
+    LexiconEntry(term: 'kaba saba', category: ToxicityCategory.hakaret, severity: 0.42, requiresDirection: true),
+    LexiconEntry(term: 'odun kafalı', category: ToxicityCategory.hakaret, severity: 0.60),
+    LexiconEntry(term: 'tahta kafalı', category: ToxicityCategory.hakaret, severity: 0.60),
+    LexiconEntry(term: 'boş kafalı', category: ToxicityCategory.hakaret, severity: 0.60),
+    LexiconEntry(term: 'kalın kafalı', category: ToxicityCategory.hakaret, severity: 0.55),
+    LexiconEntry(term: 'düşük zekâlı', category: ToxicityCategory.hakaret, severity: 0.70),
+    LexiconEntry(term: 'zekâ özürlü', category: ToxicityCategory.hakaret, severity: 0.80),
+    LexiconEntry(term: 'anlayışsız', category: ToxicityCategory.asagilama, severity: 0.35, requiresDirection: true),
+    LexiconEntry(term: 'kavrayışsız', category: ToxicityCategory.asagilama, severity: 0.38, requiresDirection: true),
+    // "bu telefon beş para etmez" — ürün yorumu; yalnızca yöneltilince.
+    LexiconEntry(term: 'beş para etmez', category: ToxicityCategory.asagilama, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'sıfırı tüketmiş', category: ToxicityCategory.asagilama, severity: 0.45),
+
+    // ── Hakaret · karakter ───────────────────────────────────────────────
+    LexiconEntry(term: 'kişiliksiz', category: ToxicityCategory.hakaret, severity: 0.70, requiresDirection: true),
+    LexiconEntry(term: 'sinsi', category: ToxicityCategory.hakaret, severity: 0.48, requiresDirection: true),
+    LexiconEntry(term: 'ikiyüzlü', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'riyakâr', category: ToxicityCategory.hakaret, severity: 0.52, requiresDirection: true),
+    LexiconEntry(term: 'beleşçi', category: ToxicityCategory.hakaret, severity: 0.48, requiresDirection: true),
+    LexiconEntry(term: 'çıkarcı', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'menfaatçi', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'vefasız', category: ToxicityCategory.hakaret, severity: 0.42, requiresDirection: true),
+    LexiconEntry(term: 'köküne kadar bozuk', category: ToxicityCategory.hakaret, severity: 0.70),
+    LexiconEntry(term: 'zibidi herif', category: ToxicityCategory.hakaret, severity: 0.65),
+
+    // ── Hayvan benzetmesi (yönelim şartlı) ───────────────────────────────
+    LexiconEntry(term: 'kurbağa', category: ToxicityCategory.hakaret, severity: 0.40, requiresDirection: true),
+    LexiconEntry(term: 'karga', category: ToxicityCategory.hakaret, severity: 0.38, requiresDirection: true),
+    LexiconEntry(term: 'akbaba', category: ToxicityCategory.hakaret, severity: 0.48, requiresDirection: true),
+    // ÇIKARILDI (ölçümle): 'tilki' — mecazı çoğu zaman övgüdür; yönelim şartı
+    // korumuyor, "sen tilki gibi zekisin" 0.53 ile işaretleniyordu.
+    LexiconEntry(term: 'sıçan', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'fare', category: ToxicityCategory.hakaret, severity: 0.42, requiresDirection: true),
+    LexiconEntry(term: 'solucan', category: ToxicityCategory.hakaret, severity: 0.48, requiresDirection: true),
+    LexiconEntry(term: 'böcek', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'hamamböceği', category: ToxicityCategory.hakaret, severity: 0.60, requiresDirection: true),
+    LexiconEntry(term: 'ayı', category: ToxicityCategory.hakaret, severity: 0.42, matchMode: MatchMode.exact, requiresDirection: true),
+    LexiconEntry(term: 'katır', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'manda', category: ToxicityCategory.hakaret, severity: 0.45, requiresDirection: true),
+
+    // ── Tehdit ───────────────────────────────────────────────────────────
+    // Tek kelimelik hâlleri meşru bağlamda geçtiği için hepsi ÖBEK.
+    LexiconEntry(term: 'seni gebertirim', category: ToxicityCategory.tehdit, severity: 0.96),
+    LexiconEntry(term: 'kafanı kırarım', category: ToxicityCategory.tehdit, severity: 0.92),
+    LexiconEntry(term: 'çeneni kırarım', category: ToxicityCategory.tehdit, severity: 0.92),
+    LexiconEntry(term: 'boynunu kırarım', category: ToxicityCategory.tehdit, severity: 0.94),
+    LexiconEntry(term: 'ellerini kırarım', category: ToxicityCategory.tehdit, severity: 0.90),
+    LexiconEntry(term: 'gözünü oyarım', category: ToxicityCategory.tehdit, severity: 0.94),
+    LexiconEntry(term: 'kafanı koparırım', category: ToxicityCategory.tehdit, severity: 0.94),
+    LexiconEntry(term: 'seni ezerim', category: ToxicityCategory.tehdit, severity: 0.82),
+    LexiconEntry(term: 'seni mahvederim', category: ToxicityCategory.tehdit, severity: 0.85),
+    LexiconEntry(term: 'seni yok ederim', category: ToxicityCategory.tehdit, severity: 0.90),
+    LexiconEntry(term: 'seni perişan ederim', category: ToxicityCategory.tehdit, severity: 0.82),
+    LexiconEntry(term: 'nerede oturduğunu biliyorum', category: ToxicityCategory.tehdit, severity: 0.88),
+    LexiconEntry(term: 'seni bulurum', category: ToxicityCategory.tehdit, severity: 0.78),
+    // "bu davanın peşini bırakmam" — kararlılık beyanı; yalnızca yöneltilince.
+    LexiconEntry(term: 'peşini bırakmam', category: ToxicityCategory.tehdit, severity: 0.65, requiresDirection: true),
+    LexiconEntry(term: 'yaşatmam seni', category: ToxicityCategory.tehdit, severity: 0.92),
+    LexiconEntry(term: 'ailene zarar', category: ToxicityCategory.tehdit, severity: 0.95),
+    // ÇIKARILDI (ölçümle): 'çoluk çocuğuna' — tehdit fiili taşımayan öbek
+    // "çoluk çocuğuna iyi bak" cümlesini 0.70 ile işaretliyordu.
+
+    // ── Taciz ────────────────────────────────────────────────────────────
+    // ÇIKARILDI (ölçümle): 'soyun' — "soy" + iyelik ekiyle birebir aynı
+    // yazılır; "senin soyun nereden geliyor" 0.75 ile işaretleniyordu.
+    LexiconEntry(term: 'çıplak fotoğraf', category: ToxicityCategory.taciz, severity: 0.80),
+    LexiconEntry(term: 'resmini gönder', category: ToxicityCategory.taciz, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'yalnız mısın', category: ToxicityCategory.taciz, severity: 0.30, requiresDirection: true),
+    LexiconEntry(term: 'seni izliyorum', category: ToxicityCategory.taciz, severity: 0.70),
+    LexiconEntry(term: 'peşindeyim', category: ToxicityCategory.taciz, severity: 0.65),
+    // Yalın "nerede yaşadığını" kargo ve adres sorusunu da yakalıyordu;
+    // tehdit olan, bilginin ELDE olduğunun söylenmesidir.
+    LexiconEntry(term: 'nerede yaşadığını biliyorum', category: ToxicityCategory.tehdit, severity: 0.88),
+
+    // ── Aşağılama · içeriğin reddi ───────────────────────────────────────
+    LexiconEntry(term: 'saçmalık', category: ToxicityCategory.asagilama, severity: 0.32, requiresDirection: true),
+    LexiconEntry(term: 'ipe sapa gelmez', category: ToxicityCategory.asagilama, severity: 0.42),
+    LexiconEntry(term: 'kof', category: ToxicityCategory.asagilama, severity: 0.35, matchMode: MatchMode.exact, requiresDirection: true),
+    // ÇIKARILDI (ölçümle): 'sudan sebep' — kişiye değil gerekçeye yönelik
+    // bir betimleme; "sudan sebeplerle kavga ettiler" anlatısını işaretliyordu.
+    LexiconEntry(term: 'komedi', category: ToxicityCategory.asagilama, severity: 0.28, requiresDirection: true),
+    LexiconEntry(term: 'trajikomik', category: ToxicityCategory.asagilama, severity: 0.30, requiresDirection: true),
   ];
 }
+

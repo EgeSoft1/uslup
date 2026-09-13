@@ -52,6 +52,38 @@ abstract final class AppSpacing {
   static const double bottomNavClearance = 92;
 }
 
+// ─── Kırılma noktaları ───────────────────────────────────────────────────────
+//
+// Ev sahibi platformun masaüstü yerleşimi üç sütundur: gezinme · akış · yan
+// panel. Dar ekranda bu sütunlar yan yana durmaz, bu yüzden kabuk iki ayrı
+// yerleşim taşır (`AdaptiveShell`).
+//
+// Eşikler ölçüye göre seçildi, cihaz adına göre değil:
+//   • 1024 — 600 px'lik akış sütunu + 280 px'lik gezinme sütunu sığdığı an.
+//   • 1320 — sağ panel (arama + gündem) 320 px ile eklenebildiği an.
+// Aradaki bantta gezinme sütunu ikon şeridine iner; akış sütunu daralmaz,
+// çünkü daralan asıl içerik okunabilirliği kaybeder.
+abstract final class AppBreakpoints {
+  /// Altında mobil kabuk (alt sekme çubuğu) çizilir.
+  static const double desktop = 1024;
+
+  /// Üstünde sağ panel de görünür.
+  static const double wide = 1320;
+
+  /// Akış sütununun üst sınırı. Daha geniş bir satır uzunluğu okunmuyor.
+  static const double feedColumnMax = 604;
+
+  static const double sidebarWide = 280;
+  static const double sidebarRail = 92;
+  static const double rightRail = 332;
+
+  /// Üç sütunun toplam üst sınırı — 4K ekranda içerik kenarlara dağılmasın.
+  static const double shellMax = 1360;
+
+  static bool isDesktop(BuildContext context) =>
+      MediaQuery.sizeOf(context).width >= desktop;
+}
+
 // ─── Köşe yarıçapı ───────────────────────────────────────────────────────────
 abstract final class AppRadius {
   static const double xs = 8;

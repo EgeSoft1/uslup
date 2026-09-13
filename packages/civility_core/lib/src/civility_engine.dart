@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // NSosyal Sosyal YZ — Nezaket Motoru (Civility Engine)
 // Dosya: packages/civility_core/lib/src/civility_engine.dart
 //
@@ -34,6 +34,7 @@
 
 import 'lexicon/toxicity_lexicon.dart';
 import 'normalization/tokenizer.dart';
+import 'normalization/turkish_morphology.dart';
 import 'normalization/turkish_normalizer.dart';
 import 'context/context_analyzer.dart';
 import 'detect/implicit_detector.dart';
@@ -179,6 +180,10 @@ class CivilityAnalysis {
   /// Çözümlemenin sürdüğü süre — performans iddiasının kanıtı.
   final Duration elapsed;
 
+  /// Davranışsal biyometri (varsa) — Kullanıcının klavye vuruş hızı (ms) ve silme oranı.
+  final double? typingSpeedMs;
+  final double? backspaceRatio;
+
   const CivilityAnalysis({
     required this.text,
     required this.toxicity,
@@ -187,10 +192,12 @@ class CivilityAnalysis {
     required this.findings,
     required this.signals,
     required this.elapsed,
+    this.typingSpeedMs,
+    this.backspaceRatio,
   });
 
   /// Boş/temiz metin için sonuç.
-  factory CivilityAnalysis.clean(String text, ContextSignals signals) {
+  factory CivilityAnalysis.clean(String text, ContextSignals signals, {double? typingSpeedMs, double? backspaceRatio}) {
     return CivilityAnalysis(
       text: text,
       toxicity: 0.0,
@@ -199,6 +206,8 @@ class CivilityAnalysis {
       findings: const [],
       signals: signals,
       elapsed: Duration.zero,
+      typingSpeedMs: typingSpeedMs,
+      backspaceRatio: backspaceRatio,
     );
   }
 
@@ -222,7 +231,7 @@ class CivilityAnalysis {
 ///   • `OnnxTurkishClassifier`    — ince ayarlı BERTurk, ONNX Runtime (planlı)
 abstract class ToxicityClassifier {
   /// Metni çözümler ve nezaket raporu döndürür.
-  CivilityAnalysis analyze(String text);
+  CivilityAnalysis analyze(String text, {double? typingSpeedMs, double? backspaceRatio});
 
   /// Sınıflandırıcının insan-okunur adı — şeffaflık panelinde gösterilir.
   String get modelName;
@@ -244,6 +253,43 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
 
   /// Çok kelimeli öbekler ("kapa çeneni"). Doğrudan metin içinde aranır.
   final List<({String normalized, LexiconEntry entry})> _phraseEntries = [];
+
+  /// Boşlukları silinmiş öbekler: "amina koyim" → "aminakoyim".
+  ///
+  /// Öbek katmanı boşluğu sabit bir ayraç sayar; kullanıcı bitişik yazınca
+  /// öbek kaçar. Bu tablo, birleşik yazımı TEK bir token olarak aramayı
+  /// mümkün kılar. Bkz. `_matchEvasionJoins`.
+  final Map<String, LexiconEntry> _despacedPhrases = {};
+
+  /// Tek kelimelik BÜTÜN girdilerin yüzey biçimleri — eşleşme kipinden
+  /// bağımsız olarak.
+  ///
+  /// `_exactEntries` yalnızca `MatchMode.exact` girdilerini tutar; kök
+  /// eşleşmeli girdiler ("orospu") orada YOKTUR. Bölme kaçışını yakalayan
+  /// birleştirme geçişi ise kök eşleşmesi yapamaz (gerekçe:
+  /// `_matchEvasionJoins`) ve bu yüzden kendi BİREBİR tablosuna ihtiyaç
+  /// duyar. "oros" + "pu" → "orospu" burada bulunur; "o" + "çocuk" →
+  /// "oçocuk" bulunmaz.
+  final Map<String, LexiconEntry> _surfaceForms = {};
+
+  /// Terimi yazılışında taşıdığı katlanan harflere bağlar: "aq" → {q}.
+  ///
+  /// ── KATLAMA KANITI SİLER ─────────────────────────────────────────────────
+  /// Normalizasyon q→k, w→v, x→ks dönüşümü yapar; "salaq" böylece "salak"
+  /// girdisine iner. Dönüşüm girdinin KENDİSİNE de uygulanır ve "aq"
+  /// kısaltması Türkçe "ak" kelimesine katlanır. Ölçülen sonuç:
+  ///
+  ///   "ak saçlı dede" · "AK Parti" · "akla gelen" · "dayanışma ağı" → 0.90 ✗
+  ///
+  /// "aq" bir kelimenin gizlenmiş yazımı DEĞİLDİR; q harfinin kendisi
+  /// kısaltmanın kimliğidir. Bu yüzden böyle bir girdi, orijinal metinde o
+  /// harf fiilen yazıldıysa eşleşir. "salaq" gibi kaçışlar etkilenmez:
+  /// onları yakalayan "salak" girdisi q taşımaz.
+  final Map<String, Set<String>> _surfaceLetterEvidence = {};
+
+  /// Normalizasyonun katladığı yabancı harfler.
+  /// `TurkishNormalizer._foreignLetters` ile aynı küme olmalıdır.
+  static const String _foldedLetters = 'qwx';
 
   /// Normalize edilmiş maskeleme ön ekleri (yanlış pozitif engelleyici).
   final List<String> _maskedPrefixes = [];
@@ -286,12 +332,22 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       final normalized = _normalizer.normalize(entry.term).value;
       if (normalized.isEmpty) continue;
 
+      final folded = entry.term
+          .toLowerCase()
+          .split('')
+          .where(_foldedLetters.contains)
+          .toSet();
+      if (folded.isNotEmpty) _surfaceLetterEvidence[entry.term] = folded;
+
       if (normalized.contains(' ')) {
         _phraseEntries.add((normalized: normalized, entry: entry));
-      } else if (entry.matchMode == MatchMode.exact) {
+        _despacedPhrases[normalized.replaceAll(' ', '')] = entry;
+      } else if (entry.matchMode != MatchMode.prefix) {
         _exactEntries[normalized] = entry;
+        _surfaceForms[normalized] = entry;
       } else {
         _prefixEntries.add((normalized: normalized, entry: entry));
+        _surfaceForms[normalized] = entry;
       }
     }
 
@@ -306,7 +362,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   }
 
   @override
-  CivilityAnalysis analyze(String text) {
+  CivilityAnalysis analyze(String text, {double? typingSpeedMs, double? backspaceRatio}) {
     final stopwatch = Stopwatch()..start();
 
     if (text.trim().isEmpty) {
@@ -345,6 +401,9 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     // 4b. Token eşleşmeleri (tek kelimeli)
     findings.addAll(_matchTokens(normalized, tokens, signals));
 
+    // 4b2. Bölme/bitişik yazma kaçışları ("oros pu", "aminakoyim").
+    findings.addAll(_matchEvasionJoins(normalized, tokens, signals));
+
     // 4c. Edimbilimsel örüntüler — yasaklı kelime içermeyen saldırı.
     if (enableImplicitPatterns) {
       findings.addAll(_matchImplicit(normalized, tokens, signals));
@@ -355,7 +414,29 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     deduped.sort((a, b) => b.adjustedSeverity.compareTo(a.adjustedSeverity));
 
     // ── 6. Skor birleştirme ─────────────────────────────────────────────────
-    final toxicity = _combineSeverities(deduped);
+    double toxicity = _combineSeverities(deduped);
+
+    // ── 7. Davranışsal Biyometri (Madde 60) ─────────────────────────────────
+    // Hızlı yazım (<150ms) ve yoğun silme (>%30) yüksek öfke belirtisidir.
+    // Siber Kalkan, içeriği sınırda (dikkat) olan bir mesajı, salt klavye 
+    // şiddetinden dolayı (riskli) seviyesine çekebilir.
+    if (typingSpeedMs != null && backspaceRatio != null && toxicity > 0) {
+      double stressPenalty = 0.0;
+      if (typingSpeedMs < 120.0) {
+        stressPenalty += 0.15; // Çok hızlı, agresif yazım
+      } else if (typingSpeedMs < 180.0) {
+        stressPenalty += 0.08;
+      }
+
+      if (backspaceRatio > 0.3) {
+        stressPenalty += 0.10; // Cümleyi sürekli bozup yeniden yazma
+      } else if (backspaceRatio > 0.15) {
+        stressPenalty += 0.05;
+      }
+
+      // Maksimum %25 biyometrik ceza eklenebilir. Eşik atlatıcı görevi görür.
+      toxicity = (toxicity + stressPenalty).clamp(0.0, 1.0);
+    }
 
     stopwatch.stop();
 
@@ -367,6 +448,8 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       findings: deduped,
       signals: signals,
       elapsed: stopwatch.elapsed,
+      typingSpeedMs: typingSpeedMs,
+      backspaceRatio: backspaceRatio,
     );
   }
 
@@ -462,8 +545,18 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       // Agresif varyant da meşru bir kelimeye denk geliyorsa elenir.
       if (aggressiveText != token.text && _isMasked(aggressiveText)) continue;
 
-      final matched = _lookup(token.text) ??
+      var matched = _lookup(token.text) ??
           (aggressiveText == token.text ? null : _lookup(aggressiveText));
+
+      // ── İP-29: Ters Yazım Tespiti ("kallas" -> "sallak", "latpa" -> "aptal") ──
+      // Yanlış pozitifleri (çip -> piç) önlemek için yalnızca 4 harf ve üzeri
+      // kelimelerde tersten okuma denemesi yapılır.
+      if (matched == null && token.text.length > 3) {
+        final reversedText = token.text.split('').reversed.join('');
+        if (!_isMasked(reversedText)) {
+          matched = _lookup(reversedText);
+        }
+      }
 
       if (matched == null) continue;
 
@@ -542,6 +635,112 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     return results;
   }
 
+  /// Kelimeyi bölerek veya bitiştirerek yapılan gizlemeyi yakalar.
+  ///
+  /// ── İKİ AYRI KAÇIŞ, TEK MEKANİZMA ────────────────────────────────────────
+  /// Ölçüm iki gerçek açık gösterdi ve ikisi de aynı kökten geliyordu:
+  /// katman BOŞLUĞU sabit bir kelime sınırı sayıyordu.
+  ///
+  ///   "orospu"      → yakalanıyordu     "oros pu"     → temiz  ✗  (bölme)
+  ///   "amina koyim" → yakalanıyordu     "aminakoyim"  → temiz  ✗  (bitiştirme)
+  ///
+  /// Mevcut kaçınma birleştirmesi yalnızca ÜÇ ya da daha fazla ardışık TEK
+  /// HARFLİ token'ı ("a m k") görüyordu; hece düzeyinde bölmeyi görmüyordu.
+  ///
+  /// ── NEDEN BÜTÜN METNİN BOŞLUKLARI SİLİNMİYOR ─────────────────────────────
+  /// En kısa çözüm, metnin boşluklarını silip içinde arama yapmaktır. Bu
+  /// çözüm KABUL EDİLMEDİ çünkü masum cümlelerden saldırgan dizgiler üretir:
+  ///
+  ///   "o çocuk"  → "ococuk"   içinde "oç" epiteti var  → yanlış pozitif
+  ///
+  /// Bunun yerine yalnızca KOMŞU token'lar birleştirilir ve sonuç TAM
+  /// EŞLEŞME olarak aranır — kök eşleşmesi (prefix) KASITLI olarak devre
+  /// dışıdır. "oçocuk" hiçbir sözlük girdisiyle birebir aynı olmadığı için
+  /// elenir; "orospu" olduğu için yakalanır. Kesinlik, mekanizmanın
+  /// kendisinden gelir; bir istisna listesinden değil.
+  ///
+  /// Pencere en fazla üç token'dır: daha uzun bölmeler ("o r o s p u") zaten
+  /// tek-harf birleştirmesinin alanına girer.
+  List<ToxicityFinding> _matchEvasionJoins(
+    NormalizedText normalized,
+    List<Token> tokens,
+    ContextSignals signals,
+  ) {
+    if (tokens.isEmpty) return const [];
+
+    final results = <ToxicityFinding>[];
+
+    // width = 1 YALNIZCA birleşik yazılmış ÖBEKLER için taranır
+    // ("aminakoyim"). Tek kelimelik girdiler zaten `_matchTokens` yolunda
+    // ve orada kök eşleşmesiyle birlikte aranıyor; burada tekrarlanmaları
+    // aynı bulgunun iki kez üretilmesinden başka bir şey yapmaz.
+    for (int width = 1; width <= 3; width++) {
+      for (int i = 0; i + width <= tokens.length; i++) {
+        final buffer = StringBuffer();
+        var allSingleLetters = true;
+        for (int k = 0; k < width; k++) {
+          buffer.write(tokens[i + k].text);
+          if (tokens[i + k].length != 1) allSingleLetters = false;
+        }
+        final joined = buffer.toString();
+
+        // Kısa birleşimler gürültüdür — TEK İSTİSNA, parçaların hepsinin
+        // tek harf olmasıdır. "a q" kasıtlı bir gizlemedir ve iki harflik
+        // bir sonuç üretir; mevcut tek-harf birleştirmesi ise ancak ÜÇ
+        // harften itibaren devreye girdiği için tam bu aralığı kaçırıyordu.
+        final minLength = allSingleLetters ? 2 : 4;
+        if (joined.length < minLength) continue;
+
+        final entry = width == 1
+            ? _despacedPhrases[joined]
+            : (_surfaceForms[joined] ?? _despacedPhrases[joined]);
+        if (entry == null) continue;
+
+        final start = tokens[i].start;
+        final end = tokens[i + width - 1].end;
+        final originalRange = normalized.toOriginalRange(start, end);
+
+        final context = _contextAnalyzer.evaluateMatch(
+          tokens: tokens,
+          matchIndex: i,
+          matchEndIndex: i + width - 1,
+          originalRange: originalRange,
+          signals: signals,
+          // ── ÖZ-YÖNELİM BU YOLDA HESAPLANMAZ ─────────────────────────────
+          // Öbek yolunda (`_matchPhrases`) eşleşmenin KENDİ İÇİNDEKİ
+          // kelimeler bağlam taramasından dışlanır: "amına koyim" öbeğinde
+          // "koyim"in birinci şahıs eki öbeğin parçasıdır, konuşanın
+          // kendinden bahsettiğinin işareti değildir.
+          //
+          // Birleştirme yolunda bu dışlama kendiliğinden çalışmaz, çünkü
+          // öbek TEK bir token hâline gelmiştir ve bağlam katmanı onun
+          // kendi son ekine bakar. Ölçülen sonuç şuydu:
+          //
+          //   "amina koyim" → 0.95        "aminakoyim" → 0.00  ✗
+          //
+          // Bitişik yazmak bir küfrü öz-ifadeye çevirmez. Dışlama burada
+          // açıkça yapılır; aksi hâlde kaçış yolu kapanmış görünürken
+          // bağlam katmanı üzerinden yeniden açılıyordu.
+          selfDirectionApplies: false,
+        );
+
+        final finding = _buildFinding(
+          term: entry.term,
+          category: entry.category,
+          severity: entry.severity,
+          requiresDirection: entry.requiresDirection,
+          neutralAlternative: entry.neutralAlternative,
+          originalText: normalized.original,
+          originalRange: originalRange,
+          context: context,
+        );
+        if (finding != null) results.add(finding);
+      }
+    }
+
+    return results;
+  }
+
   /// Bulgu nesnesini kurar; bağlam kuralları elerse null döner.
   ToxicityFinding? _buildFinding({
     required String term,
@@ -580,6 +779,17 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     final safeStart = originalRange.start.clamp(0, originalText.length);
     final safeEnd = originalRange.end.clamp(safeStart, originalText.length);
 
+    // Katlanan harfe dayanan girdi, o harf yazılmadıysa eşleşmiş sayılmaz
+    // ("ak" ≠ "aq"). Gerekçe: `_surfaceLetterEvidence`. Kontrol burada,
+    // TEK noktada yapılır; token, öbek ve birleştirme yollarının üçü de
+    // buradan geçer.
+    final evidence =
+        source == FindingSource.sozluk ? _surfaceLetterEvidence[term] : null;
+    if (evidence != null) {
+      final span = originalText.substring(safeStart, safeEnd).toLowerCase();
+      if (!evidence.every(span.contains)) return null;
+    }
+
     return ToxicityFinding(
       matchedText: originalText.substring(safeStart, safeEnd),
       term: term,
@@ -595,10 +805,11 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     );
   }
 
-  /// Tam eşleşmeli terimlerin kabul ettiği ikinci şahıs bildirme ekleri.
-  /// Kapalı liste olması kasıtlıdır — açık uçlu bir kural bu terimleri
-  /// yeniden yanlış pozitif kaynağına çevirirdi.
-  static const List<String> _copulaSuffixes = ['siniz', 'sunuz', 'sin', 'sun'];
+  // NOT. Burada bir `_copulaSuffixes` alanı vardı ve hiçbir yerden
+  // okunmuyordu: ikinci şahıs bildirme eki bilgisi `TurkishMorphology` ile
+  // `ContextAnalyzer` içine taşındığında bu kopya geride kalmıştı. İki ayrı
+  // yerde duran bir "doğruluk kaynağı" er ya da geç birbirinden ayrılır;
+  // ölü olanı silmek, sonradan yanlışlıkla canlandırılmasından ucuzdur.
 
   /// Yumuşatıcı bağlamda ulaşılabilecek en yüksek şiddet.
   /// Eleme eşiğinin altındadır — yani yumuşatma daima elemeyle sonuçlanır.
@@ -614,31 +825,39 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// Tam eşleşme önceliklidir çünkü daha kesindir ve çokanlamlı kısa
   /// terimler ("mal", "it", "adi") yalnızca bu yolla tetiklenebilir.
   LexiconEntry? _lookup(String text) {
+    // 0. Birebir tam eşleşme (en yüksek kesinlik).
     final exact = _exactEntries[text];
     if (exact != null) return exact;
 
-    // Tam eşleşmeli terim + ikinci şahıs bildirme eki: "mal" + "sın".
+    // 1. Kök eşleşmesi: Önce prefix (ön ek) girdilerini dene.
+    // Prefix girdileri uzundan kısaya sıralıdır; bu sayede "siktir" (6 harf)
+    // "sik" (3 harf, exact) girdisinden ÖNCE bulunur. Bu kritiktir:
+    // "siktir" sözlükte ayrı bir girdi olarak varken, "sik+tir" morfolojik
+    // parçalaması istenmeyen bir requiresDirection kontrolü tetikler.
     //
-    // Ölçüm bu açığı gösterdi: "sen tam bir malsın" hiç yakalanmıyordu,
-    // çünkü "mal" çokanlamlı olduğu için tam eşleşmeye kilitlenmiş ve
-    // "malsın" token'ı tam eşleşmiyordu. Kök eşleşmesine açmak "malzeme"yi
-    // yanlış pozitif yapardı.
-    //
-    // Çözüm ikisinin arası: yalnızca KAPALI bir ek listesi kabul edilir.
-    // "malsın" = mal + ikinci şahıs eki → hakaret.
-    // "malzeme" = bu eklerin hiçbiriyle bitmez → masum.
-    for (final suffix in _copulaSuffixes) {
-      if (text.length > suffix.length + 2 && text.endsWith(suffix)) {
-        final stem = text.substring(0, text.length - suffix.length);
-        final stemEntry = _exactEntries[stem];
-        if (stemEntry != null) return stemEntry;
+    // Örn: "aptal" -> "aptalsın", "aptallar", "aptallığa" (geçerli)
+    // "salak" -> "salağım" (yumuşama ile geçerli)
+    // "amaç" -> "am" + "aç" (geçersiz ek dizilimi -> reddedilir)
+    // "malzeme" -> "mal" + "zeme" (geçersiz ek -> reddedilir)
+    for (final candidate in _prefixEntries) {
+      final isVerbal = candidate.entry.category == ToxicityCategory.tehdit ||
+          candidate.entry.term.endsWith('mek') ||
+          candidate.entry.term.endsWith('mak');
+      if (TurkishMorphology.isValidInflectedForm(text, candidate.normalized,
+          isVerbal: isVerbal)) {
+        return candidate.entry;
       }
     }
 
-    // Kök eşleşmesi: Türkçe eklemeli çekimleri yakalar.
-    // "aptal" kökü → "aptalsın", "aptallar", "aptallığın" hepsini bulur.
-    for (final candidate in _prefixEntries) {
-      if (text.startsWith(candidate.normalized)) return candidate.entry;
+    // 2. Kısa exact-mode kökler için morfolojik çekim kontrolü.
+    // Bu aşama prefix'lerde bulunamazsa devreye girer.
+    // ("mal" -> "malsın", "am" -> "amına", "bok" -> "boktan")
+    // Birebir kipteki kısaltmalar çekime girmez (bkz. `MatchMode.verbatim`).
+    for (final exact in _exactEntries.entries) {
+      if (exact.value.matchMode == MatchMode.verbatim) continue;
+      if (TurkishMorphology.isValidInflectedForm(text, exact.key)) {
+        return exact.value;
+      }
     }
 
     return null;

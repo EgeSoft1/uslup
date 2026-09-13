@@ -26,6 +26,7 @@ dependencies:
   # UI / UX
   cupertino_icons: ^1.0.6
   flutter_animate: ^4.5.0
+  onnxruntime: ^1.4.1
 
 # ── KALDIRILAN BAĞIMLILIKLAR (3 Ağustos 2026) ────────────────────────────────
 # Aşağıdakiler devralınan mesajlaşma altyapısından kalmıştı ve hiçbir yerde
@@ -67,8 +68,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
   assets:
     - assets/images/
+    - assets/models/
 
   # Değişken (variable) yazı tipleri. Ağırlık, `wght` ekseninden gelir ve
   # `app_theme.dart` içindeki appDisplay/appBody yardımcıları tarafından

@@ -255,4 +255,93 @@ void main() {
       expect(IdentityTerms.all.length, greaterThanOrEqualTo(90));
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('6. İP-28 · Harf katlaması ve kısaltmalar', () {
+    // q→k katlaması "aq" girdisini Türkçe "ak" kelimesine indiriyordu; çekim
+    // denemesi ise "ağı", "akla", "akımı" gibi biçimlere küfür kökü
+    // yakıştırıyordu. Aşağıdaki cümlelerin HEPSİ 0.90 ile işaretleniyordu.
+    const innocent = <String>[
+      'Translar için dayanışma ağı kuruldu',
+      'ak saçlı dede',
+      'AK Parti açıklama yaptı',
+      'akla gelen ilk şey',
+      'elektrik akımı kesildi',
+      'akın akın geldiler',
+      'ağın hızı düşük',
+      'manyetik akı yoğunluğu',
+      'mka',
+    ];
+
+    for (final text in innocent) {
+      test('"$text" temiz kalır', () {
+        expect(flags(text), isFalse,
+            reason: 'Katlanmış harf bir kısaltmayı meşru kelimeye çevirmiş '
+                'olabilir; bkz. `_surfaceLetterEvidence`.');
+      });
+    }
+
+    const caught = <String>['aq', 'AQ', 'a.q', 'a q', 'mal aq', 'amk', 'sixiym'];
+
+    for (final text in caught) {
+      test('"$text" yakalanmaya devam eder', () {
+        expect(flags(text), isTrue,
+            reason: 'Harf kanıtı şartı kaçışın kendisini kapatmamalı.');
+      });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('6b. İP-28 genişletmesinin bedeli — yakalar / yakalamaz çiftleri', () {
+    // Soldakilerin HEPSİ genişletme sonrasında işaretleniyordu (0.30 – 0.90).
+    // Girdiler çıkarıldı, daraltıldı ya da yönelim şartına bağlandı; sağdaki
+    // yönelimli biçimler yakalanmaya devam etmeli.
+    const pairs = <List<String>>[
+      ['bu telefon beş para etmez', 'sen beş para etmezsin'],
+      ['peşini bırakmam bu davanın', 'senin peşini bırakmam'],
+      ['kargo için nerede yaşadığını yazar mısın', 'nerede yaşadığını biliyorum'],
+      ['kaba saba bir masa', 'sen kaba sabasın'],
+    ];
+
+    for (final pair in pairs) {
+      test('"${pair[0]}" ↔ "${pair[1]}"', () {
+        expect(flags(pair[0]), isFalse);
+        expect(flags(pair[1]), isTrue);
+      });
+    }
+
+    const removed = <String>[
+      'çoluk çocuğuna iyi bak',
+      'senin soyun nereden geliyor',
+      'sudan sebeplerle kavga ettiler',
+      'sen tilki gibi zekisin',
+    ];
+
+    for (final text in removed) {
+      test('"$text" temiz kalır', () {
+        expect(flags(text), isFalse,
+            reason: 'Bu girdi ölçümle çıkarıldı; geri eklenmiş olabilir.');
+      });
+    }
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('7. Yapısal güvence — sözlükte mükerrer girdi yok', () {
+    // İP-28 genişletmesi "sözlükte YOK" ölçütüyle yazıldı ama 19 terim zaten
+    // vardı; kimi farklı şiddet ve kategoriyle. Aynı normalize anahtarı iki
+    // girdi paylaşınca hangisinin kazanacağını sıralamanın kararsızlığı
+    // belirler — ölçülmüş kalibrasyon sessizce ezilir.
+    test('her terim normalize edildiğinde tektir', () {
+      const normalizer = TurkishNormalizer();
+      final seen = <String, String>{};
+      for (final entry in ToxicityLexicon.entries) {
+        final key = normalizer.normalize(entry.term).value;
+        final previous = seen[key];
+        expect(previous, isNull,
+            reason: '"${entry.term}" ile "$previous" aynı anahtara ("$key") '
+                'iniyor. Yeni girdi eklemek yerine mevcut girdiyi güncelle.');
+        seen[key] = entry.term;
+      }
+    });
+  });
 }

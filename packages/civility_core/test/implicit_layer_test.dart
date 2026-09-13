@@ -58,6 +58,14 @@ void main() {
           reason: 'En zor ayrım: alay parçacığı olmadan övgü cezalandırılmaz.');
     });
 
+    test('kinaye ve ironi yakalanır, samimi övgü yakalanmaz', () {
+      expect(flags('çok zekisin ya'), isTrue, reason: 'ya takısı kinaye belirtir');
+      expect(flags('zeka fışkırıyor maşallah'), isTrue);
+      expect(flags('einstein mısın be mübarek'), isTrue);
+      expect(flags('çok akıllısın sen'), isFalse, reason: 'ya/sen ya yok, samimi olabilir');
+      expect(flags('zekice bir hamleydi'), isFalse);
+    });
+
     test('susturma yakalanır, deyim içindeki aynı kelime yakalanmaz', () {
       expect(flags('sus artık'), isTrue);
       expect(flags('sus payı vermişler'), isFalse,

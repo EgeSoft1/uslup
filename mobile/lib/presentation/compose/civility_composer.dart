@@ -140,13 +140,13 @@ class _CivilityComposerState extends State<CivilityComposer> {
   bool _reasonsExpanded = true;
 
   /// Yeniden girişi (re-entrancy) engelleyen bayrak.
-  ///
-  /// `_controller.findings` atanınca denetleyici dinleyicilerini uyarır —
-  /// çünkü işaretlemenin yeniden çizilmesi gerekir. Ama bu sınıf da o
-  /// dinleyicilerden biridir; bayrak olmasaydı her tuş vuruşu çözümlemeyi
-  /// iki kez çalıştırırdı. Ölçüm ekranda gösterildiği için bu, yanlış bir
-  /// süre raporlamak anlamına da gelirdi.
   bool _analyzing = false;
+  
+  /// Nudge Teorisi: Mikro-Sürtünme gecikmesi
+  bool _isFrictionDelaying = false;
+
+  /// VDS'deki LLM modeli şu an cümle üretiyor mu?
+  bool _isLlmThinking = false;
 
   @override
   void initState() {
@@ -213,6 +213,9 @@ class _CivilityComposerState extends State<CivilityComposer> {
       if (warned) {
         _sawWarning = true;
         _reasonsExpanded = true;
+        _isLlmThinking = true;
+      } else {
+        _isLlmThinking = false;
       }
     });
 
@@ -222,7 +225,11 @@ class _CivilityComposerState extends State<CivilityComposer> {
       if (!mounted) return;
       // Kullanıcı bu arada yazmaya devam etmiş olabilir — eski öneriyi gösterme.
       if (_controller.text != analysis.text) return;
-      setState(() => _suggestion = suggestion);
+      HapticFeedback.lightImpact();
+      setState(() {
+        _suggestion = suggestion;
+        _isLlmThinking = false;
+      });
     });
   }
 
@@ -273,11 +280,20 @@ class _CivilityComposerState extends State<CivilityComposer> {
     final analysis = _analysis ?? Civility.engine.analyze(text);
     final risk = analysis.risk;
 
-    // Yalnızca EN ÜST basamakta onay istenir. Her uyarıda diyalog açmak,
-    // uyarıyı bir engele çevirir ve kullanıcıyı özelliği kapatmaya iter.
+    // Yalnızca EN ÜST basamakta onay istenir.
     if (risk == RiskLevel.yuksek) {
       final proceed = await _confirmHighRisk(analysis);
       if (!mounted || proceed != true) return;
+    }
+    
+    // Nudge Teorisi: Uyarıya rağmen gönderiyorsa mikro-sürtünme (1.5 sn gecikme)
+    if (_sawWarning && (risk == RiskLevel.riskli || risk == RiskLevel.yuksek)) {
+      setState(() => _isFrictionDelaying = true);
+      HapticFeedback.lightImpact();
+      // Dopamin döngüsünü kırmak için bekleme süresi
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      setState(() => _isFrictionDelaying = false);
     }
 
     HapticFeedback.mediumImpact();
@@ -293,6 +309,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
       _suggestion = null;
       _sawWarning = false;
       _acceptedSuggestion = false;
+      _isFrictionDelaying = false;
     });
   }
 
@@ -438,10 +455,13 @@ class _CivilityComposerState extends State<CivilityComposer> {
           const SizedBox(height: AppSpacing.md),
           _reasonPanel(p, analysis),
         ],
-        if (_suggestion != null) ...[
-          const SizedBox(height: AppSpacing.md),
-          _suggestionCard(p, _suggestion!),
-        ],
+          if (_isLlmThinking) ...[
+            const SizedBox(height: AppSpacing.md),
+            _suggestionPendingCard(p),
+          ] else if (_suggestion != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            _suggestionCard(p, _suggestion!),
+          ],
         if (analysis != null &&
             !analysis.hasFindings &&
             hasText &&
@@ -637,6 +657,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
       controller: _controller,
       focusNode: _focusNode,
       autofocus: widget.autofocus,
+      readOnly: _isFrictionDelaying,
       minLines: widget.minLines,
       maxLines: widget.maxLines,
       textCapitalization: TextCapitalization.sentences,
@@ -685,14 +706,23 @@ class _CivilityComposerState extends State<CivilityComposer> {
         if (widget.onSubmit != null) ...[
           const SizedBox(width: AppSpacing.sm),
           FilledButton(
-            onPressed: hasText ? _submit : null,
+            onPressed: hasText && !_isFrictionDelaying ? _submit : null,
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, 40),
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               textStyle:
                   const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             ),
-            child: Text(_submitLabel),
+            child: _isFrictionDelaying
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(_submitLabel),
           ),
         ] else if (hasText) ...[
           const SizedBox(width: AppSpacing.sm),
@@ -727,7 +757,8 @@ class _CivilityComposerState extends State<CivilityComposer> {
           children: [
             for (var i = 0; i < RiskLevel.values.length; i++)
               AnimatedContainer(
-                duration: AppDurations.fast,
+                duration: AppDurations.normal,
+                curve: AppCurves.standard,
                 margin: const EdgeInsets.only(right: 3),
                 width: i <= risk.index && hasText ? 14 : 8,
                 height: 4,
@@ -821,9 +852,18 @@ class _CivilityComposerState extends State<CivilityComposer> {
               padding: const EdgeInsets.fromLTRB(
                   AppSpacing.base, 0, AppSpacing.base, AppSpacing.md),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // ── KALDIRILDI: gizli VDS tetikleyici ──────────────────
+                  // Burada, uzun basınca sunucu senkronizasyonu başlatan
+                  // görünmez bir ikon vardı — hemen altındaki "metin
+                  // cihazdan çıkmadı" satırının yanında. İki sebeple
+                  // kaldırıldı: keşfedilemeyen bir jest kullanıcı arayüzü
+                  // değildir, ve ağa çıkan bir eylemin en az o satır kadar
+                  // görünür olması gerekir.
+                  //
+                  // İşlev kaybolmadı: aynı iki eylem Üslup panelinde
+                  // ADIYLA yazan bir düğmenin arkasında duruyor.
                   for (final finding in analysis.findings)
                     _FindingRow(
                       finding: finding,
@@ -939,10 +979,58 @@ class _CivilityComposerState extends State<CivilityComposer> {
     ).animate().fadeIn(duration: 220.ms).slideY(begin: 0.05, end: 0);
   }
 
-  /// Uyarı alıp düzelten kullanıcıya olumlu geri bildirim.
+  /// Öneri üretilirken görünen kısa bekleme kartı.
   ///
-  /// Yalnızca daha önce uyarı görülmüşse çıkar. Her temiz cümlede
-  /// "aferin" demek, geri bildirimi gürültüye çevirir.
+  /// Yerel yeniden yazıcı mikrosaniyeler içinde döndüğü için bu kart
+  /// çoğu zaman tek kare bile görünmez; varlık sebebi, isteğe bağlı
+  /// sunucu katmanı takılıysa boş bir alan bırakmamaktır.
+  Widget _suggestionPendingCard(AppPalette p) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.base),
+      decoration: BoxDecoration(
+        color: p.isDark ? Colors.black : Colors.white,
+        borderRadius: AppRadius.lgAll,
+        border: Border.all(color: p.brand.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(p.brand),
+            ),
+          ).animate(onPlay: (controller) => controller.repeat()).shimmer(duration: 1000.ms),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Alternatif hazırlanıyor…',
+                  style: appBody(
+                    color: p.brand,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                  ),
+                ),
+                Text(
+                  'Yeniden yazım bu cihazda üretiliyor.',
+                  style: appBody(
+                    color: p.textSecondary,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 200.ms);
+  }
+
   Widget _resolvedBanner(AppPalette p) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -1116,4 +1204,5 @@ class _FindingRow extends StatelessWidget {
       ),
     );
   }
+
 }

@@ -97,9 +97,12 @@ class _HomeShellState extends State<HomeShell> {
             const ProfileScreen(),
           ],
         ),
-        floatingActionButton: showCompose
-            ? _ComposeFab(onTap: () => ComposeScreen.open(context))
-            : null,
+        floatingActionButton: AnimatedScale(
+          scale: showCompose ? 1.0 : 0.0,
+          duration: AppDurations.normal,
+          curve: AppCurves.emphasized,
+          child: _ComposeFab(onTap: () => ComposeScreen.open(context)),
+        ),
         bottomNavigationBar: _BottomNav(
           currentIndex: _currentIndex,
           items: _items,

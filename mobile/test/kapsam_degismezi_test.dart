@@ -51,12 +51,23 @@ void main() {
     //
     // civility_composer.dart — katmanın kendisi; içindeki `TextField`
     //   zaten çözümlenen kutudur.
-    // explore_screen.dart    — arama kutusu. Yazdığı şey yayımlanmaz,
-    //   kimseye ulaşmaz ve bir başkasına zarar veremez; müdahale etmek
-    //   kullanıcıyı sebepsiz kısıtlamak olurdu.
+    // explore_screen.dart    — arama kutuları (akış içi ve masaüstü sağ
+    //   sütun). Yazdığı şey yayımlanmaz, kimseye ulaşmaz ve bir başkasına
+    //   zarar veremez; müdahale etmek kullanıcıyı sebepsiz kısıtlamak
+    //   olurdu. Masaüstü kutusu da BU dosyada durur: izin listesini
+    //   büyütmek, değişmezi zamanla anlamsızlaştırırdı.
+    // llm_chat_screen.dart   — motorun kendisiyle konuşulan deneme
+    //   ekranı. Buradaki kutu bir yayın yüzeyi DEĞİLDİR: yazılan cümle
+    //   hiçbir yere gönderilmez, doğrudan motora verilir ve çıktısı
+    //   (toksisite, bulgular, gerekçe, öneri) ekrana yazılır. Yani metin
+    //   zaten katmandan geçer — `CivilityComposer` ile sarmak, çözümlemeyi
+    //   iki kez çalıştırmak olurdu. Aşağıdaki ikinci test bu dosyanın
+    //   motoru gerçekten çağırdığını denetler; çağırmayı bırakırsa istisna
+    //   kendiliğinden geçersizleşir.
     const izinliDosyalar = <String>{
       'lib/presentation/compose/civility_composer.dart',
       'lib/presentation/explore/explore_screen.dart',
+      'lib/presentation/uslup/llm_chat_screen.dart',
     };
 
     final girdiKaliplari = RegExp(
@@ -97,6 +108,24 @@ void main() {
         isTrue,
         reason: 'CivilityComposer motoru çağırmıyor; kutu bir metin '
             'kutusundan ibaret kalmış.',
+      );
+    });
+
+    test('deneme ekranı istisnası motoru çağırdığı sürece geçerlidir', () {
+      final chat = _libSources().firstWhere(
+        (f) => f.path.endsWith('lib/presentation/uslup/llm_chat_screen.dart'),
+        orElse: () => fail('llm_chat_screen.dart bulunamadı'),
+      );
+
+      // İstisnanın GEREKÇESİ "metin zaten motora gidiyor"du. Gitmiyorsa
+      // istisna da yok: bu ekran o zaman sıradan bir metin kutusudur ve
+      // `CivilityComposer` kullanmak zorundadır.
+      expect(
+        chat.source.contains('Civility.engine.analyze'),
+        isTrue,
+        reason: 'llm_chat_screen.dart motoru çağırmıyor; izinli listedeki '
+            'gerekçesi düşmüş. Ya motoru çağırsın ya CivilityComposer '
+            'kullansın.',
       );
     });
   });

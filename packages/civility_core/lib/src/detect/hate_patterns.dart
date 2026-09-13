@@ -306,9 +306,21 @@ abstract final class HatePatterns {
   /// konumda durabilen, kendisi bir ad öbeği kurmayan zarflar. Bir ad
   /// gelirse ("hayvan hakları") kalıp yine düşmez — kesinlik mekanizması
   /// olduğu gibi korunur.
+  ///
+  /// ── İP-26 EKLEMESİ ──────────────────────────────────────────────────────
+  /// Durum bildiren son öbekler de aynı işlevi görüyordu ve aynı kaçışı
+  /// açıyordu:
+  ///
+  ///   "Afganlar devlete yük olmuş"          → yakalanıyordu
+  ///   "Afganlar devlete yük olmuş durumda"  → temiz (0.00)   ✗
+  ///
+  /// "durumda", "halde", "hale geldi" bir ad öbeği kurmaz; yüklemin
+  /// ardından durur ve cümleyi bitirir. Kesinlik mekanizması bozulmaz.
   static const String _kuyruk = r'(?:\s+(?:artik|zaten|hep|hepsi|'
       r'hicbir zaman|asla|kesinlikle|tabii|elbette|bence|valla|vallahi|'
-      r'her zaman|maalesef|ne yazik ki|iste|resmen|aynen))*\s*$';
+      r'her zaman|maalesef|ne yazik ki|iste|resmen|aynen|'
+      r'durumda|durumdalar|halde|hale geldi|hale geldiler|'
+      r'oldu|oldular|oluyor|oluyorlar))*\s*$';
 
   // ── Düşmanca yüklem sözvarlıkları ────────────────────────────────────────
 
@@ -379,6 +391,8 @@ abstract final class HatePatterns {
     r'|ulkesine don|ulkelerine don|istemiyoruz|istemiyorum|burada istenm'
     r'|yasanmaz|oturulmaz|durulmaz|calisilmaz|yasanmiyor|oturulmuyor'
     r'|ne beklen'
+    // İP-26 · yeni kuruluşların zorunlu sabit parçaları.
+    r'|adam olmaz|adam olmuyor'
     r'|\b(?:sen|siz)\b'
     r'|\b(?:butun|tum|hepsi|hepiniz|her|tamami|tumu)\b'
     ')',
@@ -595,6 +609,46 @@ abstract final class HatePatterns {
       severity: 0.80,
       requiresIdentityAntecedent: true,
       neutralAlternative: 'göç politikası hakkında farklı düşünüyorum',
+    ),
+
+    // ═══ İP-26 · YENİ KURULUŞLAR (12 Eylül 2026) ═════════════════════════════
+    //
+    // İkisi de "bu grubun bireyleri düzelemez" önermesini kurar; kişinin
+    // davranışını değil, GRUBUNU sebep gösterirler. Ölçümde ikisi de
+    // kaçıyordu ve ikisi de Türkçe'de son derece yaygın.
+
+    ImplicitPattern(
+      // "bu Romanlardan adam olmaz" · "Suriyelilerden adam olmuyor"
+      //
+      // Yakın-kaçış: "bu çocuktan adam olmaz" — kimlik yuvası yok, kalıba
+      // düşmez. Kişiye yöneltilmiş hâli `karakter.adam_olmaz` içindedir ve
+      // orada nefret değil hakarettir; ayrımı yapan tek şey yuvadır.
+      id: 'nefret.kimlikten_adam_olmaz',
+      pattern: _re('\\b${IdentityTerms.slot}${_gap(2)}'
+          r'adam ol(?:maz|muyor)\w*'),
+      family: ImplicitFamily.kimlikAsagilama,
+      category: ToxicityCategory.nefret,
+      severity: 0.84,
+      neutralAlternative: 'bu konuda olumsuz deneyimlerim oldu',
+    ),
+
+    ImplicitPattern(
+      // "Alevilerin hepsi öyle zaten" · "Ermenilerin tümü aynı"
+      //
+      // İÇERİKSİZ TOPLU GENELLEME: yüklem bir sözvarlığına düşmez çünkü
+      // yüklem yoktur — suçlama, "öyle" işaret zarfına yüklenip okuyucunun
+      // zihnindeki olumsuz içeriğe bırakılır. Kuruluşun kendisi saldırıdır.
+      //
+      // Yakın-kaçış: "Alevilerin hepsi öyle düşünmüyor" → kalıba DÜŞMEZ.
+      // `_yuklem` cümle sonu şart koşar; arkasından bir fiil gelirse eşleşme
+      // kırılır. Bu, olumsuzlamayı da doğal olarak dışarıda bırakır.
+      id: 'nefret.iceriksiz_genelleme',
+      pattern: _re('\\b${IdentityTerms.slot}${_gap(2)}'
+          '(?:hepsi|tumu|tamami|hepsi de)\\s+(?:oyle|boyle|ayni|bir)$_yuklem'),
+      family: ImplicitFamily.topluSuclama,
+      category: ToxicityCategory.nefret,
+      severity: 0.78,
+      neutralAlternative: 'bu konuda genelleme yapmak istemiyorum',
     ),
   ];
 }

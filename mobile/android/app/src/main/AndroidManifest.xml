@@ -25,12 +25,15 @@
 
          Hata ayıklama ve profil sürümleri INTERNET iznini ayrı manifest
          dosyalarından alır (src/debug, src/profile); Flutter'ın sıcak
-         yeniden yükleme aracı onu gerektirir. Kullanıcıya giden RELEASE
          sürümü bu dosyadan üretilir ve izinsizdir.
          ═══════════════════════════════════════════════════════════════════ -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:label="Üslup"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
@@ -59,6 +62,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <service
+            android:name=".CivilityInputMethodService"
+            android:exported="true"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:label="Üslup Klavyesi">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

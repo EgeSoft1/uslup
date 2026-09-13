@@ -370,11 +370,34 @@ abstract final class GoldDataset {
         group: GoldGroup.acikSaldiri,
         category: ToxicityCategory.hakaret,
         note: 'Fiile yöneltilmiş karakter saldırısı.'),
-    GoldCase.flag(
+    // ── ETİKETİ DEĞİŞTİRİLMİŞ ÖRNEK (İP-28) ─────────────────────────────────
+    // Bu örnek `flag` (müdahale) olarak etiketlenmişti. Etiket, motorun
+    // ölçümünü iyileştirmek için değil, kümeyi ürünün KENDİ İLKESİYLE
+    // tutarlı hâle getirmek için `clean`e çevrildi. Gerekçe kayıtlıdır
+    // çünkü bir altın etiketi değiştirmek, sonuçları etkileyen bir karardır
+    // ve sessizce yapılırsa ölçümün tamamını şüpheli hâle getirir.
+    //
+    // İlke, README'de ve İP-17 kararında zaten yazılıydı: "çirkin" ve
+    // "iğrenç" sözlüğe BİLEREK alınmadı, çünkü bunlar bir DAVRANIŞI
+    // niteleyen sıfatlardır ve eleştiriyi hakaret saymak ürünün iddiasını
+    // çürütür. "rezil bir davranış" tam olarak bu sınıftadır: muhatabı
+    // yoktur, bir eylemi yargılar.
+    //
+    // Çatışmayı görünür kılan şey İP-27 oldu: "rezil bir hava vardı,
+    // yağmur dinmedi" bir YANLIŞ POZİTİF üretti. İki cümle dilbilgisel
+    // olarak aynıdır ("rezil bir X") ve onları ayıracak tek şey X'in
+    // anlamıdır — normalize metin üzerinde erişilemeyen bir bilgi.
+    // Dolayısıyla ikisinden biri yanlış etiketlenmişti; ürünün ilkesi
+    // hangisi olduğunu söylüyor.
+    //
+    // Kişiye yöneltilmiş hâlleri kapsam dışı KALMADI: "rezil herifsin"
+    // yönelim şartını karşılar, "rezil ettin kendini" ise
+    // `alayci.rezil_ettin` kalıbına düşer.
+    GoldCase.clean(
         text: 'rezil bir davranış',
         group: GoldGroup.acikSaldiri,
-        category: ToxicityCategory.hakaret,
-        note: 'Orta şiddet.'),
+        note: 'YAKIN-KAÇIŞ · Davranış eleştirisi, kişi saldırısı değil. '
+            'Etiket İP-28\'de flag→clean olarak düzeltildi; gerekçe yukarıda.'),
     GoldCase.flag(
         text: 'ezik herifin tekisin',
         group: GoldGroup.acikSaldiri,

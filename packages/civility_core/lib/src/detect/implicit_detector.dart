@@ -12,6 +12,7 @@
 // =============================================================================
 
 import 'hate_patterns.dart';
+import 'idiom_patterns.dart';
 import 'implicit_patterns.dart';
 
 /// Normalize metinde bulunan tek bir örüntü eşleşmesi.
@@ -116,6 +117,25 @@ class ImplicitDetector {
     List<int>? identityMentions;
     bool? hostilePresent;
 
+    // ── DEYİM KAPISI (İP-28 · gecikme optimizasyonu) ────────────────────────
+    // Deyim katmanı, kimlik kapısıyla aynı sorunu daha sert biçimde yaşar:
+    // yüzlerce girdi, her tuş vuruşunda, metnin tamamı üzerinde.
+    //
+    // Çözüm de aynı biçimdedir ama farklı bir değişmeze dayanır. Nefret
+    // örüntülerinin ortak şartı TEK bir kapıdır (metinde kimlik geçmesi);
+    // deyimlerin ortak şartı yoktur — her deyimin KENDİ kapı kelimesi
+    // vardır. Bu yüzden kapı bir "evet/hayır" değil, bir KÜMEDİR: tek
+    // taramada metindeki bütün kapı kökleri toplanır, sonra her deyim
+    // yalnızca kendi kökü o kümedeyse denenir.
+    //
+    // Sıradan bir cümlede ("yarın toplantı kaçta") hiçbir kapı açılmaz ve
+    // deyim katmanının maliyeti tek bir düz taramadır.
+    //
+    // Kapı bir hızlandırmadır; sonuç kümesini değiştirmesi bir hatadır.
+    // `test/detector_gate_test.dart` kapılı ve kapısız dedektörün bütün
+    // etiketli örneklerde aynı bulguları ürettiğini kanıtlar.
+    Set<String>? idiomAnchors;
+
     for (final pattern in patterns) {
       if (fastGate && pattern.id.startsWith(HatePatterns.idPrefix)) {
         identityMentions ??= _identityMentions(normalized);
@@ -123,6 +143,12 @@ class ImplicitDetector {
 
         hostilePresent ??= HatePatterns.hostileGate.hasMatch(normalized);
         if (!hostilePresent) continue;
+      }
+
+      final gate = pattern.gateWord;
+      if (fastGate && gate != null) {
+        idiomAnchors ??= IdiomPatterns.scanAnchors(normalized);
+        if (!idiomAnchors.contains(gate)) continue;
       }
 
       for (final match in pattern.pattern.allMatches(normalized)) {

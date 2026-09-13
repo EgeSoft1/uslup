@@ -1,20 +1,91 @@
+// =============================================================================
+// Giriş noktası
+// Dosya: mobile/lib/main.dart
+//
+// Üç iş yapar: motoru kurar, Android klavye servisinden (IME) gelen metin
+// çözümleme isteklerini karşılar ve uyarlanır kabuğu çalıştırır.
+//
+// ── NEDEN `init()` BEKLENİYOR AMA ZORUNLU DEĞİL ───────────────────────────
+// `Civility.init()` melez ONNX katmanını yükler. Yüklenemezse ürün yine
+// çalışır: `Civility.engine` ilk erişimde deterministik çekirdeği kendisi
+// kurar (`civility_runtime.dart`). Bu yüzden burada bir hata ürünü
+// açılmaz hâle getirmez — yalnızca melez katmanı kapatır.
+// =============================================================================
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'core/civility/civility_runtime.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
-import 'presentation/home/home_shell.dart';
+import 'presentation/home/adaptive_shell.dart';
 
-void main() {
+/// Dokunmatik olmayan platformlarda (masaüstü tarayıcı, Windows) yön
+/// kilidi ve kenardan kenara sistem çubuğu ayarı anlamsızdır.
+bool get _isMobilePlatform =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS);
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  // Durum çubuğu ve gezinme çubuğu içeriğin altına uzanır; her ekran kendi
-  // rengini `SystemUiOverlayStyle` ile bildirir.
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+  await Civility.init();
+
+  if (_isMobilePlatform) {
+    _bindKeyboardService();
+
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    // Durum çubuğu ve gezinme çubuğu içeriğin altına uzanır; her ekran kendi
+    // rengini `SystemUiOverlayStyle` ile bildirir.
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
   runApp(const NSosyalApp());
+}
+
+/// Klavye (IME) servisinden gelen metinleri yakalayıp çözümler.
+///
+/// Katmanın uygulama sınırının DIŞINDA da çalıştığı yer burasıdır: kullanıcı
+/// başka bir uygulamada yazarken bile aynı motor, aynı cihazda çalışır.
+void _bindKeyboardService() {
+  const methodChannel = MethodChannel('uslup/ime');
+
+  methodChannel.setMethodCallHandler((call) async {
+    if (call.method != 'analyze') return null;
+
+    final args = call.arguments as Map?;
+    final text = args?['text'] as String?;
+    if (text == null || text.isEmpty) return null;
+
+    final analysis = Civility.engine.analyze(
+      text,
+      typingSpeedMs: (args?['typing_speed_ms'] as num?)?.toDouble(),
+      backspaceRatio: (args?['backspace_ratio'] as num?)?.toDouble(),
+    );
+
+    if (!analysis.hasFindings) {
+      await methodChannel.invokeMethod('updateSuggestion', {
+        'toxicity': 0.0,
+        'message': '',
+      });
+      return null;
+    }
+
+    final suggestion = await Civility.suggester.suggest(analysis);
+    final cleanText = suggestion?.text ?? text;
+
+    await methodChannel.invokeMethod('updateSuggestion', {
+      'toxicity': analysis.toxicity,
+      'message': 'Öneri: $cleanText',
+      'cleanText': cleanText,
+    });
+    return null;
+  });
 }
 
 class NSosyalApp extends StatelessWidget {
@@ -45,7 +116,7 @@ class NSosyalApp extends StatelessWidget {
                 child: child!,
               );
             },
-            home: const HomeShell(),
+            home: const AdaptiveShell(),
           );
         },
       ),

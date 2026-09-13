@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // NSosyal Sosyal YZ — Nezaket Motoru Test Paketi
 // Dosya: packages/civility_core/test/civility_engine_test.dart
 //
@@ -109,6 +109,17 @@ void main() {
       }
     });
 
+    test('ünsüz yumuşaması içeren çekimli hakaretler yakalanır (k->ğ, p->b)', () {
+      const softenedInflections = [
+        'sen tam bir salağın tekisin',
+        'senin gibi bir köpeği kimse istemez',
+        'sen tam bir dalyarağın tekisin',
+      ];
+      for (final text in softenedInflections) {
+        expect(engine.analyze(text).hasFindings, isTrue, reason: text);
+      }
+    });
+
     test('küfür en yüksek risk seviyesini üretir', () {
       final result = engine.analyze('siktir git buradan');
       expect(result.risk, RiskLevel.yuksek);
@@ -153,6 +164,23 @@ void main() {
       for (final text in innocent) {
         final result = engine.analyze(text);
         expect(result.risk, RiskLevel.temiz, reason: 'YANLIŞ POZİTİF: $text');
+      }
+    });
+
+    test('morfolojik ek ayıklama ile kök çakışmaları (amaç, malzeme, boksör, itfaiye) elenir', () {
+      const morphologicallyInnocent = [
+        'Bu projedeki temel amacımız nedir?',
+        'Yeni ambalaj tasarımı çok başarılı oldu.',
+        'Amcamlar yarın akşam yemeğe gelecek.',
+        'Fabrikadaki bütün malzemeleri depoya taşıdık.',
+        'Milli boksör olimpiyatlarda altın madalya kazandı.',
+        'İtfaiye ekipleri yangına hızla müdahale etti.',
+        'Bu ayki ithalat ve ihracat rakamları açıklandı.',
+      ];
+      for (final text in morphologicallyInnocent) {
+        final result = engine.analyze(text);
+        expect(result.risk, RiskLevel.temiz, reason: 'YANLIŞ POZİTİF: $text');
+        expect(result.civilityScore, 100, reason: 'SKOR DÜŞMEMELİ: $text');
       }
     });
 

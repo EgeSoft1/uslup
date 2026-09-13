@@ -36,14 +36,31 @@ String trKucult(String value) {
 }
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key});
+  const ExploreScreen({
+    super.key,
+    this.initialQuery = '',
+    this.showSearchBar = true,
+  });
+
+  /// Masaüstünde arama kutusu sağ sütunda durur; burada ikinci bir kutu
+  /// çizmek aynı işi yapan iki alan gösterirdi.
+  final bool showSearchBar;
+
+  /// Masaüstü kabuğunda sağ sütundaki arama kutusundan gelen terim.
+  ///
+  /// Aramanın iki kutusu var ama tek bir çalıştırıcısı: sağ sütundaki kutu
+  /// yalnızca terimi buraya taşır, eşleştirmeyi yine `_results` yapar.
+  /// İkinci bir arama yolu yazılsaydı, Türkçe küçük harf dönüşümü gibi
+  /// incelikler tek yerde düzeltilemezdi.
+  final String initialQuery;
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  final TextEditingController _query = TextEditingController();
+  late final TextEditingController _query =
+      TextEditingController(text: widget.initialQuery);
   final SocialStore _store = SocialStore.instance;
 
   @override
@@ -87,7 +104,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         bottom: false,
         child: Column(
           children: [
-            _searchBar(p),
+            if (widget.showSearchBar) _searchBar(p),
             Expanded(
               child: ListenableBuilder(
                 listenable: _store,
@@ -450,6 +467,89 @@ class _FollowButton extends StatelessWidget {
               ),
               child: const Text('Takip et'),
             ),
+    );
+  }
+}
+
+// ─── Paylaşılan arama kutusu ─────────────────────────────────────────────────
+
+/// Masaüstü sağ sütunundaki arama kutusu.
+///
+/// ── NEDEN BU DOSYADA ──────────────────────────────────────────────────────
+/// `test/kapsam_degismezi_test.dart`, `lib/` altındaki her ham metin
+/// girdisini sayar ve Üslup katmanından geçmeyen bir tane bulursa kırılır.
+/// İzinli listede yalnızca iki dosya var; bu kutu onlardan birinin içinde
+/// durur çünkü izinin GEREKÇESİ birebir aynıdır:
+///
+///   Arama kutusuna yazılan şey yayımlanmaz, kimseye ulaşmaz ve bir
+///   başkasına zarar veremez. Müdahale etmek, kullanıcıyı sebepsiz
+///   kısıtlamak olurdu.
+///
+/// Üçüncü bir dosya açıp izin listesini genişletmek, o listeyi zamanla
+/// anlamsızlaştırırdı — istisna ne kadar ucuzsa değişmez o kadar zayıftır.
+class ExploreSearchField extends StatefulWidget {
+  const ExploreSearchField({
+    super.key,
+    required this.onSubmitted,
+    this.hint = 'Arama yap',
+    this.initialText = '',
+  });
+
+  final ValueChanged<String> onSubmitted;
+  final String hint;
+  final String initialText;
+
+  @override
+  State<ExploreSearchField> createState() => _ExploreSearchFieldState();
+}
+
+class _ExploreSearchFieldState extends State<ExploreSearchField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialText);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final term = _controller.text.trim();
+    if (term.isEmpty) return;
+    widget.onSubmitted(term);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    return TextField(
+      controller: _controller,
+      textInputAction: TextInputAction.search,
+      onSubmitted: (_) => _submit(),
+      style: TextStyle(fontSize: 14, color: p.textPrimary),
+      decoration: InputDecoration(
+        hintText: widget.hint,
+        isDense: true,
+        filled: true,
+        fillColor: p.surface,
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.base, vertical: 12),
+        prefixIcon:
+            Icon(Icons.search_rounded, size: 19, color: p.textTertiary),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.pill,
+          borderSide: BorderSide(color: p.borderStrong),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.pill,
+          borderSide: BorderSide(color: p.borderStrong),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.pill,
+          borderSide: BorderSide(color: p.brandInk, width: 2),
+        ),
+      ),
     );
   }
 }

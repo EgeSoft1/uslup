@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.example.turkiye_mesajlasma.MainActivity">
+    <subtype
+        android:imeSubtypeLocale="tr_TR"
+        android:imeSubtypeMode="keyboard"
+        android:label="Üslup Klavyesi" />
+</input-method>

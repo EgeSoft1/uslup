@@ -708,3 +708,66 @@ class SectionLabel extends StatelessWidget {
     );
   }
 }
+
+// ─── Tutarlı SnackBar yardımcısı ─────────────────────────────────────────────
+
+/// Uygulama genelinde tutarlı SnackBar gösterimi sağlar.
+///
+/// Farklı ekranlarda farklı renk/stil kullanmak yerine, bu yardımcı üzerinden
+/// geçen her SnackBar aynı tasarım diline uyar.
+class AppSnackBar {
+  AppSnackBar._();
+
+  /// Başarı mesajı gösterir (yeşil arka plan).
+  static void success(BuildContext context, String message) {
+    _show(context, message, AppColors.success, Icons.check_circle_rounded);
+  }
+
+  /// Bilgi mesajı gösterir (marka rengi arka plan).
+  static void info(BuildContext context, String message) {
+    _show(context, message, AppColors.brand, Icons.info_rounded);
+  }
+
+  /// Uyarı mesajı gösterir (turuncu arka plan).
+  static void warning(BuildContext context, String message) {
+    _show(context, message, AppColors.warning, Icons.warning_rounded);
+  }
+
+  /// Hata mesajı gösterir (kırmızı arka plan).
+  static void error(BuildContext context, String message) {
+    _show(context, message, AppColors.danger, Icons.error_rounded);
+  }
+
+  static void _show(
+      BuildContext context, String message, Color color, IconData icon) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 18),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: color,
+          behavior: SnackBarBehavior.floating,
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+          margin: const EdgeInsets.fromLTRB(
+              AppSpacing.base, 0, AppSpacing.base, AppSpacing.base),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+  }
+}

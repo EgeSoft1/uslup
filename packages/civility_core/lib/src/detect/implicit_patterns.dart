@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // Örtük Saldırı Örüntüleri — Türkçe edimbilimsel kalıplar
 // Dosya: packages/civility_core/lib/src/detect/implicit_patterns.dart
 //
@@ -38,6 +38,7 @@
 
 import '../lexicon/toxicity_lexicon.dart';
 import 'hate_patterns.dart';
+import 'idiom_patterns.dart';
 
 /// Örtük saldırının edimbilimsel türü. Şeffaflık panelinde kullanıcıya
 /// "bu ifade neden sorunlu" açıklaması bu sınıflandırmadan üretilir.
@@ -51,8 +52,19 @@ enum ImplicitFamily {
   /// Muhataplığın ve katkının reddi.
   yoksayma,
 
-  /// Konuşma hakkının elinden alınması.
+  /// Açık hakaret içermeyen, öfke ve misilleme vaadi.
+  tehdit,
+
+  /// Geri adım attırmaya, söz hakkını gaspetmeye yönelik kalıplar.
   susturma,
+
+  /// Zero-Shot Sarcasm Detection (İroni ve Kinaye)
+  /// Kelimeler olumlu olsa da cümlenin yapısı manipülatif ve alaycıdır.
+  kinaye,
+
+  /// Kendine Zarar Verme (Self-Harm) Tespiti
+  /// Toksisitenin başkasına değil, kullanıcının kendisine yönelmesi.
+  kendineZararVerme,
 
   /// Övgü kılığında alay.
   alayci,
@@ -91,9 +103,12 @@ extension ImplicitFamilyInfo on ImplicitFamily {
   String get label => switch (this) {
         ImplicitFamily.kucumseme => 'Küçümseme',
         ImplicitFamily.otekilestirme => 'Ötekileştirme',
-        ImplicitFamily.yoksayma => 'Yok sayma',
+        ImplicitFamily.yoksayma => 'Yok Sayma',
+        ImplicitFamily.tehdit => 'Tehdit',
         ImplicitFamily.susturma => 'Susturma',
-        ImplicitFamily.alayci => 'Alaycılık',
+        ImplicitFamily.kinaye => 'Kinaye ve İroni',
+        ImplicitFamily.kendineZararVerme => 'Kendine Zarar Verme (Acil Durum)',
+        ImplicitFamily.alayci => 'Alay Etme',
         ImplicitFamily.ortukTehdit => 'Örtük tehdit',
         ImplicitFamily.karakterSaldirisi => 'Karakter saldırısı',
         ImplicitFamily.inkarKalibi => 'İnkâr kalıbı',
@@ -143,6 +158,12 @@ extension ImplicitFamilyInfo on ImplicitFamily {
         ImplicitFamily.varlikReddi =>
           'Bir grubun var olma hakkını reddediyor. Bu ifade Türk Ceza '
               'Kanunu 216. madde kapsamına girebilir.',
+        ImplicitFamily.tehdit =>
+          'Fiziksel veya psikolojik şiddet içeren, karşı tarafa zarar verme kastı taşıyan bir ifade.',
+        ImplicitFamily.kinaye =>
+          'Sözde övgü gibi görünse de (kinaye/ironi), aslında karşı tarafı alaya alma ve aşağılama kastı taşıyor.',
+        ImplicitFamily.kendineZararVerme =>
+          'İntihar, kendine zarar verme veya umutsuzluk içeren riskli bir bağlam. Lütfen yardım almayı düşün.',
       };
 }
 
@@ -177,6 +198,29 @@ class ImplicitPattern {
   /// Kapıyı `ImplicitDetector` uygular; örüntü yalnızca şartı beyan eder.
   final bool requiresIdentityAntecedent;
 
+  /// Bu örüntünün DENENMESİ için metinde bulunması gereken değişmez kök.
+  ///
+  /// ── NEDEN VAR (İP-28) ────────────────────────────────────────────────────
+  /// Deyim katmanı yüzlerce girdi taşır. Her tuş vuruşunda yüzlerce düzenli
+  /// ifadeyi metnin tamamı üzerinde çalıştırmak, ürünün en sert kısıtını —
+  /// 16 ms'lik kare bütçesini — tek başına yiyip bitirirdi.
+  ///
+  /// Deyimlerin bir avantajı vardır: her biri, o deyime özgü ve başka hiçbir
+  /// yerde geçmeyen bir çekirdek kelime taşır ("takke", "çöplük", "yoğurt").
+  /// Kapı kelimesi budur. Dedektör tek bir taramada metindeki bütün kapı
+  /// kelimelerini toplar; hangi deyimin kapısı açıldıysa YALNIZCA o deyimin
+  /// düzenli ifadesi çalıştırılır. Kapı kelimesi geçmeyen bir cümlede deyim
+  /// katmanının maliyeti tek bir taramadır.
+  ///
+  /// Kök olarak yazılır, tam kelime olarak değil: Türkçe'de son ünsüz
+  /// yumuşar ("çöplük" → "çöplüğünde"), bu yüzden değişmeyen ön ek alınır
+  /// ("coplu"). Sözlük katmanındaki kök eşleşmesiyle aynı mantıktır.
+  ///
+  /// `null` ise örüntü her zaman denenir — kapı yalnızca bir hızlandırmadır,
+  /// davranışı değiştirmesi bir hatadır ve `test/detector_gate_test.dart`
+  /// bunu kapılı/kapısız iki çalıştırmayı karşılaştırarak denetler.
+  final String? gateWord;
+
   const ImplicitPattern({
     required this.id,
     required this.pattern,
@@ -185,6 +229,7 @@ class ImplicitPattern {
     required this.severity,
     this.neutralAlternative,
     this.requiresIdentityAntecedent = false,
+    this.gateWord,
   });
 }
 
@@ -214,6 +259,38 @@ abstract final class ImplicitPatterns {
   static String _bosluk(int n) => '(?:\\s+\\w+){0,$n}\\s+';
 
   static final List<ImplicitPattern> all = [
+    // ── KENDİNE ZARAR VERME (Self-Harm Detection - Madde 29) ─────────────
+    ImplicitPattern(
+      id: 'kendineZarar.intihar_ima',
+      pattern: _re(r'\b(yasamaya|hayata)\s+(dayanamiyorum|son verecegim|gucum kalmadi)\b'),
+      family: ImplicitFamily.kendineZararVerme,
+      category: ToxicityCategory.tehdit, // Acil durum uyarı seviyesi
+      severity: 1.0, // En yüksek risk
+    ),
+    ImplicitPattern(
+      id: 'kendineZarar.olmek',
+      pattern: _re(r'\b(olmek|yok olmak)\s+(istiyorum)\b'),
+      family: ImplicitFamily.kendineZararVerme,
+      category: ToxicityCategory.tehdit,
+      severity: 1.0,
+    ),
+
+    // ── KİNAYE VE İRONİ (Zero-Shot Sarcasm Detection) ───────────────────
+    ImplicitPattern(
+      id: 'kinaye.zeka_seviyesi',
+      pattern: _re(r'\b(zeka|iq)\s+(seviyen|kapasiten|masallah)\b'),
+      family: ImplicitFamily.kinaye,
+      category: ToxicityCategory.asagilama,
+      severity: 0.65,
+    ),
+    ImplicitPattern(
+      id: 'kinaye.zavalli',
+      pattern: _re(r'\b(ne kadar|cok)\s+(zavalli|bos|yazik|acinasi)\b'),
+      family: ImplicitFamily.kinaye,
+      category: ToxicityCategory.asagilama,
+      severity: 0.60,
+    ),
+
     // ═══ KÜÇÜMSEME ═══════════════════════════════════════════════════════════
     ImplicitPattern(
       id: 'kucumseme.yetkinlik_reddi',
@@ -1024,6 +1101,515 @@ abstract final class ImplicitPatterns {
       category: ToxicityCategory.asagilama,
       severity: 0.42,
     ),
+
+    // ═══ İP-25 · MOTOR GENİŞLETMESİ (Eylül 2026) ═══════════════════════════
+    // İstanbul Küme Vakfı testleri ve gerçek dünya kullanımında kaçan
+    // edimbilimsel kalıplar. Her biri bir CÜMLEYİ değil, o cümlenin
+    // temsil ettiği EDİMBİLİMSEL KURULUŞU hedefler.
+
+    // ── BEDDUA KALIPLARI ──────────────────────────────────────────────────
+    // Türkçe sosyal medyada çok yaygın, hiçbir platformda filtrelenmez.
+    // Meşru kullanımı yoktur — Allah'a dua etmek ile birine beddua etmek
+    // yapısal olarak farklıdır: beddua İKİNCİ ŞAHSA yöneliktir.
+    ImplicitPattern(
+      // "allah belanı versin" / "allah cezanı versin" / "allah kahretsin"
+      id: 'beddua.allah_belani',
+      pattern: _re(r'\ballah\b' +
+          _bosluk(1) +
+          r'(belani|cezani|kahretsin|canini alsin|batirsin)' + _ek + r'\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.55,
+    ),
+    ImplicitPattern(
+      // "cehenneme kadar yolun var" / "cehennemin dibi boylasın"
+      id: 'beddua.cehennem',
+      pattern: _re(r'\bcehennem' + _ek + r'\b' +
+          _bosluk(2) +
+          r'(yolun|dibi|kadar)' + _ek + r'\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
+    ),
+
+    // ── DEYİMSEL HAKARET ──────────────────────────────────────────────────
+    ImplicitPattern(
+      // "iki paralık adam" / "beş kuruşluk adam" — değersizleştirme deyimi.
+      // Yakın-kaçış: "iki paralık eşya" kalıba DÜŞMEZ — kapalı isim listesi.
+      id: 'kucumseme.paralik_adam',
+      pattern: _re(r'\b(iki|uc|bes|on) (paralik|kurusluk|liralık)\b' +
+          _bosluk(1) +
+          r'(adam|herif|insan|tip|kisi)' + _ek + r'\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "yüzüne tüküreyim" / "yüzüne tükürseler" — ağır aşağılama.
+      id: 'karakter.yuzune_tukur',
+      pattern: _re(r'\byuzun(e|uze) tukur' + _ek + r'\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.hakaret,
+      severity: 0.70,
+    ),
+    ImplicitPattern(
+      // "aklını peynir ekmekle mi yedin" — deyimsel yetersizlik atfı.
+      id: 'kucumseme.aklini_peynir_ekmekle',
+      pattern: _re(r'\baklin(i|izi) peynir ekmekle' + _bosluk(1) +
+          r'(mi |mu )?ye' + _ek + r'\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+      neutralAlternative: 'bu kararı anlamakta zorlanıyorum',
+    ),
+
+    // ── AGRESİF SORGULAMA ─────────────────────────────────────────────────
+    ImplicitPattern(
+      // "senin derdin ne" — yok sayma/küçümseme. Karşındakinin kaygısını
+      // bir problem olarak çerçeveler.
+      // Yakın-kaçış: "derdin ne kadar büyük" kalıba DÜŞMEZ (çekim farkı).
+      id: 'yoksayma.derdin_ne',
+      pattern: _re(r'\b(senin|sizin) derdin(iz)? ne\b\s*(ki|be|ya|lan)?\s*[?!]?\s*$'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "sana ne oluyor" / "sana ne oluyorsa" — muhatabın tepkisini
+      // patolojikleştirme.
+      id: 'yoksayma.sana_ne_oluyor',
+      pattern: _re(r'\b(sana|size) ne oluyor' + _ek + r'\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.38,
+    ),
+
+    // ── UTANDIRMA / TERBIYE ETME ──────────────────────────────────────────
+    ImplicitPattern(
+      // "terbiyeni takın" / "terbiyeni takınız" — emir kipi susturma.
+      id: 'susturma.terbiyeni_takin',
+      pattern: _re(r'\bterbiye(ni|nizi) tak' + _emir + r'\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "ağzını topla" / "ağzınızı toplayın" — susturma.
+      id: 'susturma.agzini_topla',
+      pattern: _re(r'\bagz(ini|inizla|inizl|inizi) topla' + _emir + r'\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
+    ),
+    ImplicitPattern(
+      // "ne ayıp" / "ayıp değil mi" — utandırma.
+      // Yakın-kaçış: "ayıp olur" kalıba DÜŞMEZ — ikinci şahıs yönelimi yok.
+      id: 'karakter.ne_ayip',
+      pattern: _re(r'\bne ayip\b|\bayip degil mi\b|\butanmiyor musun\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.38,
+    ),
+
+    // ── KİNAYE VE İRONİ (Zero-Shot Sarcasm) ───────────────────────────────
+    ImplicitPattern(
+      // "zeka fışkırıyor" / "zekan taşıyor" — sözde övgü, gerçekte aşağılama.
+      id: 'kinaye.zeka_fiskiriyor',
+      pattern: _re(r'\bzeka(si|niz|n)? (fiskir|tas)' + _ek + r'\b'),
+      family: ImplicitFamily.kinaye,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+      neutralAlternative: 'fikrinize katılmıyorum',
+    ),
+    ImplicitPattern(
+      // "çok zekisin ya" / "ne kadar zekisin be" — cümlenin sonundaki parçacıklar alay atfı taşır.
+      id: 'kinaye.cok_zekisin_ya',
+      pattern: _re(r'\b(cok|ne kadar da|masallah) (zeki|akilli)sin( ya| be)\b'),
+      family: ImplicitFamily.kinaye,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "bizim dahi" / "sayın dahi" / "einstein mısın"
+      id: 'kinaye.dahi_benzetmesi',
+      pattern: _re(r'\b(bizim dahi|sayin dahi|einstein( misin| misiniz)?)\b'),
+      family: ImplicitFamily.kinaye,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+    ImplicitPattern(
+      // "aferin çok büyük iş yaptın" / "ayakta alkışlıyorum" — sahte onaylama.
+      id: 'kinaye.sahte_alkis',
+      pattern: _re(r'\b(ayakta alkisliyorum|buyuk is yaptin(iz|)\b|aferin sana\b)'),
+      family: ImplicitFamily.kinaye,
+      category: ToxicityCategory.asagilama,
+      severity: 0.38,
+    ),
+
+    // ═══ İP-26 · DEYİM AİLELERİ (12 Eylül 2026) ════════════════════════════
+    //
+    // ── NEDEN BU GENİŞLETME ───────────────────────────────────────────────
+    // Dört ayrık kümenin ortak bulgusu tekti ve motorun bir kusuru değildi:
+    // duyarlılık, YAZILMIŞ AİLE SAYISIYLA sınırlı. İP-22 ölçümünde yazılmış
+    // ailelerin hiç görülmemiş örneklerinde duyarlılık %90,0 iken hiç
+    // yazılmamış ailelerde %6,7 çıktı. Yani yapılacak iş algoritma işi
+    // değil, VERİ işiydi ve bu blok o işin karşılığıdır.
+    //
+    // ── BEDELİ AÇIKÇA YAZILIYOR ───────────────────────────────────────────
+    // Bu blok yazılırken İP-22'nin kaçırdıkları OKUNDU. Dolayısıyla İP-22
+    // artık bir genelleme ölçümü DEĞİLDİR — önceki üç küme gibi YANMIŞTIR.
+    // Bunu gizlemek mümkündü (kaçanların çoğu zaten genel Türkçe deyimidir
+    // ve bakmadan da yazılabilirdi) ama ölçüm disiplini "bakmadım" demenin
+    // değil, "baktım" demenin üstüne kurulur.
+    //
+    // Yerine yazılan taze küme: `eval/generalization4_dataset.dart` (İP-27).
+    // Geçerli genelleme sayısı oradan okunur.
+    //
+    // ── SEÇİM ÖLÇÜTÜ ──────────────────────────────────────────────────────
+    // Her aile, Türkçe'de KALIPLAŞMIŞ ve muhataba yöneldiğinde tek işlevi
+    // değersizleştirmek olan bir deyimdir. Deyimin meşru bir okuması varsa
+    // (örn. "kendine gel" bir arkadaşı sarsmak için de kullanılır) şiddeti
+    // eşiğin hemen altında tutuldu: tek başına müdahale üretmez, başka bir
+    // bulguyla birleşince skoru yukarı iter.
+
+    // ── AKIL SAĞLIĞI İMASI ────────────────────────────────────────────────
+    ImplicitPattern(
+      // "kafayı yemişsin" · "kafayı sıyırmışsın" · "kafayı üşütmüşsün"
+      // Yakın-kaçış: "kafayı bu işe taktım" — kapalı fiil listesi.
+      id: 'karakter.kafayi_yemis',
+      pattern: _re(r'\bkafayi (yemis|siyirmis|usutmus|bulmus)' + _ek + r'\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
+      neutralAlternative: 'bu yaklaşımı hiç anlamıyorum',
+    ),
+    ImplicitPattern(
+      // "kendine gel" · "aklını başına al" · "aklını başına devşir"
+      // Meşru kullanımı vardır (endişeli bir uyarı); şiddet düşük tutuldu.
+      id: 'karakter.kendine_gel',
+      pattern: _re(r'\bkendine gel\b|\bakl(ini|inizi) bas(ina|iniza) (al|devsir)' +
+          _emir + r'\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.34,
+    ),
+    ImplicitPattern(
+      // "tedavi ol" · "doktora görün" — akıl sağlığını hakaret aracı yapar.
+      // Yakın-kaçış: "doktora göründün mü" (soru, tavsiye) kalıba düşmez:
+      // emir kipi ve cümle sonu şart.
+      id: 'karakter.tedavi_ol',
+      pattern: _re(r'\b(tedavi ol|doktora gorun|ilaclarini al)' + _emir +
+          r'\b\s*[.!]?\s*$'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.55,
+    ),
+
+    // ── KİBİR SUÇLAMASI ───────────────────────────────────────────────────
+    ImplicitPattern(
+      // "burnu havada" · "burnun havada geziyorsun"
+      // Yakın-kaçış: "burnu kanadı" — kapalı "havada" şartı.
+      id: 'karakter.burnu_havada',
+      pattern: _re(r'\bburn(u|un|unuz) havada\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "kendini bir şey sanıyorsun" · "ne sanıyorsun kendini"
+      id: 'karakter.kendini_bir_sey_saniyor',
+      pattern: _re('\\bkendin(i|izi) (bir sey|adam|dahi|allah) san$_ek\\b'
+          r'|\bne san(iyorsun|iyorsunuz) kendin(i|izi)\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+      neutralAlternative: 'bu konuda aynı fikirde değiliz',
+    ),
+    ImplicitPattern(
+      // "havalara girme" · "havalanma" (ikinci şahıs emir)
+      id: 'karakter.havalara_girme',
+      pattern: _re(r'\bhavalara girm' + _ek + r'\b|\bhavalanma' + _emir + r'\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.32,
+    ),
+
+    // ── EMEĞİ / İÇERİĞİ DEĞERSİZLEŞTİRME ──────────────────────────────────
+    ImplicitPattern(
+      // "boşa kürek çekiyorsun" · "boşuna kürek çekme"
+      id: 'kucumseme.bosa_kurek',
+      pattern: _re(r'\b(bosa|bosuna) kurek cek' + _ek + r'\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+      neutralAlternative: 'bu yolun sonuç vereceğine inanmıyorum',
+    ),
+    ImplicitPattern(
+      // "ipe sapa gelmez şeyler konuşuyorsun"
+      id: 'kucumseme.ipe_sapa_gelmez',
+      pattern: _re(r'\bipe sapa gelmez\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.45,
+      neutralAlternative: 'söylediklerini takip edemiyorum',
+    ),
+    ImplicitPattern(
+      // "laf ebeliği yapma" · "laf cambazlığı" · "laf kalabalığı yapma"
+      id: 'yoksayma.laf_ebeligi',
+      pattern: _re(r'\blaf (ebeligi|cambazligi|kalabaligi|salatasi)\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.44,
+    ),
+    ImplicitPattern(
+      // "boş yapma" · "boş konuşma" · "boş boş konuşma"
+      // Yakın-kaçış: "boş bir sayfa" — fiil listesi kapalı.
+      id: 'yoksayma.bos_yapma',
+      pattern: _re(r'\bbos (bos )?(yapma|konusma|sallama)' + _emir + r'\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "hava civa" · "hikâye anlatma bana"
+      id: 'yoksayma.hikaye_anlatma',
+      pattern: _re(r'\bhikaye anlatma\b|\bmasal (anlatma|okuma)\b|\bhava civa\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.38,
+    ),
+
+    // ── MUHATAPLIĞIN / YETKİNİN REDDİ ─────────────────────────────────────
+    ImplicitPattern(
+      // "nereden çıktın sen şimdi" · "nereden çıktınız"
+      // Yakın-kaçış: "bu fikir nereden çıktı" — ikinci şahıs şart.
+      id: 'yoksayma.nereden_ciktin',
+      pattern: _re(r'\bnereden cikt(in|iniz)\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+    ImplicitPattern(
+      // "sen kim, bu iş kim" · "sen kim oluyorsun"
+      // Eliptik kuruluş: iki "kim" arasında en fazla üç kelime.
+      id: 'yoksayma.sen_kim_bu_is_kim',
+      pattern: _re('\\bsen kim\\b${_bosluk(3)}kim\\b'
+          r'|\b(sen|siz) kim ol(uyorsun|uyorsunuz)\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.46,
+    ),
+    ImplicitPattern(
+      // "ne haddine" · "haddin değil" (eliptik "had" ailesi)
+      id: 'yoksayma.ne_haddine',
+      pattern: _re(r'\bne hadd(ine|inize)\b|\bhadd(in|iniz) degil\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.46,
+    ),
+    ImplicitPattern(
+      // "üstüne vazife değil" · "sana mı kaldı" · "sen karışma"
+      //
+      // Yakın-kaçış 1: "bu iş bana kaldı" — ikinci şahıs şart.
+      // Yakın-kaçış 2: "sen karışmasan da olur, ben hallederim" — ÖLÇÜMLE
+      //   bulundu. İlk yazımda fiil kuyruğu serbestti (`karism\w*`) ve
+      //   şart kipini de yakalıyordu; oysa "karışmasan da olur" bir
+      //   susturma değil, NAZİKÇE YÜKÜ ÜSTLENMEDİR. Kalıp artık yalnızca
+      //   EMİR kipini görür: "karışma", "karışmayın". Şart eki (-sa/-se)
+      //   kelime sınırını kırdığı için kendiliğinden dışarıda kalır.
+      id: 'yoksayma.ustune_vazife_degil',
+      pattern: _re(r'\b(ustune|uzerine) vazife degil\b'
+          r'|\b(sana|size) mi kaldi\b'
+          r'|\b(sen|siz) karisma(yin|yiniz)?\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "sende hiç X mi var" — niteliğin topluca reddi.
+      // İP-22'de "sende hiç edep mi var" kaçmıştı: mevcut nitelik_reddi
+      // kalıbı araya giren "hiç" pekiştirecini görmüyordu.
+      // Yakın-kaçış: "sende hiç kalem var mı" — nitelik listesi kapalı.
+      //
+      // İP-27 DÜZELTMESİ. Çoğul/nazik biçim ("sizde hiç vicdan mı var")
+      // kaçıyordu ve sebebi bir yazım hatasıydı: `sen(de|izde)` yalnızca
+      // "sende" ve "senizde" üretir — ikincisi Türkçe'de var olmayan bir
+      // kelimedir, "sizde" ise hiç üretilmiyordu. Nazik hitap, saldırıyı
+      // yumuşatmaz; kalıbın onu görmemesi bir kusurdur.
+      id: 'karakter.nitelik_reddi_hic',
+      pattern: _re(r'\b(sende|sizde) (hic )?'
+          r'(edep|utanma|vicdan|ar|haya|insaf|saygi|ahlak|onur|seref|'
+          r'merhamet|adalet|dusunce)\w* (mi|mu) var\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.hakaret,
+      severity: 0.58,
+      neutralAlternative: 'bu davranışı doğru bulmuyorum',
+    ),
+
+    // ── SUSTURMA (yeni fiiller) ───────────────────────────────────────────
+    ImplicitPattern(
+      // "çeneni tut" · "çenenizi tutun" — "kapa çeneni"den farklı fiil.
+      id: 'susturma.ceneni_tut',
+      pattern: _re(r'\bcene(ni|nizi) tut' + _emir + r'\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.55,
+    ),
+    ImplicitPattern(
+      // "ağzından çıkanı kulağın duysun"
+      id: 'susturma.agzindan_cikani',
+      pattern: _re(r'\bagz(indan|inizdan) cikani kulag(in|iniz)\w* duys' + _ek + r'\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+    ),
+    ImplicitPattern(
+      // "yerini bil" · "sıranı bil" · "hizanı bil"
+      id: 'susturma.yerini_bil',
+      pattern: _re(r'\b(yer(ini|inizi)|sira(ni|nizi)|hiza(ni|nizi)) bil' +
+          _emir + r'\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
+    ),
+    ImplicitPattern(
+      // "ukalalık yapma" · "çok bilmişlik yapma" · "bilmiş bilmiş konuşma"
+      id: 'susturma.ukalalik_yapma',
+      pattern: _re('\\b(ukalalik|bilmislik|cok bilmislik) yap$_emir\\w*\\b'
+          r'|\bukala dumbelegi\b'),
+      family: ImplicitFamily.susturma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.46,
+    ),
+
+    // ── ÖRTÜK TEHDİT (deyimsel) ───────────────────────────────────────────
+    ImplicitPattern(
+      // "ağzının payını alacaksın" · "ağzının payını verdim"
+      id: 'tehdit.agzinin_payi',
+      pattern: _re(r'\bagz(inin|inizin) payini (al|ver)' + _ek + r'\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.62,
+    ),
+    ImplicitPattern(
+      // "elime geçersen" · "elime bir geçersin" · "elime geçerse"
+      //
+      // Yakın-kaçış: "elime geçen ilk kitabı okudum" — İP-27 ÖLÇÜMÜYLE
+      //   bulunmuş bir YANLIŞ POZİTİFTİR. İlk yazımda alternatifler arasında
+      //   çıplak `gec` vardı ve arkasındaki serbest ek kuyruğu (`_ek`) onu
+      //   "geçen" ortacına da uyduruyordu. "Elime geçen X" Türkçe'de son
+      //   derece sıradan bir sıfat-fiil kuruluşudur ve tehditle ilgisi yoktur.
+      //
+      //   Tehdidi kuran şey ikinci şahsın ŞART ya da GENİŞ ZAMAN çekimidir:
+      //   "geçersen", "geçersin", "geçerse", "geçersiniz". Ortaç (-en) ve
+      //   geçmiş zaman (-ti) artık kalıbın dışındadır.
+      id: 'tehdit.elime_gecersen',
+      pattern: _re(r'\belime (bir )?gecer(sen|sin|se|seniz|siniz)\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.70,
+    ),
+    ImplicitPattern(
+      // "bana bulaşma" · "benimle uğraşma" — misilleme uyarısı.
+      // Yakın-kaçış: "boyaya bulaşma" — birinci şahıs yönelimi şart.
+      id: 'tehdit.bana_bulasma',
+      pattern: _re(r'\b(bana|benimle) (bulasma|ugrasma|dalga gecme)' +
+          _emir + r'\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.52,
+    ),
+    ImplicitPattern(
+      // "iki elim yakanda olsun" — klasik beddua/tehdit kuruluşu.
+      id: 'tehdit.elim_yakanda',
+      pattern: _re(r'\biki elim yaka(nda|nizda)\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.68,
+    ),
+
+    // ── ALAY / ACIMA ──────────────────────────────────────────────────────
+    ImplicitPattern(
+      // "acıyorum sana" · "sana acıyorum" · "yazık sana"
+      // Yakın-kaçış: "yazık oldu" — ikinci şahıs yönelimi şart.
+      id: 'alayci.aciyorum_sana',
+      pattern: _re(r'\baciyorum (sana|size)\b|\b(sana|size) aciyorum\b'
+          r'|\byazik (sana|size)\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.40,
+    ),
+    ImplicitPattern(
+      // "gülerler adama" · "el âlem güler" — utandırma yoluyla susturma.
+      id: 'alayci.gulerler_adama',
+      pattern: _re(r'\bguler(ler)? adama\b|\bel alem gul' + _ek + r'\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.38,
+    ),
+    ImplicitPattern(
+      // "rezil ettin kendini" · "rezil oldun"
+      id: 'alayci.rezil_ettin',
+      pattern: _re(r'\brezil (ettin|oldun|olmussun)' + _ek + r'\b'),
+      family: ImplicitFamily.alayci,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+
+    // ── DEYİMSEL YETERSİZLİK ATFI ─────────────────────────────────────────
+    ImplicitPattern(
+      // "gözün kör mü" · "kör müsün" · "okuma yazman yok mu"
+      // Yakın-kaçış: "kör nokta" — soru kipi ve ikinci şahıs şart.
+      id: 'kucumseme.gozun_kor_mu',
+      pattern: _re(r'\bgoz(un|unuz) kor mu\b|\bkor mus(un|unuz)\b'
+          r'|\bokuma yazma(n|niz) yok mu\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.48,
+    ),
+    ImplicitPattern(
+      // "boyundan büyük işlere kalkışma"
+      id: 'kucumseme.boyundan_buyuk',
+      pattern: _re(r'\bboy(undan|unuzdan) buyuk\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.42,
+    ),
+    ImplicitPattern(
+      // "adam olmazsın" · "senden adam olmaz"
+      // Kimlik eksenli hâli `nefret.kimlikten_adam_olmaz` içindedir.
+      id: 'karakter.adam_olmaz',
+      pattern: _re(r'\b(senden|sizden) adam olmaz\b|\badam olmazs(in|iniz)\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.hakaret,
+      severity: 0.60,
+      neutralAlternative: 'bu davranışın değişmesini bekliyorum',
+    ),
+    ImplicitPattern(
+      // "ne işe yarıyorsun" · "ne işe yararsın"
+      id: 'kucumseme.ne_ise_yariyorsun',
+      pattern: _re(r'\bne ise yar(iyorsun|arsin|iyorsunuz|arsiniz)\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+    ),
+    ImplicitPattern(
+      // "cahilliğinle övünme" · "cehaletinle övünme"
+      id: 'kucumseme.cahillikle_ovunme',
+      pattern: _re(r'\b(cahillig(in|iniz)le|cehalet(in|iniz)le) ovun' +
+          _emir + r'\w*\b'),
+      family: ImplicitFamily.kucumseme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.50,
+    ),
+
+    // ═══ DEYİM VE ATASÖZÜ ════════════════════════════════════════════════════
+    // Kalıplaşmış değersizleştirme ayrı bir dosyada: `idiom_patterns.dart`.
+    // Ayrı tutulmalarının sebebi ÖLÇÜM dürüstlüğüdür — buradaki kalıplar
+    // ÜRETKENDİR (yazılan bir kuruluş, hiç görülmemiş örnekleri de yakalar),
+    // deyimler değildir. İkisini aynı listede saymak, ezberlenen deyim
+    // sayısını genelleme oranına karıştırırdı.
+    ...IdiomPatterns.all,
 
     // ═══ NEFRET SÖYLEMİ ══════════════════════════════════════════════════════
     // Kimlik hedefli kuruluşlar ayrı bir dosyada: `hate_patterns.dart`.

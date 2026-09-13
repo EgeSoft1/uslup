@@ -25,7 +25,12 @@ import '../feed/post_detail_screen.dart';
 import '../widgets/social_widgets.dart';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.embedded = false});
+
+  /// Masaüstü kabuğunda bu ekran itilmez, orta sütuna GÖMÜLÜR. Gömülüyken
+  /// geri düğmesi çizilmez: basıldığında hiçbir şey yapmayan bir düğme,
+  /// kullanıcıya yalan söyler.
+  final bool embedded;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -56,11 +61,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         shape: Border(bottom: BorderSide(color: p.divider)),
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(Icons.arrow_back_rounded),
-          tooltip: 'Geri',
-        ),
+        automaticallyImplyLeading: !widget.embedded,
+        leading: widget.embedded
+            ? null
+            : IconButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+                tooltip: 'Geri',
+              ),
         title: Text(
           'Bildirimler',
           style: TextStyle(

@@ -158,4 +158,214 @@ abstract final class TurkishMorphology {
     final first = trimmed[0];
     return toUpperTr(first) + trimmed.substring(1);
   }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // ZEMBEREK BENZERİ HAFİFLETİLMİŞ MORFOLOJİK ANALİZ & EK AYIKLAMA MOTORU
+  // ───────────────────────────────────────────────────────────────────────────
+
+  /// Sert ünsüzle biten kök sonunu ünlüyle başlayan ek aldığında yumuşatır.
+  /// k ↔ ğ/g, p ↔ b, ç ↔ c, t ↔ d (normalize metinde k ↔ g, t ↔ d, p ↔ b).
+  static String? softenNormalizedStem(String normalizedStem) {
+    if (normalizedStem.length < 2) return null;
+    final lastChar = normalizedStem[normalizedStem.length - 1];
+    final prefix = normalizedStem.substring(0, normalizedStem.length - 1);
+    return switch (lastChar) {
+      'k' => '${prefix}g',
+      't' => '${prefix}d',
+      'p' => '${prefix}b',
+      _ => null,
+    };
+  }
+
+  /// Yumuşamış kök sonunu sert hâline geri çevirir (g → k, d → t, b → p).
+  static String? hardenNormalizedStem(String normalizedStem) {
+    if (normalizedStem.length < 2) return null;
+    final lastChar = normalizedStem[normalizedStem.length - 1];
+    final prefix = normalizedStem.substring(0, normalizedStem.length - 1);
+    return switch (lastChar) {
+      'g' => '${prefix}k',
+      'd' => '${prefix}t',
+      'b' => '${prefix}p',
+      _ => null,
+    };
+  }
+
+  /// Türkçe Büyük ve Küçük Ünlü Uyumu kontrolü (Normalize metin üzerinde).
+  ///
+  /// Kalın ünlülü kökler ('a', 'o', 'u') eklerinde 'e' içeremez (örn: aptal+ler ✗).
+  /// İnce ünlülü kökler ('e', 'i') eklerinde 'a' içeremez (örn: şerefsiz+lar ✗).
+  static bool isVowelHarmonious(String normalizedStem, String normalizedSuffix) {
+    if (normalizedSuffix.isEmpty) return true;
+    final stemVowel = lastVowel(normalizedStem);
+    if (stemVowel == null) return true;
+
+    final isBackStem = (stemVowel == 'a' || stemVowel == 'o' || stemVowel == 'u');
+    final isFrontStem = (stemVowel == 'e' || stemVowel == 'i');
+
+    for (var i = 0; i < normalizedSuffix.length; i++) {
+      final ch = normalizedSuffix[i];
+      // -yor şimdiki zaman eki istisnadır
+      if (ch == 'o') continue;
+
+      if (isBackStem && ch == 'e') {
+        return false;
+      }
+      if (isFrontStem && ch == 'a') {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Verilen ekin Türkçe kurallarına göre geçerli bir çekim eki olup olmadığını denetler.
+  static bool isValidSuffix(
+    String normalizedStem,
+    String normalizedSuffix, {
+    bool isVerbal = false,
+    bool isStrictShortRoot = false,
+  }) {
+    if (normalizedSuffix.isEmpty) return true;
+
+    // 1. Ünlü uyumu kuralı
+    if (!isVowelHarmonious(normalizedStem, normalizedSuffix)) {
+      return false;
+    }
+
+    // 2. Kısa ve yüksek riskli kökler ("am", "bok", "it", "mal") için katı liste
+    if (isStrictShortRoot || normalizedStem.length <= 3) {
+      return _strictShortRootSuffixes.contains(normalizedSuffix);
+    }
+
+    // 3. Standart isim veya fiil çekim ekleri
+    if (_validNounSuffixes.contains(normalizedSuffix)) return true;
+    if (isVerbal && _validVerbSuffixes.contains(normalizedSuffix)) return true;
+
+    return false;
+  }
+
+  /// Verilen token'ın, [normalizedStem] kökünden türetilmiş geçerli bir çekimli
+  /// form olup olmadığını doğrular (Ünsüz yumuşaması dahil).
+  static bool isValidInflectedForm(
+    String fullNormalizedToken,
+    String normalizedStem, {
+    bool isVerbal = false,
+  }) {
+    if (fullNormalizedToken == normalizedStem) return true;
+
+    final isShort = normalizedStem.length <= 3;
+
+    // 1. Doğrudan kök + ek ("aptal" + "sın" -> "aptalsin")
+    if (fullNormalizedToken.startsWith(normalizedStem)) {
+      final suffix = fullNormalizedToken.substring(normalizedStem.length);
+      if (isValidSuffix(normalizedStem, suffix,
+          isVerbal: isVerbal, isStrictShortRoot: isShort)) {
+        return true;
+      }
+    }
+
+    // 2. Ünsüz yumuşaması ("salak" -> "salag" + "im" -> "salagim")
+    final softened = softenNormalizedStem(normalizedStem);
+    if (softened != null && fullNormalizedToken.startsWith(softened)) {
+      final suffix = fullNormalizedToken.substring(softened.length);
+      if (suffix.isNotEmpty && _vowels.contains(suffix[0])) {
+        if (isValidSuffix(normalizedStem, suffix,
+            isVerbal: isVerbal, isStrictShortRoot: isShort)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // ─── GEÇERLİ TÜRKÇE ÇEKİM EKİ ŞABLONLARI (NORMALIZE) ──────────────────────
+
+  /// Kısa kökler ("am", "bok", "it", "mal") için sınırlı güvenli çekim ekleri.
+  static const Set<String> _strictShortRootSuffixes = {
+    // İyelik ve Hâl
+    'i', 'u', 'e', 'a', 'in', 'un', 'im', 'um',
+    'ina', 'ine', 'ini', 'unu', 'inda', 'inde', 'indan', 'inden', 'inin', 'unun',
+    'imden', 'imdan', 'imde', 'imda', 'ime', 'ima', 'imi', 'umu',
+    'imiz', 'umuz', 'imize', 'imuza', 'imizi', 'umuzu', 'imizden', 'umuzdan',
+    'iniz', 'unuz', 'inize', 'inuza', 'inizi', 'unuzu', 'inizden', 'unuzdan',
+    'da', 'de', 'ta', 'te', 'dan', 'den', 'tan', 'ten',
+    'la', 'le', 'yla', 'yle',
+    // Çoğul
+    'lar', 'ler', 'lara', 'lere', 'lari', 'leri', 'larin', 'lerin',
+    'larina', 'lerine', 'larinda', 'lerinde', 'larindan', 'lerinden', 'larini', 'lerini',
+    // Şahıs / Bildirme
+    'sin', 'sun', 'siniz', 'sunuz', 'tir', 'tur', 'dir', 'dur',
+    // Küçültme (argo türevleri: amcık vb.)
+    'cik', 'cuk', 'cigi', 'cugu', 'ciklar', 'cuklar', 'ciga', 'cuga',
+    'tanlik', 'tenlik',
+  };
+
+  /// İsim ve sıfat köklerine gelebilen tüm meşru Türkçe çekim ve yapım ekleri.
+  static const Set<String> _validNounSuffixes = {
+    // Çoğul ve halleri
+    'lar', 'ler', 'lara', 'lere', 'lari', 'leri', 'larin', 'lerin',
+    'larina', 'lerine', 'larinda', 'lerinde', 'larindan', 'lerinden', 'larini', 'lerini',
+    'larimiz', 'lerimiz', 'lariniz', 'leriniz',
+    'larsin', 'lersin', 'larsiniz', 'lersiniz', 'lardir', 'lerdir',
+    'lardi', 'lerdi', 'larsa', 'lerse', 'larmis', 'lermis', 'larken', 'lerken',
+
+    // İyelik ve hâl bileşimleri
+    'm', 'im', 'um', 'ma', 'me', 'ima', 'ime', 'uma', 'ume',
+    'mi', 'imi', 'umu', 'mda', 'mde', 'imda', 'imde', 'umda', 'umde',
+    'mdan', 'mden', 'imdan', 'imden', 'umdan', 'umden',
+    'min', 'imin', 'umin', 'mla', 'mle', 'imle', 'umle',
+
+    'n', 'in', 'un', 'na', 'ne', 'ina', 'ine', 'una', 'une',
+    'ni', 'ini', 'unu', 'nda', 'nde', 'inda', 'inde', 'unda', 'unde',
+    'ndan', 'nden', 'indan', 'inden', 'undan', 'unden',
+    'nin', 'inin', 'unin', 'nla', 'nle', 'inle', 'unle',
+
+    'si', 'su', 'sine', 'sina', 'sini', 'sunu', 'sinde', 'sinda',
+    'sinden', 'sindan', 'sinin', 'sunun', 'siyle', 'suyla',
+
+    'miz', 'muz', 'mize', 'miza', 'imize', 'imiza', 'muza', 'umuza',
+    'mizi', 'imizi', 'muzu', 'umuzu', 'mizde', 'imizde', 'muzda', 'umuzda',
+    'mizden', 'imizden', 'muzdan', 'umuzdan', 'mizin', 'imizin', 'muzun', 'umuzun',
+
+    'niz', 'nuz', 'nize', 'niza', 'inize', 'iniza', 'nuza', 'unuza',
+    'nizi', 'inizi', 'nuzu', 'unuzu', 'nizde', 'inizde', 'nuzda', 'unuzda',
+    'nizden', 'inizden', 'nuzdan', 'unuzdan', 'nizin', 'inizin', 'nuzun', 'unuzun',
+
+    // Hâl ekleri (Yalın)
+    'a', 'e', 'ya', 'ye', 'i', 'u', 'yi', 'yu',
+    'da', 'de', 'ta', 'te', 'dan', 'den', 'tan', 'ten',
+    'la', 'le', 'yla', 'yle', 'ca', 'ce', 'casina', 'cesine',
+    'larla', 'lerle', 'lariyla', 'leriyle', 'larinla', 'lerinle',
+
+    // Şahıs ve bildirme ekleri (Ek-Fiil)
+    'sin', 'sun', 'siniz', 'sunuz',
+    'dir', 'dur', 'tir', 'tur', 'dirler', 'durler', 'tirlar', 'turlar',
+    'yim', 'yum', 'yiz', 'yuz',
+    'dim', 'din', 'di', 'dik', 'diniz', 'diler',
+    'tim', 'tin', 'ti', 'tik', 'tiniz', 'tiler',
+    'mis', 'mus', 'missin', 'mussun', 'missiniz', 'mussunuz', 'misler', 'muslar',
+    'sa', 'se', 'san', 'sen', 'sak', 'sek', 'saniz', 'seniz', 'salar', 'seler',
+
+    // Yaygın yapım ekleri ve çekimleri
+    'lik', 'luk', 'lig', 'lug', 'lige', 'luga', 'likten', 'luktan', 'likte', 'lukta',
+    'likler', 'luklar', 'ligim', 'ligin', 'ligi', 'ligimiz', 'liginiz', 'liktir', 'luktur',
+    'siz', 'suz', 'sizler', 'suzlar', 'sizsin', 'suzsun', 'sizsiniz', 'suzsunuz',
+    'size', 'suza', 'sizden', 'suzdan', 'sizlik', 'suzluk',
+    'ci', 'cu', 'ciler', 'cular', 'cisin', 'cusun',
+  };
+
+  /// Fiil köklerine gelebilen çekim ekleri.
+  static const Set<String> _validVerbSuffixes = {
+    'ma', 'me', 'mayi', 'meyi', 'maya', 'meye', 'madan', 'meden',
+    'er', 'ar', 'ir', 'ur', 'erim', 'arim', 'ersin', 'arsin', 'eriz', 'ariz', 'erler', 'arlar',
+    'mez', 'maz', 'mezsin', 'mazsin', 'mezsiniz', 'mazsiniz', 'mezler', 'mazlar',
+    'iyor', 'uyor', 'iyorum', 'uyorum', 'iyorsun', 'uyorsun', 'iyorlar', 'uyorlar', 'iyoruz', 'uyoruz',
+    'ecek', 'acak', 'ecegim', 'acagim', 'eceksin', 'acaksin', 'ecekler', 'acaklar',
+    'meli', 'mali', 'melisin', 'malisin', 'melisiniz', 'malisiniz', 'meliyiz', 'maliyiz',
+    'tir', 'tur', 'tirdi', 'turdu', 'tirmis', 'turmus', 'tirmek', 'turmak',
+    'dik', 'duk', 'tik', 'tuk', 'tiler', 'tular', 'dim', 'din', 'di', 'tim', 'tin', 'ti',
+    'se', 'sa', 'sen', 'san', 'sek', 'sak',
+    'mek', 'mak', 'mekten', 'maktan',
+    'in', 'iniz',
+  };
 }
