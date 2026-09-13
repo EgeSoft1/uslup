@@ -176,6 +176,44 @@ void main() {
     await _cek(tester, k, 'masaustu_13_koyu_tema');
   });
 
+  testWidgets('masaüstü · yeni gönderi · tehdit onayı', (tester) async {
+    final k = await ac(tester, masaustu);
+    await tester.tap(find.text('Yeni Gönderi').first);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_14_yeni_gonderi');
+    await senaryo(tester, 'Tehdit');
+    await tester.tap(find.widgetWithText(FilledButton, 'Gönder').last);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_15_tehdit_onayi');
+  });
+
+  testWidgets('masaüstü · gönderi yanıtı', (tester) async {
+    final k = await ac(tester, masaustu);
+    // Gönderi gövdesi etiketleri vurgulamak için RichText ile çizilir ve
+    // akış tembel kurulur: önce kaydırarak ağaca getirmek gerekir.
+    final gonderi =
+        find.textContaining('penaltı kararı', findRichText: true);
+    await tester.scrollUntilVisible(gonderi, 400,
+        scrollable: find.byType(Scrollable).at(1));
+    await tester.pumpAndSettle();
+    await tester.tap(gonderi.first);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_16_gonderi_yanitlari');
+  });
+
+  testWidgets('masaüstü · profil ve keşfet', (tester) async {
+    final k = await ac(tester, masaustu);
+    await tester.tap(find.text('Profil').first);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_17_profil');
+    await tester.tap(find.text('Keşfet').first);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_18_kesfet');
+    await tester.tap(find.text('Bildirimler').first);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_19_bildirimler');
+  });
+
   testWidgets('telefon · akış', (tester) async {
     final k = await ac(tester, telefon);
     await _cek(tester, k, 'telefon_01_akis');

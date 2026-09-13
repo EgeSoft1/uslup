@@ -450,8 +450,7 @@ class _FollowButton extends StatelessWidget {
                 minimumSize: const Size(0, 34),
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
                 side: BorderSide(color: p.borderStrong),
-                textStyle:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                textStyle: appBody(fontSize: 13, fontWeight: FontWeight.w700),
                 shape: const RoundedRectangleBorder(borderRadius: AppRadius.pill),
               ),
               child: const Text('Takiptesin'),
@@ -461,8 +460,7 @@ class _FollowButton extends StatelessWidget {
               style: FilledButton.styleFrom(
                 minimumSize: const Size(0, 34),
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                textStyle:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                textStyle: appBody(fontSize: 13, fontWeight: FontWeight.w700),
                 shape: const RoundedRectangleBorder(borderRadius: AppRadius.pill),
               ),
               child: const Text('Takip et'),

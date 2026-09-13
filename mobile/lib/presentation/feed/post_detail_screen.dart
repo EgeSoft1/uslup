@@ -71,37 +71,46 @@ class PostDetailScreen extends StatelessWidget {
 
           final replies = store.repliesOf(postId);
 
-          return ListView(
-            padding: const EdgeInsets.only(bottom: AppSpacing.xxxl),
-            children: [
-              PostCard(
-                post: post,
-                onReply: () {},
-                threadContinues: replies.isNotEmpty,
-              ),
-              Container(height: 8, color: p.background),
-              _replyBox(context, p, post),
-              Container(height: 8, color: p.background),
-              if (replies.isEmpty)
-                _emptyReplies(p)
-              else ...[
-                SectionLabel(text: '${replies.length} YANIT'),
-                for (var i = 0; i < replies.length; i++) ...[
+          // Masaüstünde ekran kabuk dışında tam sayfa açılır; sınırlanmazsa
+          // gönderi ve yanıtlar 1440 px'e yayılıp okunmaz hâle geliyordu.
+          // Akış sütunuyla aynı genişlik kullanılır.
+          return Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                  maxWidth: AppBreakpoints.feedColumnMax + AppSpacing.xxl * 2),
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xxxl),
+                children: [
                   PostCard(
-                    post: replies[i],
-                    dense: true,
-                    onOpen: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            PostDetailScreen(postId: replies[i].id),
-                      ),
-                    ),
+                    post: post,
+                    onReply: () {},
+                    threadContinues: replies.isNotEmpty,
                   ),
-                  if (i < replies.length - 1)
-                    Divider(height: 1, color: p.divider),
+                  Container(height: 8, color: p.background),
+                  _replyBox(context, p, post),
+                  Container(height: 8, color: p.background),
+                  if (replies.isEmpty)
+                    _emptyReplies(p)
+                  else ...[
+                    SectionLabel(text: '${replies.length} YANIT'),
+                    for (var i = 0; i < replies.length; i++) ...[
+                      PostCard(
+                        post: replies[i],
+                        dense: true,
+                        onOpen: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                PostDetailScreen(postId: replies[i].id),
+                          ),
+                        ),
+                      ),
+                      if (i < replies.length - 1)
+                        Divider(height: 1, color: p.divider),
+                    ],
+                  ],
                 ],
-              ],
-            ],
+              ),
+            ),
           );
         },
       ),
