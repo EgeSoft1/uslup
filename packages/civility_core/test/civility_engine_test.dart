@@ -343,6 +343,32 @@ void main() {
           reason: 'Şikâyet eden kullanıcı cezalandırılıyor');
     });
 
+    test('düşmanca görüşü başkasına atfedip kınayan cümle nefret sayılmaz (D8)',
+        () {
+      // 13 Eylül 2026'ya kadar bunlar Yüksek risk (nefret) alıyordu: aktarım
+      // listesinde "diyen" vardı, "savunan/isteyen/söyleyen" yoktu (docs/22).
+      const kinama = [
+        'Ermenilerin yok edilmesini savunanlar yargılanmalı',
+        'Mültecilerin ülkesine dönmesini isteyen pankartlar kaldırılsın',
+        'Romanların bu mahallede yaşanmaz dendiği için dışlanması ayıp',
+      ];
+      for (final text in kinama) {
+        expect(engine.analyze(text).risk, RiskLevel.temiz,
+            reason: 'Kınayan kullanıcı susturuluyor: $text');
+      }
+      // Konuşanın KENDİ görüşü yakalanmaya devam eder.
+      for (final text in const [
+        'Ermeniler yok edilmeli',
+        'Mülteciler ülkesine dönsün',
+        'Suriyeliler hayvandır',
+      ]) {
+        expect(engine.analyze(text).risk, isNot(RiskLevel.temiz),
+            reason: 'KAÇTI: $text');
+      }
+      // Kayıtlı bedel: aynı yapıyla ONAYLAYAN cümle de yumuşar. Kural
+      // kınamayı onaydan ayıramaz; İP-32 C parçası bunu ölçer (0/10).
+    });
+
     test('öz-yönelimli ifadeye müdahale edilmez', () {
       final result = engine.analyze('kendimi çok aptal hissettim bugün');
       expect(result.risk, RiskLevel.temiz);

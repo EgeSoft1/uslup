@@ -154,6 +154,7 @@ düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); ta
 | **6. ayrık (İP-29)** | **90** | **%96,4 → %96,2** | **%45,0 → %41,7** | **%61,4 → %58,1** | **Geçerli — ilk geçiş → bugünkü motor (docs/18 §7)** |
 | Gündelik metin (İP-30) | 120 masum | — | — | — | Yanlış alarm **17 → 0** (özgüllük %85,8 → %100). Hata türleri bilindikten sonra, düzeltmeden önce yazıldı — o türlere kör değil |
 | Yönelim (İP-31) | 30 masum + 20 saldırı | — | 20/20 | — | Somut adlar + ikinci şahıs: yanlış alarm **29 → 2**, saldırıların hepsi yakalanmaya devam (docs/21) |
+| Savunma dili (İP-32) | 20 masum + 20 saldırı | — | — | — | Düşmanca görüşü aktarıp **kınayan** cümlede yanlış alarm **7 → 0**; konuşanın kendi nefret söylemi 10/10; aktarıp **onaylayan** cümle 4/10 → **0/10** (bilinen bedel, docs/22) |
 
 ### Gündelik metin — İP-29'un göremediği kesinlik açığı
 
@@ -310,6 +311,21 @@ packages/civility_core/lib/src/
 - **Alıntılanan örüntüde mağdur koruması eksik.** Sözlük bulgularında alıntı
   ve aktarım yumuşatılıyor; örüntü bulgusu tırnak içinde kınanarak
   aktarıldığında yumuşatma çalışmadı (İP-29'un tek yanlış pozitifi).
+- **Yazılı tek cümlede alay ile içten övgü ayırt edilemiyor.** "Helal olsun
+  valla", "bravo gerçekten" gibi kalıplar içten övgüyü de işaretlediği için
+  kaldırıldı; alaycı kullanımları artık kaçıyor (docs/20, D3 + D5).
+- **Somut adlarda yönelim yapıyla aranıyor; bazı kuruluşlar dışarıda kalıyor.**
+  "senin gibi bir köpek", "tam bir kaz kafalısın" artık yakalanmıyor; "Sen
+  maymunlar hakkında ödev hazırlıyordun" hâlâ yanlış alarm veriyor (özne
+  konumundaki ad, "sen" + ad kuralına takılıyor) (docs/21, D7).
+- **Düşmanca görüşü aktaran cümlede kınama ile onay ayırt edilemiyor.**
+  "…yok edilmesini savunanlar yargılanmalı" (kınama) temiz kalsın diye
+  "…yok edilmesini savunanlar çok haklı" (onay) da yumuşuyor. Ürün kınayanı
+  susturmamayı onaylayanı kaçırmaya tercih eder (docs/22, D8 · İP-32 C: 0/10).
+- **Kimlik terimi ile düşmanca yüklem arasına özne girince örüntü yanılıyor.**
+  "Kürtlere yönelik hakaretler temizlenmeli" cümlesi nefret söylemi
+  sayılıyor: düzenli ifade "temizlenmeli"nin öznesinin "hakaretler"
+  olduğunu göremez (docs/22).
 - **"dölü" epiteti kaldırıldı** — aksan katlaması onu "dolu" ile birebir
   aynı hâle getiriyor ve ayırt etmenin normalize metin üzerinde yolu yok.
 - Öncülsüz gönderge **kasıtlı olarak** kaçırılır — hedefin kim olduğu metinden

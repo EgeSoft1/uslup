@@ -1260,6 +1260,16 @@ class UslupDetailsScreen extends StatelessWidget {
         vurgu: false,
       ),
       (
+        kume: 'Savunma dili (İP-32)',
+        boyut: '40',
+        kesinlik: '—',
+        duyarlilik: '—',
+        f1: '—',
+        durum: 'Düşmanca görüşü aktarıp kınayan 20 cümlede yanlış alarm 7 → '
+            '0. Bedeli: aynı yapıyla onaylayan cümleler de kaçıyor (0/10)',
+        vurgu: false,
+      ),
+      (
         kume: 'Gündelik metin (İP-30)',
         boyut: '120',
         kesinlik: '—',

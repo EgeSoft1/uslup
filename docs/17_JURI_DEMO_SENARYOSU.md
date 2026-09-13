@@ -83,7 +83,7 @@ kapalı. Göreceğiniz her şey burada, yerelde çalışıyor."
 Uygulamaya geçin. Sol menü → **Üslup Paneli**.
 
 **① Başlık kartı (10 sn)** — işaret edin:
-> "256 sözlük girdisi, 199 örüntü, 931 etiketli örnek. Bu sayılar bir
+> "256 sözlük girdisi, 199 örüntü, 971 etiketli örnek. Bu sayılar bir
 > slayttan değil, motorun kendisinden sayılıyor."
 
 **② Doğrudan saldırı (60 sn)** — `Doğrudan saldırı` çipine dokunun.
@@ -374,7 +374,7 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 |---|---|---|
 | Sözlük girdisi | 256 | çalışma anında sayılır |
 | Örüntü ve deyim | 199 | çalışma anında sayılır |
-| Etiketli örnek | 931 (9 küme) | çalışma anında sayılır |
+| Etiketli örnek | 971 (10 küme) | çalışma anında sayılır |
 | Mesaj çözümleme (p50 · p99) | 206 µs · 2.519 µs | `bin/benchmark.dart`, AOT |
 | 2.400 karakterlik gönderi (p99) | 10,2 ms · kare bütçesinin %64'ü | aynı |
 | Hızlanma (aynı makine, aynı gün) | mesajda ~5×, uzun gönderide ~7× · çıktı birebir aynı | docs/19 |
@@ -382,6 +382,7 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | **İP-29 · bugünkü motor** | **kesinlik %96,2 · duyarlılık %41,7 · F0.5 %76,2** | docs/18 §7 |
 | İP-29 dilimleri (bugün) | açık saldırı %75,0 · örtük %29,4 · masum 30'da 29 temiz | docs/18 §7 |
 | Yönelim (İP-31) | somut ad + ikinci şahıs: yanlış alarm 29 → 2 · saldırı 20/20 | `--yonelim` · docs/21 |
+| Savunma dili (İP-32) | kınayan cümlede yanlış alarm 7 → 0 · onaylayan cümle 0/10 (bedel) | `--savunma` · docs/22 |
 | Önceki kayıt (İP-22) | kesinlik %90,5 · duyarlılık %54,3 — yandı | docs/14 §5 |
 | Geliştirme kümesi | kesinlik %100 · duyarlılık %97,0 | `evaluate.dart` |
 | Katman katkısı | duyarlılık %45,1 → %97,0, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |

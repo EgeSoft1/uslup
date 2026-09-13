@@ -62,4 +62,43 @@ sınır olarak README'ye yazılır.
 
 ## 4. Sonuçlar
 
-*(Ölçümden sonra eklenecek.)*
+Kayıt `2df4b82` ile girdi; D8 ondan sonraki commit'tedir. Kelime listesi
+kayıttakiyle birebir aynıdır.
+
+### İP-32 · savunma dili kümesi
+
+| Parça | Önce | Sonra |
+|---|--:|--:|
+| A · aktarıp kınayan (20 masum) | 13 temiz (7 Yüksek risk) | **20 temiz** |
+| B · konuşanın kendi görüşü (10 saldırı) | 10 yakalandı | **10 yakalandı** |
+| C · aktarıp onaylayan (10 saldırı) | 4 yakalandı | **0 yakalandı** |
+
+C parçasında önceden de 6 örnek kaçıyordu: "…olduğunu söyleyen" gibi yan
+cümleli kuruluşlar örüntülere hiç uymuyor. D8 kalan 4'ünü de yumuşattı.
+
+### Karar
+
+Kayıtlı ölçüt: A'daki kazanç (**+7**) C'deki kayıptan (**−4**) büyük değilse
+geri al. 7 > 4 — **D8 korunur.**
+
+Bu takasın anlamı açıkça yazılmalı: kural, düşmanca bir görüşü aktaran
+cümlenin onu kınadığını mı yoksa onayladığını mı ayırt edemez. Ürün,
+kınayan kullanıcıyı susturmamayı, onaylayan kullanıcıyı kaçırmaya tercih
+eder. Bu, "diyen" için zaten verilmiş kararın aynısıdır.
+
+### Diğer kümeler
+
+**Hiçbir etiketli kümede tek örnek değişmedi.** İP-29 %96,2 · %41,7
+(ikinci geçiş, D7 sonrası) olarak durur; İP-30 120/120; İP-31 28/30 ·
+20/20; geliştirme kümesi %100 · %97,0.
+
+### Kapsam dışı kalan
+
+"Kürtlere yönelik hakaretler temizlenmeli" hâlâ nefret söylemi sayılıyor
+(araya giren özne). README'de bilinen sınır olarak yazılı.
+
+### Test
+
+`civility_engine_test` · "düşmanca görüşü başkasına atfedip kınayan cümle
+nefret sayılmaz (D8)": üç kınama cümlesi temiz, üç düz nefret söylemi
+yakalanıyor; onaylama bedeli test yorumunda kayıtlı.

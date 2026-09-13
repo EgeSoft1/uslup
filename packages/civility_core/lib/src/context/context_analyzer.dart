@@ -211,6 +211,17 @@ class ContextAnalyzer {
     // Ortaç (sıfat-fiil) hâlleri: "sana salak DİYEN haksız" — mağduru
     // savunan bir cümledir ve cezalandırılmamalıdır.
     'diyen', 'diyene', 'diyenler', 'dedigi', 'dedigin', 'demesi',
+    // D8 (docs/22): düşmanca görüşü BAŞKASINA atfeden sıfat-fiil ve
+    // ad-fiiller. "Ermenilerin yok edilmesini SAVUNANLAR yargılanmalı"
+    // nefret söylemi değil, kınamadır; "diyen" ile aynı ilke. Bedeli
+    // kayıtlıdır: aynı yapıyla ONAYLAYAN cümle de yumuşar.
+    'isteyen', 'isteyenler', 'isteyenlere', 'isteyenleri',
+    'savunan', 'savunanlar', 'savunanlara', 'savunanlari',
+    'soyleyen', 'soyleyenler', 'soyleyenlere', 'soyleyenleri',
+    'iddia',
+    'dendigi', 'dendiginde', 'denmesi',
+    'yazan', 'yazanlar',
+    'bagiran', 'bagiranlar',
   };
 
   /// İkinci şahıs bildirme (kopula) ekleri — normalize hâlleriyle.

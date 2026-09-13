@@ -132,7 +132,8 @@ abstract final class Civility {
       Generalization4Dataset.cases.length +
       Generalization5Dataset.cases.length +
       EverydayDataset.cases.length +
-      DirectionDataset.cases.length;
+      DirectionDataset.cases.length +
+      StanceDataset.cases.length;
 
   /// Geçerli genelleme ölçümü — bugünkü motorun hiç görmediği küme.
   ///
@@ -145,5 +146,5 @@ abstract final class Civility {
 
   /// Kapsam satırı — sayılar çalışma anında hesaplanır.
   static String get olcumKapsami =>
-      '9 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
+      '10 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
 }
