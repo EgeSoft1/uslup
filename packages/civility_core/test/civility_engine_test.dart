@@ -335,29 +335,35 @@ void main() {
     test('uzun metinde de doğrusal ölçeklenir', () {
       // Önceki hâli ısınmamış TEK bir çağrının süresine bakıyordu ve
       // doğrusallığı hiç ölçmüyordu; yüklü makinede 102 ms ile kırılıyordu.
-      // Şimdi: ısınma + beş ölçümün en küçüğü (gürültüye dayanıklı), ve
-      // metin dört katına çıkınca süre en fazla sekiz katına çıkabilir.
-      int enKucuk(String text) {
-        for (var i = 0; i < 3; i++) {
-          engine.analyze(text);
-        }
-        var best = 1 << 62;
-        for (var i = 0; i < 5; i++) {
-          final us = engine.analyze(text).elapsed.inMicroseconds;
-          if (us < best) best = us;
-        }
-        return best;
+      //
+      // Zaman ölçen bir test, paralel çalışan test dosyalarının gürültüsüne
+      // dayanmak zorunda. İlk düzeltme (4× metin, ≤ 8× süre, beşin en küçüğü)
+      // bile bir kez 12× ile kırıldı; tek başına ölçümde maliyet doğrusaldı.
+      // Bu yüzden:
+      //   • boyut farkı 8×: doğrusal 8×, karesel 64× verir — arada geniş pay
+      //   • iki boyut İÇ İÇE turlarla ölçülür: yük dalgası ikisine de düşer
+      //   • her boyutun en küçük süresi alınır
+      const cumle = 'Bu normal bir cümledir. ';
+      final kisaMetin = cumle * 25; //   600 kr
+      final uzunMetin = cumle * 200; // 4.800 kr
+      for (var i = 0; i < 3; i++) {
+        engine.analyze(kisaMetin);
+        engine.analyze(uzunMetin);
       }
-
-      final kisa = enKucuk('Bu normal bir cümledir. ' * 50);
-      final uzun = enKucuk('Bu normal bir cümledir. ' * 200);
+      var kisa = 1 << 62, uzun = 1 << 62;
+      for (var tur = 0; tur < 9; tur++) {
+        final k = engine.analyze(kisaMetin).elapsed.inMicroseconds;
+        final u = engine.analyze(uzunMetin).elapsed.inMicroseconds;
+        if (k < kisa) kisa = k;
+        if (u < uzun) uzun = u;
+      }
       // ignore: avoid_print
-      print('1.200 kr: $kisa µs · 4.800 kr: $uzun µs');
+      print('600 kr: $kisa µs · 4.800 kr: $uzun µs');
 
       expect(uzun, lessThan(100000));
-      expect(uzun, lessThan(kisa * 8 + 2000),
-          reason: 'Metin 4× uzadı, süre ${uzun / kisa}× arttı — '
-              'doğrusalın üstünde bir maliyet var.');
+      expect(uzun, lessThan(kisa * 24 + 2000),
+          reason: 'Metin 8× uzadı, süre ${uzun / kisa}× arttı — karesel '
+              'bir maliyet olabilir (doğrusal 8×, karesel 64×).');
     });
   });
 }
