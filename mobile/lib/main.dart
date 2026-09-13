@@ -76,6 +76,16 @@ void _bindKeyboardService() {
 
     final analysis = Civility.engine.analyze(text);
 
+    // Kendine zarar ifadesi: uyarı değil destek (docs/20, D4). Şeritte
+    // değiştirilecek bir öneri yoktur.
+    if (analysis.needsSupport && !analysis.hasFindings) {
+      await methodChannel.invokeMethod('updateSuggestion', {
+        'risk': 'destek',
+        'message': 'Zor bir an geçiriyor olabilirsin. Güvende değilsen 112.',
+      });
+      return null;
+    }
+
     if (analysis.risk.index < RiskLevel.riskli.index ||
         analysis.findings.isEmpty) {
       await methodChannel.invokeMethod('updateSuggestion', {'risk': 'temiz'});

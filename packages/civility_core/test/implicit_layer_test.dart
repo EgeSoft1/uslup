@@ -52,18 +52,53 @@ void main() {
           reason: 'Ayrım ikinci şahıs vasıta hâlinin varlığıdır.');
     });
 
-    test('alaycı övgü yakalanır, içten övgü yakalanmaz', () {
-      expect(flags('çok başarılısın gerçekten, bravo'), isTrue);
-      expect(flags('gerçekten çok başarılısın, tebrikler'), isFalse,
-          reason: 'En zor ayrım: alay parçacığı olmadan övgü cezalandırılmaz.');
+    test('övgü ve taziye, alay parçacığı taşısa bile cezalandırılmaz', () {
+      // 13 Eylül 2026'ya kadar bu test TERSİNİ istiyordu: "bravo",
+      // "helal olsun valla", "çok zekisin ya" alay sayılıyordu. Küme dışı
+      // taramada aynı kalıplar içten övgüyü ve taziyeyi de işaretledi
+      // (docs/20, D3 + D5). Yazılı tek cümle alayı samimiyetten ayırmaz;
+      // ürün övgü yazanı uyarmamayı seçer ve bu kaybı ölçümde beyan eder.
+      const ovgu = [
+        'Helal olsun be kardeşim, başardın',
+        'Aferin valla, tam zamanında yetiştirdin',
+        'Gerçekten bravo, çok emek vermişsin',
+        'Çok zekisin ya, bunu nasıl buldun!',
+        'aferin sana, sınavı geçmişsin',
+        'Ayakta alkışlıyorum, harika bir konserdi',
+        'Tam senlik bir hediye buldum',
+        'Çok yazık oldu, geçmiş olsun',
+        'Salon çok boş kaldı',
+        'Einstein ve Bohr arasındaki tartışmayı okudum',
+        'Bizim dahi bu konuda söyleyeceklerimiz var',
+      ];
+      for (final text in ovgu) {
+        expect(flags(text), isFalse, reason: 'YANLIŞ POZİTİF: $text');
+      }
+      expect(flags('gerçekten çok başarılısın, tebrikler'), isFalse);
     });
 
-    test('kinaye ve ironi yakalanır, samimi övgü yakalanmaz', () {
-      expect(flags('çok zekisin ya'), isTrue, reason: 'ya takısı kinaye belirtir');
-      expect(flags('zeka fışkırıyor maşallah'), isTrue);
-      expect(flags('einstein mısın be mübarek'), isTrue);
-      expect(flags('çok akıllısın sen'), isFalse, reason: 'ya/sen ya yok, samimi olabilir');
-      expect(flags('zekice bir hamleydi'), isFalse);
+    test('kendine zarar ifadesi saldırı değil, destek sinyalidir', () {
+      // Önceden `tehdit` · şiddet 1,0 idi: gönderimde "suç oluşturabilir"
+      // onayı ve "Bu söylediğinden çok rahatsızım" önerisi (docs/20, D4).
+      for (final text in const [
+        'Artık yaşamaya dayanamıyorum',
+        'ölmek istiyorum',
+        'hayata son vereceğim',
+      ]) {
+        final a = engine.analyze(text);
+        expect(a.needsSupport, isTrue, reason: text);
+        expect(a.risk, RiskLevel.temiz, reason: text);
+        expect(a.findings, isEmpty, reason: text);
+        expect(a.containsThreat, isFalse, reason: text);
+      }
+      expect(engine.analyze('ölmek istemiyorum').needsSupport, isFalse);
+      expect(engine.analyze('yarın buluşalım mı').needsSupport, isFalse);
+    });
+
+    test('destek sinyali aynı cümledeki gerçek saldırıyı gölgelemez', () {
+      final a = engine.analyze('ölmek istiyorum senin yüzünden şerefsiz');
+      expect(a.needsSupport, isTrue);
+      expect(a.risk, isNot(RiskLevel.temiz));
     });
 
     test('susturma yakalanır, deyim içindeki aynı kelime yakalanmaz', () {

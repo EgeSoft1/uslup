@@ -477,6 +477,15 @@ class _CivilityComposerState extends State<CivilityComposer> {
           ),
         ),
 
+        // ── Destek kartı · kendine zarar ifadesi (docs/20, D4) ───────────
+        // Müdahale merdiveninin DIŞINDADIR: uyarı rengi, öneri, düşünme payı
+        // ve onay diyaloğu yoktur. Önceki sürüm bu cümleleri "tehdit" sayıp
+        // "suç oluşturabilir" diyordu.
+        if (analysis != null && analysis.needsSupport && hasText) ...[
+          const SizedBox(height: AppSpacing.md),
+          _supportCard(p),
+        ],
+
         // ── Müdahale merdiveni · 3. ve 4. basamak ────────────────────────
         if (analysis != null && analysis.hasFindings) ...[
           const SizedBox(height: AppSpacing.md),
@@ -1019,6 +1028,56 @@ class _CivilityComposerState extends State<CivilityComposer> {
             ),
           ),
         ],
+      ),
+    ).animate().fadeIn(duration: 200.ms);
+  }
+
+  Widget _supportCard(AppPalette p) {
+    return Semantics(
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.base),
+        decoration: BoxDecoration(
+          color: p.infoSoft,
+          borderRadius: AppRadius.lgAll,
+          border: Border.all(color: p.info.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.favorite_rounded, size: 20, color: p.info),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Zor bir an geçiriyor olabilirsin',
+                    style: appBody(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w700,
+                      color: p.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Bu bir uyarı değil. Kendini güvende hissetmiyorsan '
+                    '112\'yi hemen arayabilirsin. Güvendiğin biriyle '
+                    'konuşmak da iyi gelebilir.',
+                    style: appBody(
+                        fontSize: 13, color: p.textSecondary, height: 1.45),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'Bu metin hiçbir yere raporlanmadı.',
+                    style: appBody(fontSize: 11.5, color: p.textTertiary),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     ).animate().fadeIn(duration: 200.ms);
   }

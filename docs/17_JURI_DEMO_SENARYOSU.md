@@ -240,6 +240,25 @@ bitirmeyi** hedefleyin.
 > `dart run bin/evaluate.dart --genelleme5`. Tek zayıflık: tek
 > etiketleyiciliyiz, kappa henüz yok.
 
+**"Kendi cümlemi yazabilir miyim?" / "Sıradan bir cümlede yanlış alarm verir mi?"**
+> Yazın. Sunumdan önceki gün kendi masum cümlelerimizle taradık ve ciddi
+> bir açık bulduk: "Sana katılıyorum ama bence yanlış" küfür sayılıyordu —
+> "ama", kısa kök "am" artı ek diye çözülüyordu. Önce düzeltme listesini
+> kayda geçirdik, 120 gündelik cümlelik bir küme yazıp commit ettik, sonra
+> düzelttik: yanlış alarm 17'den 0'a indi, geçerli ölçümümüzde (İP-29) tek
+> bir örnek değişmedi. O küme açığı bildikten sonra yazıldı; bu yüzden
+> "genelleme" değil "gündelik metinde yanlış alarm" diyoruz. (docs/20)
+>
+> *(Yazılan cümle yine de işaretlenirse: savunmaya geçmeyin. "Bu bir yanlış
+> alarm; motor kararını ve gerekçesini gösteriyor, kullanıcıyı
+> engellemiyor. Not alıyoruz" deyin ve cümleyi yazın.)*
+
+**"Biri intihar düşüncesini yazarsa ne olur?"**
+> Uyarı değil destek kartı çıkar: saldırı sayılmaz, öneri ve onay diyaloğu
+> açılmaz, 112'yi hatırlatır. Önceki bir sürümde bu cümleler "tehdit"
+> sayılıyordu; kriz anındaki birine "suç oluşturabilir" demek en yanlış
+> müdahaleydi, düzelttik.
+
 **"Bu bir yapay zekâ mı, yoksa kelime listesi mi?"**
 > Kelime listesi değil: aynı kelime dört bağlamda dört farklı sonuç veriyor
 > (demodaki dörtlü). Karnedeki anahtar aynı sözlükle kurulmuş bir kelime
@@ -353,8 +372,9 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | **Geçerli ayrık küme (İP-29)** | **kesinlik %96,4 · duyarlılık %45,0 · F0.5 %78,5** | docs/18 · `--genelleme5` |
 | İP-29 dilimleri | açık saldırı %83,3 · örtük %32,4 · masum 30'da 29 temiz | docs/18 |
 | Önceki kayıt (İP-22) | kesinlik %90,5 · duyarlılık %54,3 — yandı | docs/14 §5 |
-| Geliştirme kümesi | kesinlik %100 · duyarlılık %99,2 | `evaluate.dart` |
-| Katman katkısı | duyarlılık %45,1 → %99,2, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |
+| Geliştirme kümesi | kesinlik %100 · duyarlılık %97,0 | `evaluate.dart` |
+| Katman katkısı | duyarlılık %45,1 → %97,0, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |
+| **Gündelik metin (İP-30)** | **120 masum cümlede yanlış alarm 17 → 0** | `evaluate.dart --gundelik` · docs/20 |
 | Demo senaryoları | 12/12 beklendiği gibi | Üslup Paneli → Bağlam karnesi |
 | Aynı 12 cümlede kelime listesi | 6/12 · 3 yanlış alarm · 3 kaçan | Karnedeki anahtar |
 | Otomatik testler | 320 (motor) + 39 (arayüz) | `dart test`, `flutter test` |

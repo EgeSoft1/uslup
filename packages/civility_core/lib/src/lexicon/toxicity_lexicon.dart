@@ -205,6 +205,35 @@ class ToxicityLexicon {
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
+  // KISA KÖK ÇAKIŞMALARI — TAM KELİME (D2 · docs/20 · 13 Eylül 2026)
+  //
+  // ≤ 3 harfli kökler dar bir çekim listesiyle eşleşir ("mal" → "malsın").
+  // O listeden geçen bazı biçimler Türkçenin en sık kelimeleridir ve ASCII
+  // yazımda saldırgan okumadan ayırt edilemez. Türkçe harfle yazılanlar
+  // ("sıkı", "boğa", "adı") motorda özgün metinden ayrıca ayıklanır; bu
+  // liste harf kanıtı TAŞIMAYAN biçimler içindir.
+  //
+  // Maskeleme listesinden farkı: ön ek değil, TAM kelimedir. "amin" ön ek
+  // olarak maskelenseydi "amina" da maskelenirdi.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Set<String> shortRootCollisions = {
+    // am + a / in → "ama" (bağlaç), "amin" (dua)
+    'ama', 'amin',
+    // kaz + a / ı / ım → "kaza", "kazı", "Kazım"
+    'kaza', 'kazi', 'kazim',
+    // it → id (yumuşama) + ek-fiil → "idi", "idin", "idim", "idiniz"
+    'idi', 'idin', 'idim', 'idiniz',
+    // adi + le → "Adile" (ad)
+    'adile',
+    // bok → bog (yumuşama) + a → "boga" (ASCII "boğa")
+    'boga',
+    // sik + i → "siki" (ASCII "sıkı")
+    'siki',
+    // mal + a / lar / ları → "mala", "mallar", "malları" (eşya, mal varlığı)
+    'mala', 'mallar', 'mallari',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
   // SÖZLÜK
   //
   // Terimler okunabilirlik için Türkçe aksanlarıyla yazılmıştır;

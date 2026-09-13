@@ -88,7 +88,11 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
         ..add(_ChatMessage.engine(
           analysis.hasFindings
               ? analysis.risk.intervention
-              : 'Bu cümlede saldırgan bir ifade bulmadım.',
+              : analysis.needsSupport
+                  // Kendine zarar ifadesi saldırı değildir (docs/20, D4).
+                  ? 'Bu cümlede saldırgan bir ifade yok. Zor bir an '
+                      'geçiriyor olabilirsin — güvende değilsen 112\'yi ara.'
+                  : 'Bu cümlede saldırgan bir ifade bulmadım.',
           analysis: analysis,
           suggestion: suggestion,
         ));

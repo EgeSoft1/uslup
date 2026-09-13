@@ -180,6 +180,14 @@ class CivilityAnalysis {
   /// Çözümlemenin sürdüğü süre — performans iddiasının kanıtı.
   final Duration elapsed;
 
+  /// Metin kendine zarar ifadesi içeriyor mu?
+  ///
+  /// Bu bir toksisite bulgusu DEĞİLDİR: skoru, risk basamağını, öneriyi ve
+  /// onay akışını etkilemez. Arayüz bu işaretle uyarı yerine bir destek
+  /// kartı gösterir. Gerekçe: `ImplicitPatterns` içindeki kendine zarar
+  /// bloğu ve docs/20 (D4).
+  final bool needsSupport;
+
   const CivilityAnalysis({
     required this.text,
     required this.toxicity,
@@ -188,6 +196,7 @@ class CivilityAnalysis {
     required this.findings,
     required this.signals,
     required this.elapsed,
+    this.needsSupport = false,
   });
 
   /// Boş/temiz metin için sonuç.
@@ -312,6 +321,13 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// Maskeleme ön ekleri, ilk harfe göre.
   final Map<int, List<String>> _maskedByFirst = {};
 
+  /// Normalize uzunluğu ≤ 3 olan tek kelimelik girdiler (D1, D2).
+  final Set<LexiconEntry> _shortRoots = {};
+
+  /// Kısa köklerin Türkçe yazılışı — yalnızca normalizasyonun harf harf
+  /// (1:1) katladığı kökler için; yüzey kanıtı konum konum karşılaştırır.
+  final Map<LexiconEntry, String> _shortRootSpelling = {};
+
   /// İlk harf kovaları açık mı?
   ///
   /// Üründe her zaman açıktır. Kapalı hâli YALNIZCA doğrulama içindir
@@ -363,6 +379,14 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
           .where(_foldedLetters.contains)
           .toSet();
       if (folded.isNotEmpty) _surfaceLetterEvidence[entry.term] = folded;
+
+      if (!normalized.contains(' ') && normalized.length <= 3) {
+        _shortRoots.add(entry);
+        final spelling = TurkishMorphology.toLowerTr(entry.term);
+        if (spelling.length == normalized.length) {
+          _shortRootSpelling[entry] = spelling;
+        }
+      }
 
       if (normalized.contains(' ')) {
         _phraseEntries.add((normalized: normalized, entry: entry));
@@ -452,8 +476,11 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     findings.addAll(_matchEvasionJoins(normalized, tokens, signals));
 
     // 4c. Edimbilimsel örüntüler — yasaklı kelime içermeyen saldırı.
+    var needsSupport = false;
     if (enableImplicitPatterns) {
-      findings.addAll(_matchImplicit(normalized, tokens, signals));
+      final implicit = _matchImplicit(normalized, tokens, signals);
+      findings.addAll(implicit.findings);
+      needsSupport = implicit.needsSupport;
     }
 
     // Aynı karakter aralığında birden fazla bulgu varsa en şiddetlisini tut.
@@ -483,6 +510,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       findings: deduped,
       signals: signals,
       elapsed: stopwatch.elapsed,
+      needsSupport: needsSupport,
     );
   }
 
@@ -599,6 +627,17 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
 
       if (matched == null) continue;
 
+      // ── KISA KÖK ÇAKIŞMALARI (D1 + D2 · docs/20) ───────────────────────────
+      // ≤ 3 harfli köklere tanınan çekim listesi, bu köklerle başlayan en sık
+      // Türkçe kelimeleri de kapsıyordu: "ama" = am + a → Yüksek risk,
+      // "sıkı" = sik + i → Yüksek risk, "kaza" = kaz + a → Riskli.
+      if (_shortRoots.contains(matched) &&
+          (ToxicityLexicon.shortRootCollisions.contains(token.text) ||
+              ToxicityLexicon.shortRootCollisions.contains(aggressiveText) ||
+              _surfaceContradictsRoot(normalized, token, matched))) {
+        continue;
+      }
+
       final originalRange = normalized.toOriginalRange(token.start, token.end);
 
       final context = _contextAnalyzer.evaluateMatch(
@@ -632,14 +671,22 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// Örüntü bulguları da AYNI bağlam katmanından geçer. Bu şart:
   /// "işine bak diyorlar ama ben yardım etmek istiyorum" cümlesinde kalıp
   /// AKTARILIYOR, kullanılmıyor — aktarma fiili bunu yumuşatmalı.
-  List<ToxicityFinding> _matchImplicit(
+  ///
+  /// Kendine zarar ailesi bulgu üretmez; yalnızca destek işaretini koyar.
+  ({List<ToxicityFinding> findings, bool needsSupport}) _matchImplicit(
     NormalizedText normalized,
     List<Token> tokens,
     ContextSignals signals,
   ) {
     final results = <ToxicityFinding>[];
+    var needsSupport = false;
 
     for (final match in _implicitDetector.detect(normalized.value)) {
+      if (match.pattern.family == ImplicitFamily.kendineZararVerme) {
+        needsSupport = true;
+        continue;
+      }
+
       final originalRange = normalized.toOriginalRange(match.start, match.end);
       final tokenIndex = _tokenIndexAt(tokens, match.start);
       final tokenEndIndex =
@@ -671,7 +718,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       if (finding != null) results.add(finding);
     }
 
-    return results;
+    return (findings: results, needsSupport: needsSupport);
   }
 
   /// Kelimeyi bölerek veya bitiştirerek yapılan gizlemeyi yakalar.
@@ -933,6 +980,42 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
 
     return null;
   }
+
+  /// Kökün yazılışı, özgün metinde fiilen yazılan harflerle çelişiyor mu? (D1)
+  ///
+  /// Normalizasyon Türkçe harfleri katlar: "sıkı" ve "siki" aynı dizgiye
+  /// iner. Ama kullanıcı "ı" YAZDIYSA, noktalı "i" taşıyan "sik" kökünü
+  /// kastetmemiştir. Katlama kanıtı siler; bu yöntem onu özgün metinden
+  /// geri okur (`_surfaceLetterEvidence` ile aynı fikir, ters yönde).
+  ///
+  /// Kanıt yalnızca TÜRKÇEYE ÖZGÜ bir harftir. ASCII yazan (Türkçe klavyesi
+  /// olmayan) kullanıcı hiçbir şeyle çelişmez; büyük "I" ise hem "ı" hem "i"
+  /// için yazılır ve belirsiz sayılır. Kökün son harfindeki k→ğ, Türkçe
+  /// ünsüz yumuşamasıdır ("salağım") ve çelişki değildir.
+  bool _surfaceContradictsRoot(
+      NormalizedText normalized, Token token, LexiconEntry entry) {
+    final root = _shortRootSpelling[entry];
+    if (root == null) return false;
+    // Birleştirilmiş sanal token'ların harfleri özgün metinde bitişik değildir.
+    if (token.end - token.start != token.text.length) return false;
+
+    for (var k = 0; k < root.length; k++) {
+      final j = token.start + k;
+      if (j >= normalized.sourceIndices.length) return false;
+      final raw = normalized.original[normalized.sourceIndices[j]];
+      if (raw == 'I') continue;
+      final written = raw == 'İ' ? 'i' : raw.toLowerCase();
+      final expected = root[k];
+      if (written == expected || !_turkishOnlyLetters.contains(written)) {
+        continue;
+      }
+      if (k == root.length - 1 && expected == 'k' && written == 'ğ') continue;
+      return true;
+    }
+    return false;
+  }
+
+  static const String _turkishOnlyLetters = 'ığşçöü';
 
   /// Token meşru bir kelimenin başlangıcı mı?
   bool _isMasked(String token) {

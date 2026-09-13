@@ -108,6 +108,7 @@ class HybridOnnxClassifier implements ToxicityClassifier {
         findings: baseResult.findings,
         signals: baseResult.signals,
         elapsed: baseResult.elapsed,
+        needsSupport: baseResult.needsSupport,
       );
     } catch (e) {
       debugPrint('ONNX çıkarım hatası: $e');

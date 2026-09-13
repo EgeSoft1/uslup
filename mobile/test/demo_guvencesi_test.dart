@@ -187,6 +187,36 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Göndermeden önce bir saniye'), findsNothing);
     });
+
+    Future<void> yeniGonderiyeYaz(WidgetTester tester, String metin) async {
+      ekran(tester, const Size(1440, 1800));
+      await tester.pumpWidget(const NSosyalApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yeni Gönderi').first);
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, metin);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('jürinin yazabileceği "ama"lı sıradan cümle uyarı üretmez',
+        (tester) async {
+      // docs/20: bu cümle 13 Eylül'e kadar Yüksek risk (küfür) alıyordu.
+      await yeniGonderiyeYaz(tester, 'Sana katılıyorum ama bence yanlış');
+      expect(find.text('Neden uyarıldın?'), findsNothing);
+    });
+
+    testWidgets('kendine zarar cümlesi destek kartı gösterir, tehdit onayı açmaz',
+        (tester) async {
+      await yeniGonderiyeYaz(tester, 'Artık yaşamaya dayanamıyorum');
+      expect(find.text('Zor bir an geçiriyor olabilirsin'), findsOneWidget);
+      expect(find.text('Neden uyarıldın?'), findsNothing);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Gönder').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Göndermeden önce bir saniye'), findsNothing,
+          reason: 'Önceki sürüm "Tehdit, TCK kapsamında suç oluşturabilir" '
+              'diyaloğu açıyordu.');
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

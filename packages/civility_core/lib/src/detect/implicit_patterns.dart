@@ -58,12 +58,8 @@ enum ImplicitFamily {
   /// Geri adım attırmaya, söz hakkını gaspetmeye yönelik kalıplar.
   susturma,
 
-  /// Zero-Shot Sarcasm Detection (İroni ve Kinaye)
-  /// Kelimeler olumlu olsa da cümlenin yapısı manipülatif ve alaycıdır.
-  kinaye,
-
-  /// Kendine Zarar Verme (Self-Harm) Tespiti
-  /// Toksisitenin başkasına değil, kullanıcının kendisine yönelmesi.
+  /// Kendine zarar ifadesi. Saldırı DEĞİLDİR ve bulgu üretmez; motor
+  /// yalnızca `CivilityAnalysis.needsSupport` işaretini koyar.
   kendineZararVerme,
 
   /// Övgü kılığında alay.
@@ -106,8 +102,7 @@ extension ImplicitFamilyInfo on ImplicitFamily {
         ImplicitFamily.yoksayma => 'Yok Sayma',
         ImplicitFamily.tehdit => 'Tehdit',
         ImplicitFamily.susturma => 'Susturma',
-        ImplicitFamily.kinaye => 'Kinaye ve İroni',
-        ImplicitFamily.kendineZararVerme => 'Kendine Zarar Verme (Acil Durum)',
+        ImplicitFamily.kendineZararVerme => 'Destek',
         ImplicitFamily.alayci => 'Alay Etme',
         ImplicitFamily.ortukTehdit => 'Örtük tehdit',
         ImplicitFamily.karakterSaldirisi => 'Karakter saldırısı',
@@ -160,10 +155,8 @@ extension ImplicitFamilyInfo on ImplicitFamily {
               'Kanunu 216. madde kapsamına girebilir.',
         ImplicitFamily.tehdit =>
           'Fiziksel veya psikolojik şiddet içeren, karşı tarafa zarar verme kastı taşıyan bir ifade.',
-        ImplicitFamily.kinaye =>
-          'Sözde övgü gibi görünse de (kinaye/ironi), aslında karşı tarafı alaya alma ve aşağılama kastı taşıyor.',
         ImplicitFamily.kendineZararVerme =>
-          'İntihar, kendine zarar verme veya umutsuzluk içeren riskli bir bağlam. Lütfen yardım almayı düşün.',
+          'Zor bir an geçiriyor olabilirsin. Yalnız değilsin.',
       };
 }
 
@@ -259,37 +252,47 @@ abstract final class ImplicitPatterns {
   static String _bosluk(int n) => '(?:\\s+\\w+){0,$n}\\s+';
 
   static final List<ImplicitPattern> all = [
-    // ── KENDİNE ZARAR VERME (Self-Harm Detection - Madde 29) ─────────────
+    // ── KENDİNE ZARAR — TOKSİSİTE DEĞİL, DESTEK SİNYALİ (D4 · docs/20) ──────
+    // Bu iki örüntü önceden `tehdit` kategorisinde, şiddeti 1,0 idi. Sonuç:
+    // "Artık yaşamaya dayanamıyorum" yazan kişi Yüksek risk alıyor, gönderimde
+    // "Tehdit, Türk Ceza Kanunu kapsamında suç oluşturabilir" onayı görüyor
+    // ve metnine "Bu söylediğinden çok rahatsızım" önerisi yapılıyordu.
+    //
+    // Kendine zarar ifadesi başkasına yönelmiş bir saldırı değildir; bir
+    // yardım çağrısı olabilir. Motor bu aileyi BULGUYA ÇEVİRMEZ: skor, risk,
+    // öneri ve onay akışı değişmez. Yalnızca `CivilityAnalysis.needsSupport`
+    // işaretlenir ve arayüz uyarı yerine bir destek kartı gösterir.
+    //
+    // Şiddet 0: dedektörün çakışma elemesinde gerçek bir saldırı örüntüsünü
+    // gölgelemesin diye. Kategori alanı zorunlu olduğu için durur, kullanılmaz.
     ImplicitPattern(
       id: 'kendineZarar.intihar_ima',
       pattern: _re(r'\b(yasamaya|hayata)\s+(dayanamiyorum|son verecegim|gucum kalmadi)\b'),
       family: ImplicitFamily.kendineZararVerme,
-      category: ToxicityCategory.tehdit, // Acil durum uyarı seviyesi
-      severity: 1.0, // En yüksek risk
+      category: ToxicityCategory.asagilama,
+      severity: 0.0,
     ),
     ImplicitPattern(
       id: 'kendineZarar.olmek',
       pattern: _re(r'\b(olmek|yok olmak)\s+(istiyorum)\b'),
       family: ImplicitFamily.kendineZararVerme,
-      category: ToxicityCategory.tehdit,
-      severity: 1.0,
+      category: ToxicityCategory.asagilama,
+      severity: 0.0,
     ),
 
-    // ── KİNAYE VE İRONİ (Zero-Shot Sarcasm Detection) ───────────────────
-    ImplicitPattern(
-      id: 'kinaye.zeka_seviyesi',
-      pattern: _re(r'\b(zeka|iq)\s+(seviyen|kapasiten|masallah)\b'),
-      family: ImplicitFamily.kinaye,
-      category: ToxicityCategory.asagilama,
-      severity: 0.65,
-    ),
-    ImplicitPattern(
-      id: 'kinaye.zavalli',
-      pattern: _re(r'\b(ne kadar|cok)\s+(zavalli|bos|yazik|acinasi)\b'),
-      family: ImplicitFamily.kinaye,
-      category: ToxicityCategory.asagilama,
-      severity: 0.60,
-    ),
+    // ── KALDIRILAN: KİNAYE AİLESİ (D3 · docs/20 · 13 Eylül 2026) ────────────
+    // Altı örüntü vardı (zeka_seviyesi, zavalli, zeka_fiskiriyor,
+    // cok_zekisin_ya, dahi_benzetmesi, sahte_alkis). Bağlamsız ironi tespiti
+    // övgüyü ve taziyeyi saldırı sayıyordu:
+    //
+    //   "Çok yazık oldu, geçmiş olsun"          → Riskli
+    //   "Salon çok boş kaldı"                   → Riskli
+    //   "aferin sana, sınavı geçmişsin"         → Riskli
+    //   "Einstein ve Bohr arasındaki tartışma"  → Riskli
+    //   "Bizim dahi söyleyeceklerimiz var"      → Riskli ("dahi" = "bile")
+    //
+    // İroni, sözcüklerde değil söyleyen ile muhatap arasındaki geçmişte
+    // durur; tek bir cümle bunu taşımaz.
 
     // ═══ KÜÇÜMSEME ═══════════════════════════════════════════════════════════
     ImplicitPattern(
@@ -412,8 +415,10 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       // "hepiniz aynısınız" — "hepimiz" ile karışmaması kritik.
+      // D6 (docs/20): çıplak "aynı" almaşığı "hepiniz aynı fikirde misiniz"
+      // sorusunu yakalıyordu; yalnız yüklem biçimleri kaldı.
       id: 'otekilestirme.hepiniz_aynisiniz',
-      pattern: _re(r'\bhepiniz (aynisiniz|ayni|birsiniz)\b'),
+      pattern: _re(r'\bhepiniz (aynisiniz|birsiniz)\b'),
       family: ImplicitFamily.otekilestirme,
       category: ToxicityCategory.asagilama,
       severity: 0.48,
@@ -430,8 +435,10 @@ abstract final class ImplicitPatterns {
     // ═══ YOK SAYMA ═══════════════════════════════════════════════════════════
     ImplicitPattern(
       // "yine mi sen" — "yine mi bu hata" masumdur.
+      // D6 (docs/20): tümce sonuna bağlandı; "yine mi sen kazandın, tebrik
+      // ederim" bir yakınma değil, sorudur.
       id: 'yoksayma.yine_mi_sen',
-      pattern: _re(r'\byine mi (sen|siz)\b'),
+      pattern: _re(r'\byine mi (sen|siz)\s*$'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
       severity: 0.38,
@@ -629,30 +636,14 @@ abstract final class ImplicitPatterns {
     // En zor sınıf. Övgü sözcüğü TEK BAŞINA yeterli değildir; bir alay
     // parçacığı ("valla", "gerçekten") eşlik etmelidir. Aksi hâlde içten
     // takdir cezalandırılır.
-    ImplicitPattern(
-      id: 'alayci.helal_olsun_valla',
-      pattern: _re(r'\bhelal olsun\b[^!]{0,20}\b(valla|vallahi|bee?)\b'),
-      family: ImplicitFamily.alayci,
-      category: ToxicityCategory.asagilama,
-      severity: 0.36,
-    ),
-    ImplicitPattern(
-      id: 'alayci.aferin_valla',
-      pattern: _re(r'\baferin\b[^!]{0,20}\b(valla|vallahi|bee?)\b'),
-      family: ImplicitFamily.alayci,
-      category: ToxicityCategory.asagilama,
-      severity: 0.36,
-    ),
-    ImplicitPattern(
-      // "bravo" + alay parçacığı. "gerçekten çok başarılısın, tebrikler"
-      // içinde "bravo" olmadığı için takılmaz.
-      id: 'alayci.bravo',
-      pattern: _re(
-          r'\b(gercekten|valla|vallahi|hakikaten)\b[^!]{0,40}\bbravo\b|\bbravo\b[^!]{0,40}\b(gercekten|valla|vallahi)\b'),
-      family: ImplicitFamily.alayci,
-      category: ToxicityCategory.asagilama,
-      severity: 0.38,
-    ),
+    //
+    // ── KALDIRILANLAR (D5 · docs/20 · 13 Eylül 2026) ─────────────────────────
+    // alayci.helal_olsun_valla, alayci.aferin_valla, alayci.bravo: yukarıdaki
+    // ilke yetmedi. "valla", "be", "gerçekten" Türkçede İÇTEN övgünün de en
+    // sık eşlikçisidir: "Helal olsun be kardeşim, başardın", "Aferin valla,
+    // tam zamanında yetiştirdin", "Gerçekten bravo, çok emek vermişsin" —
+    // üçü de işaretleniyordu. Yazılı metin alayı samimiyetten ayıracak bir
+    // işaret taşımıyor; övgü yazanı uyarmak katmanı kapattırır.
     ImplicitPattern(
       // "ne kadar da zekisin/akıllısın" — abartı kalıbı.
       id: 'alayci.ne_kadar_da',
@@ -717,8 +708,10 @@ abstract final class ImplicitPatterns {
       severity: 0.65,
     ),
     ImplicitPattern(
+      // D6 (docs/20): "beni tanıyor musun, geçen yıl aynı sınıftaydık" bir
+      // tanışma sorusudur; "tanıyor musun" almaşığı çıkarıldı.
       id: 'tehdit.beni_tanimiyorsun',
-      pattern: _re(r'\bbeni (tanimiyorsun|taniyor musun)\b'),
+      pattern: _re(r'\bbeni tanimiyorsun\b'),
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.58,
@@ -842,15 +835,8 @@ abstract final class ImplicitPatterns {
       category: ToxicityCategory.asagilama,
       severity: 0.52,
     ),
-    ImplicitPattern(
-      // "bu yazdığın tam senlik" — kişiye indirgeyen alay.
-      id: 'alayci.tam_senlik',
-      pattern: _re(r'\btam (senlik|sizlik)\b'
-          r'|\bsenden beklenen\w* (bu|buydu)\b'),
-      family: ImplicitFamily.alayci,
-      category: ToxicityCategory.asagilama,
-      severity: 0.44,
-    ),
+    // KALDIRILAN (D5 · docs/20): alayci.tam_senlik — "tam senlik bir hediye
+    // buldum" ve "senden beklenen buydu, harika iş çıkardın" övgüdür.
     ImplicitPattern(
       // "acıdım sana gerçekten" — acıma yoluyla aşağılama.
       // Yakın-kaçış: samimi acıma da bu kalıba düşer. Şiddet bu yüzden
@@ -1207,41 +1193,6 @@ abstract final class ImplicitPatterns {
       id: 'karakter.ne_ayip',
       pattern: _re(r'\bne ayip\b|\bayip degil mi\b|\butanmiyor musun\b'),
       family: ImplicitFamily.karakterSaldirisi,
-      category: ToxicityCategory.asagilama,
-      severity: 0.38,
-    ),
-
-    // ── KİNAYE VE İRONİ (Zero-Shot Sarcasm) ───────────────────────────────
-    ImplicitPattern(
-      // "zeka fışkırıyor" / "zekan taşıyor" — sözde övgü, gerçekte aşağılama.
-      id: 'kinaye.zeka_fiskiriyor',
-      pattern: _re(r'\bzeka(si|niz|n)? (fiskir|tas)' + _ek + r'\b'),
-      family: ImplicitFamily.kinaye,
-      category: ToxicityCategory.asagilama,
-      severity: 0.45,
-      neutralAlternative: 'fikrinize katılmıyorum',
-    ),
-    ImplicitPattern(
-      // "çok zekisin ya" / "ne kadar zekisin be" — cümlenin sonundaki parçacıklar alay atfı taşır.
-      id: 'kinaye.cok_zekisin_ya',
-      pattern: _re(r'\b(cok|ne kadar da|masallah) (zeki|akilli)sin( ya| be)\b'),
-      family: ImplicitFamily.kinaye,
-      category: ToxicityCategory.asagilama,
-      severity: 0.40,
-    ),
-    ImplicitPattern(
-      // "bizim dahi" / "sayın dahi" / "einstein mısın"
-      id: 'kinaye.dahi_benzetmesi',
-      pattern: _re(r'\b(bizim dahi|sayin dahi|einstein( misin| misiniz)?)\b'),
-      family: ImplicitFamily.kinaye,
-      category: ToxicityCategory.asagilama,
-      severity: 0.42,
-    ),
-    ImplicitPattern(
-      // "aferin çok büyük iş yaptın" / "ayakta alkışlıyorum" — sahte onaylama.
-      id: 'kinaye.sahte_alkis',
-      pattern: _re(r'\b(ayakta alkisliyorum|buyuk is yaptin(iz|)\b|aferin sana\b)'),
-      family: ImplicitFamily.kinaye,
       category: ToxicityCategory.asagilama,
       severity: 0.38,
     ),

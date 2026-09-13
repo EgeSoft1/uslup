@@ -140,13 +140,29 @@ düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); ta
 
 | Küme | Boyut | Kesinlik | Duyarlılık | F1 | Durum |
 |---|:--:|:--:|:--:|:--:|---|
-| Geliştirme | 256 | %100 | %99,3 | %99,6 | Ezberleme payı içerir |
+| Geliştirme | 256 | %100 | %97,0 | %98,5 | Ezberleme payı içerir (13 Eylül: 3 alay örneği bilerek bırakıldı — docs/20) |
 | 1. ayrık | 80 | %98,0 | %100 | %99,0 | Yanmış (ilk ölçüm F1 %84,2) |
 | 2. ayrık (İP-15) | 100 | %100 | %38,5 | %55,6 | Yanmış (İP-19 onarımında kullanıldı) |
 | 3. ayrık (İP-20) | 80 | %100 | %50,0 | %66,7 | Yanmış (İP-21 onarımında kullanıldı) |
 | 4. ayrık (İP-22) | 65 | %90,5 | %54,3 | %67,9 | Yanmış (İP-26 genişletmesinde kullanıldı) |
 | 5. ayrık (İP-27) | 90 | kayıt yok | ≈%48 | — | Yanmış (İP-28 deyim katmanında kullanıldı) |
 | **6. ayrık (İP-29)** | **90** | **%96,4** | **%45,0** | **%61,4** | **Geçerli — ilk geçiş, ölçümden önce kilitlendi** |
+| Gündelik metin (İP-30) | 120 masum | — | — | — | Yanlış alarm **17 → 0** (özgüllük %85,8 → %100). Hata türleri bilindikten sonra, düzeltmeden önce yazıldı — o türlere kör değil |
+
+### Gündelik metin — İP-29'un göremediği kesinlik açığı
+
+İP-29'un masum dilimi 30 bağlam tuzağından oluşur ve gündelik metni temsil
+etmez. 13 Eylül'deki küme dışı tarama bunu gösterdi: **"Sana katılıyorum ama
+bence yanlış"** cümlesi Yüksek risk (küfür) alıyordu — "ama", kısa kök "am" +
+"a" diye çözülüyordu. "Sana sıkı sıkı sarılıyorum", "Allah razı olsun senden,
+amin", "Çok yazık oldu, geçmiş olsun" ve kendine zarar ifadeleri de işaretlenen
+gündelik cümleler arasındaydı; sonuncusu "suç oluşturabilir" onayı açıyordu.
+
+Düzeltmeler ölçümden önce kayda geçirildi (docs/20), yeni bir gündelik küme
+düzeltmeden önce commit edildi. Sonuç: gündelik kümede 17 yanlış alarm 0'a
+indi, **İP-29'da tek bir örnek değişmedi**. Bedeli açık: yazılı tek cümlede
+içten övgüden ayırt edilemeyen alay kalıpları kaldırıldı ve geliştirme
+kümesinde duyarlılık %99,2'den %97,0'a indi.
 
 ### Duyarlılık sayısı neyin cevabı
 
@@ -164,7 +180,7 @@ yazıldı"** sorusunun cevabıdır. Yazılmış bir ailenin yeni örneklerini mo
 örüntü kataloğuyla kapatılamaz — bu, kural tabanlı katmanın tavanıdır ve
 gizlenmemektedir.
 
-**Dürüstlük notu.** Geliştirme kümesindeki %99,6 bir genelleme kanıtı
+**Dürüstlük notu.** Geliştirme kümesindeki %98,5 (F1) bir genelleme kanıtı
 **değildir** — kümeyi de örüntüleri de aynı kişi yazmıştır. Ayrık kümeler bunu
 sayıya çevirdi: örtük saldırı diliminde duyarlılık %100'den %12,0'ye düştü.
 

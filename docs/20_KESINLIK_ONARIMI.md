@@ -63,4 +63,52 @@ ekleme yapılmayacak; yapılırsa bu belgeye ayrıca ve gerekçesiyle yazılacak
 
 ## 4. Sonuçlar
 
-*(Ölçümden sonra eklenecek.)*
+Kayıt `812c75b` ile girdi; değişiklikler ondan sonraki commit'tedir.
+Listeye ekleme yapılmadı. Bir sapma: D1'in kapsam sütununda "boğum" da
+yazıyordu; k→ğ yumuşaması çelişki sayılmadığı için D1 onu ayıklamaz
+(yalnızca ASCII "boga" D2 ile çıkar). Liste genişletilmedi.
+
+### İP-30 · gündelik metin (120 masum cümle)
+
+| | Önce | Sonra |
+|---|--:|--:|
+| Temiz kalan | 103 | **120** |
+| Yanlış alarm | 17 (11'i Yüksek risk) | **0** |
+| Özgüllük | %85,8 | **%100** |
+
+Önceki 17 alarmın 9'u yalnızca "ama" kaynaklıydı. Bu kümenin sınırı
+bölüm 3'te yazılı: hata sınıfları bilindikten sonra yazıldı.
+
+### İP-29 · geçerli ayrık küme
+
+**Tek bir örnek değişmedi.** Kesinlik %96,4 · duyarlılık %45,0 · F0.5 %78,5
+— ilk geçişle birebir aynı. İkinci geçiş raporlamaya gerek kalmadı.
+
+### Etiketli kümelerde örnek düzeyinde değişiklikler
+
+| Küme | Değişen | Ayrıntı |
+|---|---|---|
+| Geliştirme | 3 kaybedildi | "helal olsun sana valla", "çok başarılısın gerçekten, bravo", "aferin sana valla" (D3, D5) |
+| 1. ayrık (yanmış) | 2 kaybedildi · 1 kazanıldı | kaybedilen: "helal olsun valla sana", "bravo gerçekten" · kazanılan (masum, önceden yanlış alarmdı): "aferin sana, gerçekten hak ettin" |
+| İP-15 (yanmış) | 1 kaybedildi | "bu yazdığın tam senlik" (D5) |
+| İP-20 · İP-22 · İP-27 · İP-29 | değişiklik yok | |
+
+Kaybedilen altı örneğin altısı da yazılı tek cümlede içten övgüden ayırt
+edilemeyen alay kalıplarıdır — bölüm 3'te öngörülen bedel.
+
+| Geliştirme kümesi | Önce | Sonra |
+|---|--:|--:|
+| Kesinlik | %100 | %100 |
+| Duyarlılık | %99,2 | %97,0 |
+| F0.5 | — | %99,4 |
+| Katman katkısı (duyarlılık, sözlük → tüm katmanlar) | %45,1 → %99,2 | %45,1 → %97,0 |
+
+### Davranış (testlerle kilitlendi)
+
+- `civility_engine_test`: 12 gündelik kısa kök cümlesi temiz; 8 gerçek
+  hakaret (malsın, amına, götsün, itsin, adi herif, BÜYÜK HARF) hâlâ yakalanıyor.
+- `implicit_layer_test`: 11 övgü/taziye cümlesi temiz; kendine zarar ifadesi
+  `needsSupport` · risk temiz · bulgu yok · tehdit değil; destek sinyali aynı
+  cümledeki gerçek saldırıyı gölgelemiyor.
+- `demo_guvencesi_test` (arayüz): "ama"lı cümle uyarı üretmiyor; kendine zarar
+  cümlesi destek kartı gösteriyor ve gönderimde tehdit onayı açılmıyor.

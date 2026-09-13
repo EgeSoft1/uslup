@@ -239,6 +239,50 @@ void main() {
       }
     });
 
+    test('kısa kökle başlayan gündelik kelimeler temiz kalır (D1 + D2)', () {
+      // "ama" = am + a · "sıkı" = sik + i · "kaza" = kaz + a … Hepsi ikinci
+      // şahıs geçen cümlede Riskli ya da Yüksek risk alıyordu (docs/20).
+      const everyday = [
+        'Sana katılıyorum ama bence yanlış',
+        'Haklısın ama zamanlama kötü oldu',
+        'Allah razı olsun senden, amin',
+        'Sana sıkı sıkı sarılıyorum',
+        'Sen sığın buraya, yağmur başladı',
+        'Sen boğa burcusun değil mi',
+        'Sen boga burcusun degil mi',
+        'Kaza mı geçirdin sen?',
+        'Sana Kazım abiyi tanıştırayım',
+        'Sen o zaman haklı idin',
+        'Yeni gelen arkadaşın adı ne?',
+        'Sana malları yarın gönderirim',
+      ];
+      for (final text in everyday) {
+        final result = engine.analyze(text);
+        expect(result.risk, RiskLevel.temiz,
+            reason: 'YANLIŞ POZİTİF: "$text" → '
+                '${result.findings.map((f) => f.term).toList()}');
+      }
+    });
+
+    test('kısa kök düzeltmesi gerçek hakaretleri kaçırmaz', () {
+      // D1 yalnızca Türkçeye ÖZGÜ bir harf kökle çelişirse devreye girer;
+      // ASCII yazım ve doğru Türkçe yazım yakalanmaya devam eder.
+      const insults = [
+        'sen tam bir malsın',
+        'sen malsin',
+        'amına koyayım',
+        'sen götsün',
+        'göt herif',
+        'sen bir itsin',
+        'SEN MALSIN',
+        'adi herif sen',
+      ];
+      for (final text in insults) {
+        expect(engine.analyze(text).risk, isNot(RiskLevel.temiz),
+            reason: 'KAÇTI: $text');
+      }
+    });
+
     test('boş ve boşluk metin çökmez', () {
       expect(engine.analyze('').risk, RiskLevel.temiz);
       expect(engine.analyze('   ').risk, RiskLevel.temiz);

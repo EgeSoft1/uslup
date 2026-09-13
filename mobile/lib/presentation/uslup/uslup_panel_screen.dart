@@ -1184,8 +1184,8 @@ class UslupDetailsScreen extends StatelessWidget {
         kume: 'Geliştirme',
         boyut: '256',
         kesinlik: '%100,0',
-        duyarlilik: '%99,2',
-        f1: '%99,6',
+        duyarlilik: '%97,0',
+        f1: '%98,5',
         durum: 'Ezberleme payı içerir — genelleme kanıtı DEĞİLDİR',
         vurgu: false,
       ),
@@ -1246,6 +1246,17 @@ class UslupDetailsScreen extends StatelessWidget {
         durum: 'GEÇERLİ — bugünkü motor, ölçümden önce kilitlenmiş küme. '
             'Açık saldırı %83, örtük saldırı %32, masum 30\'da 29 temiz',
         vurgu: true,
+      ),
+      (
+        kume: 'Gündelik metin (İP-30)',
+        boyut: '120',
+        kesinlik: '—',
+        duyarlilik: '—',
+        f1: '—',
+        durum: 'Yalnız masum cümle. Yanlış alarm 17 → 0 (özgüllük %85,8 → '
+            '%100). Hata türleri bilindikten sonra yazıldı — o türlere kör '
+            'değil',
+        vurgu: false,
       ),
     ];
 
@@ -1317,7 +1328,7 @@ class UslupDetailsScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           _CompareBar(
             label: 'Duyarlılık · tüm katmanlar',
-            value: 99.2,
+            value: 97.0,
             color: p.success,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -1328,8 +1339,8 @@ class UslupDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Duyarlılık 54,1 puan arttı ve kesinlikten hiçbir şey '
-            'götürmedi. Örtük saldırı diliminde kazanç %1,8 → %100,0: '
+            'Duyarlılık 51,9 puan arttı ve kesinlikten hiçbir şey '
+            'götürmedi. Örtük saldırı diliminde kazanç %1,8 → %94,7: '
             'küfürsüz düşmanlığı yalnızca örüntü katmanı görüyor.',
             style:
                 appBody(fontSize: 12.5, color: p.textSecondary, height: 1.45),

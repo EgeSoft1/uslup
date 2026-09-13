@@ -88,16 +88,29 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
 
         // Çözümleme sonucu eşzamansız gelir. Kullanıcı bu arada bir parola
         // alanına geçtiyse eski sonuç orada GÖSTERİLMEZ.
-        if (!analysisEnabled || (risk != "riskli" && risk != "yuksek") || message.isEmpty()) {
+        val shown = risk == "riskli" || risk == "yuksek" || risk == "destek"
+        if (!analysisEnabled || !shown || message.isEmpty()) {
             currentCleanText = null
             strip.visibility = View.GONE
+            return
+        }
+
+        val bg = strip.background as? android.graphics.drawable.GradientDrawable
+
+        // Kendine zarar ifadesi: uyarı değil destek. Titreşim yok, dokunulacak
+        // öneri yok, sakin renk (docs/20, D4).
+        if (risk == "destek") {
+            currentCleanText = null
+            strip.text = "💙 $message"
+            bg?.setColor(android.graphics.Color.parseColor("#E3F2FD"))
+            strip.setTextColor(android.graphics.Color.parseColor("#0D47A1"))
+            strip.visibility = View.VISIBLE
             return
         }
 
         currentCleanText = cleanText
         strip.text = "⚠️ $message"
 
-        val bg = strip.background as? android.graphics.drawable.GradientDrawable
         if (risk == "yuksek") {
             bg?.setColor(android.graphics.Color.parseColor("#B71C1C"))
             strip.setTextColor(android.graphics.Color.WHITE)
