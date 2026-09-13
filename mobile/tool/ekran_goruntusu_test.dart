@@ -214,6 +214,28 @@ void main() {
     await _cek(tester, k, 'masaustu_19_bildirimler');
   });
 
+  testWidgets('masaüstü · karne · kelime listesi anahtarı (uzun)',
+      (tester) async {
+    final k = await ac(tester, masaustuUzun);
+    await panel(tester);
+    final anahtar = find.text('Kelime listesi');
+    await tester.ensureVisible(anahtar);
+    await tester.pumpAndSettle();
+    await tester.tap(anahtar);
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_20_kelime_listesi');
+  });
+
+  testWidgets('masaüstü · yeni gönderi · destek kartı', (tester) async {
+    final k = await ac(tester, masaustu);
+    await tester.tap(find.text('Yeni Gönderi').first);
+    await bekle(tester);
+    await tester.enterText(
+        find.byType(TextField).last, 'Artık yaşamaya dayanamıyorum');
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_21_destek_karti');
+  });
+
   testWidgets('telefon · akış', (tester) async {
     final k = await ac(tester, telefon);
     await _cek(tester, k, 'telefon_01_akis');

@@ -351,7 +351,7 @@ cd mobile
 flutter test tool/ekran_goruntusu_test.dart
 ```
 
-`docs/gorseller/ekranlar/` altına 17 kare üretir (2× çözünürlük, gerçek
+`docs/gorseller/ekranlar/` altına 25 kare üretir (2× çözünürlük, gerçek
 yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 
 | Dosya | Nerede |
@@ -360,6 +360,8 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | `masaustu_04_magdur_anlatisi.png` + `_05_olumsuzlama` | "Aynı kelime, farklı bağlam" |
 | `masaustu_07_kimlik_beyani.png` + `_08_nefret_soylemi` | Nefret söylemi slaytı |
 | `masaustu_10_panel_tam_sayfa.png` | Bağlam karnesi (uzun görüntü, kırpın) |
+| `masaustu_20_kelime_listesi.png` | Aynı karne, kelime listesi anahtarı açık: 6/12 (demo yedeği ⑥) |
+| `masaustu_21_destek_karti.png` | "Biri intihar düşüncesini yazarsa?" sorusunun cevabı |
 | `masaustu_11_sistem_detaylari.png` | Teknik slayt |
 | `masaustu_12_topluluk.png` | Etki slaytı |
 | `telefon_03_canli_uyari.png` | "Telefonda da aynı katman" |
