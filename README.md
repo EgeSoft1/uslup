@@ -109,9 +109,11 @@ Ayrıntı: [`docs/16_URUN_KABUGU.md`](docs/16_URUN_KABUGU.md)
 
 ## Ölçülen sonuçlar
 
-Geçerli genelleme ölçümü, **dördüncü ayrık kümedir** (İP-22). Önceki üç ayrık
-küme yanmıştır — motor onlara bakılarak düzeltildiği için artık genelleme
-ölçemezler. Gerekçe ve tam geçmiş:
+Raporlanan genelleme ölçümü, **son TAM ilk geçiş olan dördüncü ayrık kümedir**
+(İP-22). Beş ayrık kümenin beşi de yanmıştır — motor her birine bakılarak
+düzeltildiği için artık genelleme ölçemezler. Beşinci küme (İP-27) ilk geçişte
+60 saldırgan örneğin 31'ini kaçırdı; deyim katmanı bu kaçaklara bakılarak
+yazıldı ve ilk geçiş kesinliği kayda geçmedi. Gerekçe ve tam geçmiş:
 [`docs/14_MENTORLUK_PENCERESI_SONUCLARI.md`](docs/14_MENTORLUK_PENCERESI_SONUCLARI.md)
 
 | Ölçüm | Değer |
@@ -121,7 +123,7 @@ küme yanmıştır — motor onlara bakılarak düzeltildiği için artık genel
 | F1 | %67,9 → %70,4 |
 | Duyarlılık | **%54,3** |
 | **Yapısal ailenin genelleme oranı** | **%90,0** — aynı yapının hiç görülmemiş örneklerinde |
-| Çözümleme süresi | **p50 159 µs · p99 1459 µs** (AOT; p99'da 16 ms kare bütçesinin %9,1'i) |
+| Çözümleme süresi | **p50 357 µs · p99 2.212 µs** (AOT; p99'da 16 ms kare bütçesinin %13,8'i · 13 Eylül 2026) |
 
 ### Ölçüm geçmişi — neden tek bir sayı yok
 
@@ -131,7 +133,8 @@ küme yanmıştır — motor onlara bakılarak düzeltildiği için artık genel
 | 1. ayrık | 80 | %98,0 | %100 | %99,0 | Yanmış (ilk ölçüm F1 %84,2) |
 | 2. ayrık (İP-15) | 100 | %100 | %38,5 | %55,6 | Yanmış (İP-19 onarımında kullanıldı) |
 | 3. ayrık (İP-20) | 80 | %100 | %50,0 | %66,7 | Yanmış (İP-21 onarımında kullanıldı) |
-| **4. ayrık (İP-22)** | **65** | **%90,5** | **%54,3** | **%67,9** | **Geçerli — ilk geçiş** |
+| **4. ayrık (İP-22)** | **65** | **%90,5** | **%54,3** | **%67,9** | **Raporlanan — son tam ilk geçiş** |
+| 5. ayrık (İP-27) | 90 | kayıt yok | ≈%48 | — | Yanmış (İP-28 deyim katmanında kullanıldı) |
 
 ### Duyarlılık sayısı neyin cevabı
 
@@ -201,6 +204,17 @@ flutter pub get
 flutter run
 ```
 
+Jüri sunumu — **internetsiz** masaüstü demo:
+
+```bash
+cd mobile
+flutter build web --release --no-web-resources-cdn   # bir kez, internet varken
+# sonra depo kökünde SUNUMU_BASLAT.bat → yerel sunucu + tam ekran pencere
+flutter test tool/ekran_goruntusu_test.dart          # slayt ekran görüntüleri
+```
+
+Sunum akışı ve hazır cevaplar: [`docs/17_JURI_DEMO_SENARYOSU.md`](docs/17_JURI_DEMO_SENARYOSU.md)
+
 ---
 
 ## Depo yapısı
@@ -209,7 +223,7 @@ flutter run
 |---|---|
 | `packages/civility_core/` | **Nezaket motoru** — saf Dart, bağımlılıksız. Projenin çekirdeği. |
 | `mobile/` | Flutter istemci — sosyal akış kabuğu, gönderi ve yanıt kutuları (katman burada çalışır), Üslup ölçüm paneli, topluluk sağlığı paneli |
-| `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Üründe çalışmaz; mimari kararı ölçmek içindir. |
+| `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Uygulamada yalnızca ONNX **ikinci görüş** olarak durur: temiz/işaretli kararını hiçbir zaman değiştiremez, yalnızca kural motorunun zaten işaretlediği bir metnin basamağını yükseltebilir. Böylece ölçülen kesinlik uygulamada da birebir geçerlidir. |
 | `docs/` | Ürün tanımı, model değerlendirme, kullanıcı akışları, teknik rapor, erişilebilirlik denetimi |
 > **Not.** Bu depo, devralınan bir mesajlaşma platformu iskeletinin üzerine
 > kurulmuştur. Devralınan sunucu altyapısı (`crates/`, `db/`, `devops/`)
@@ -261,7 +275,8 @@ packages/civility_core/lib/src/
   görüş **kasıtlı olarak** kapsam dışıdır — korunan nitelik değildir.
 - Tüm veri sentetiktir; hiçbir örnek gerçek kullanıcıdan gelmemiştir.
 - **Öneri çeşitliliği sınırlı.** En sık öneri, üretilen tüm önerilerin
-  %28,9'unu kaplıyor. Daha ileri gitmek her örüntüye kendi nötr karşılığını
+  %30,8'ini kaplıyor (13 Eylül'de %28,9'dan yükseldi: bozuk Türkçe üreten
+  iki yeniden yazım yolu kapatıldı ve o cümleler genel kalıba düşüyor). Daha ileri gitmek her örüntüye kendi nötr karşılığını
   yazmayı gerektirir — algoritma işi değil, veri işi.
 - Yalnızca Türkçe desteklenmektedir.
 - Bir Büyük Dil Modeli **kullanılmamaktadır** — yazılmış, ölçülmüş ve kasıtlı

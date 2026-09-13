@@ -41,7 +41,9 @@ GIRDI  = "Kullanıcı cümleyi yazıyor"
 CIKTI  = "Kullanıcı seçer ve gönderir"
 BASLIK = "CİHAZ ÜZERİNDE"
 ROZET  = "SUNUCU ADIMI YOKTUR"
-DIPNOT = "Toplam çözümleme: 87–193 µs (AOT) — 16 ms kare bütçesinin %1,2'si"
+# 13 Eylül 2026 AOT ölçümü (bin/benchmark.dart). Önceki dipnot (87–193 µs,
+# %1,2) deyim katmanı ve sözlük genişlemesinden önceydi.
+DIPNOT = "Tipik çözümleme: 357 µs (AOT, p50) — p99'da bile 16 ms kare bütçesinin %13,8'i"
 
 # kutu geometrisi
 IN_BOX   = (270, 8, 630, 54)

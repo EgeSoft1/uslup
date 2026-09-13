@@ -980,8 +980,12 @@ class UslupDetailsScreen extends StatelessWidget {
       ),
       (
         title: 'Skor birleştirme ve öneri',
-        detail: 'noisy-OR: 1 − Π(1 − sᵢ). Öneri üretildikten sonra motor '
-            'öneriyi YENİDEN çözümler; daha temiz değilse öneri gösterilmez.'
+        // Formül kasıtlı olarak yazılmadı: alt simge karakteri (sᵢ) gömülü
+        // yazı tipinde yok ve çevrimdışı web sürümünde kutu olarak çizilirdi.
+        detail: 'Bulguların şiddeti noisy-OR ile birleşir: birden fazla '
+            'saldırı toplamı artırır ama skor 1\'i asla aşmaz. Öneri '
+            'üretildikten sonra motor öneriyi YENİDEN çözümler; daha temiz '
+            'değilse öneri gösterilmez.'
       ),
     ];
 
