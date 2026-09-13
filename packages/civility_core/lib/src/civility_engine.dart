@@ -650,6 +650,18 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
         selfDirectionApplies: matched.category != ToxicityCategory.tehdit,
       );
 
+      // ── D7 · SOMUT ADLARDA YAPISAL YÖNELİM (docs/21) ─────────────────────
+      // Yakınlık yönelimi "Sana köpeğimin fotoğrafını atayım" cümlesini
+      // Yüksek risk yapıyordu. Bu adlar yalnızca muhataba YAKIŞTIRILMIŞSA
+      // (öküzsün · seni gidi domuz · köpek misin · maymun gibi
+      // davranıyorsun · eşek herif) bulgu üretir.
+      if (matched.requiresDirection &&
+          ToxicityLexicon.predicativeDirectionTerms.contains(matched.term) &&
+          !_contextAnalyzer.isPredicativelyDirected(
+              tokens: tokens, matchIndex: i, signals: signals)) {
+        continue;
+      }
+
       final finding = _buildFinding(
         term: matched.term,
         category: matched.category,

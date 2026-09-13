@@ -140,3 +140,40 @@ PARÇALARA GÖRE
 ```
 
 Kaçan 33 örneğin tam listesi: aynı komutun çıktısında.
+
+## 7. İkinci geçiş — 13 Eylül 2026, küme dışı kesinlik onarımlarından sonra
+
+İlk geçişten sonra motor iki turda değişti. İkisinin de gerekçesi bu
+kümenin DIŞINDA bulundu, değişiklik listeleri ölçümden önce kayda geçti ve
+bu kümeye bakılarak hiçbir kural yazılmadı:
+
+| Tur | Kayıt | İP-29 etkisi |
+|---|---|---|
+| D1–D6 · kısa kök, kinaye, kendine zarar | docs/20 | **tek örnek değişmedi** |
+| D7 · somut adlarda yapısal yönelim | docs/21 | 2 saldırı örneği kaçtı |
+
+D7 sonrası ölçüm (`--genelleme5`):
+
+| Metrik | İlk geçiş | **İkinci geçiş** |
+|---|--:|--:|
+| Kesinlik | %96,4 | **%96,2** |
+| Duyarlılık | %45,0 | **%41,7** |
+| F1 | %61,4 | %58,1 |
+| F0.5 | %78,5 | **%76,2** |
+| Açık saldırı (duyarlılık) | %83,3 | %75,0 |
+| Örtük saldırı (duyarlılık) | %32,4 | %29,4 |
+| Parça 3 · serbest düşmanca | 11/30 | 9/30 |
+
+Kaçan iki örnek, D7'nin tanıdığı yapıların dışında kalan kuruluşlardır: bir
+bileşik yüklem ("… kaz kafalısın": ek "kafalı"ya gelir, "kaz"a değil) ve bir
+lanet kalıbı ("… eşek arısı soksun": "soksun" üçüncü şahıs isteğidir; eski
+yakınlık kuralı onu ikinci şahıs eki sanıyordu). **Bu iki örneğe bakılarak
+kural eklenmeyecek** — eklenirse küme yanar.
+
+Karşılığında, bu kümenin ölçmediği bir hata sınıfı kapandı: ikinci şahıs
+geçen gündelik cümlelerde somut adlar ("Sana köpeğimin fotoğrafını atayım")
+30 cümlenin 29'unda işaretleniyordu, şimdi 2'sinde (İP-31, docs/21).
+
+**Raporlama:** İki sayı yan yana verilir. İlk geçiş, motorun kümeyi ilk
+gördüğü andır; ikinci geçiş, bugünkü motorun aynı kümedeki başarımıdır ve
+küme yanmamıştır.

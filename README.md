@@ -114,14 +114,19 @@ hiç görmediği 90 cümle, küme ölçümden ÖNCE commit edildi (`9179ee4`), s
 düzeltilmeden raporlanıyor. Kayıt:
 [`docs/18_IP29_ILK_GECIS.md`](docs/18_IP29_ILK_GECIS.md)
 
-| İP-29 ilk geçiş | Değer |
-|---|---|
-| **Kesinlik** | **%96,4** — 30 masum cümlenin 29'u temiz kaldı |
-| **Duyarlılık** | **%45,0** |
-| **F0.5** — ürünün hedef fonksiyonu | **%78,5** |
-| Açık saldırı · örtük saldırı (duyarlılık) | %83,3 · %32,4 |
-| Bilinen yeteneklerin yeni kuruluşları | 16/30 (%53,3) |
-| Serbest düşmanca ifadeler (deyim, lanet, cinsiyet/yaş hedefli) | 11/30 (%36,7) |
+| İP-29 | İlk geçiş | Bugünkü motor (ikinci geçiş) |
+|---|---|---|
+| **Kesinlik** | **%96,4** — 30 masum cümlenin 29'u temiz | **%96,2** |
+| **Duyarlılık** | **%45,0** | **%41,7** |
+| **F0.5** — ürünün hedef fonksiyonu | **%78,5** | **%76,2** |
+| Açık saldırı · örtük saldırı (duyarlılık) | %83,3 · %32,4 | %75,0 · %29,4 |
+| Bilinen yeteneklerin yeni kuruluşları | 16/30 (%53,3) | 16/30 |
+| Serbest düşmanca ifadeler (deyim, lanet, cinsiyet/yaş hedefli) | 11/30 (%36,7) | 9/30 |
+
+İkinci geçiş, kümenin DIŞINDA bulunan bir kesinlik açığının onarımından
+sonradır (somut adlarda yapısal yönelim, docs/21): ikinci şahıs geçen gündelik
+cümlelerde yanlış alarm 30'da 29'dan 30'da 2'ye indi, karşılığında İP-29'da iki
+saldırı örneği kaçtı. Değişiklik bu kümeye bakılarak yapılmadı; küme yanmadı.
 
 Önceki beş ayrık kümenin beşi de yanmıştır — motor her birine bakılarak
 düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); tam geçmiş:
@@ -146,8 +151,9 @@ düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); ta
 | 3. ayrık (İP-20) | 80 | %100 | %50,0 | %66,7 | Yanmış (İP-21 onarımında kullanıldı) |
 | 4. ayrık (İP-22) | 65 | %90,5 | %54,3 | %67,9 | Yanmış (İP-26 genişletmesinde kullanıldı) |
 | 5. ayrık (İP-27) | 90 | kayıt yok | ≈%48 | — | Yanmış (İP-28 deyim katmanında kullanıldı) |
-| **6. ayrık (İP-29)** | **90** | **%96,4** | **%45,0** | **%61,4** | **Geçerli — ilk geçiş, ölçümden önce kilitlendi** |
+| **6. ayrık (İP-29)** | **90** | **%96,4 → %96,2** | **%45,0 → %41,7** | **%61,4 → %58,1** | **Geçerli — ilk geçiş → bugünkü motor (docs/18 §7)** |
 | Gündelik metin (İP-30) | 120 masum | — | — | — | Yanlış alarm **17 → 0** (özgüllük %85,8 → %100). Hata türleri bilindikten sonra, düzeltmeden önce yazıldı — o türlere kör değil |
+| Yönelim (İP-31) | 30 masum + 20 saldırı | — | 20/20 | — | Somut adlar + ikinci şahıs: yanlış alarm **29 → 2**, saldırıların hepsi yakalanmaya devam (docs/21) |
 
 ### Gündelik metin — İP-29'un göremediği kesinlik açığı
 
@@ -292,7 +298,8 @@ packages/civility_core/lib/src/
   Ölçüm altyapısı hazırdır — `bin/annotate_export.dart` kör etiketleme dosyası
   üretir, `bin/kappa.dart` Cohen's kappa'yı hesaplar; eksik olan ikinci insandır.
 - **Duyarlılık sınırlıdır ve örtük saldırıda düşüktür.** Geçerli ayrık
-  kümede (İP-29) toplam %45,0: açık saldırıda %83,3, örtük saldırıda %32,4.
+  kümede (İP-29) bugünkü motorla toplam %41,7 (ilk geçiş %45,0): açık
+  saldırıda %75,0, örtük saldırıda %29,4.
   İP-22'de ölçülen "yazılmış ailenin yeni örneklerinde %90" genellenmedi —
   devrik sıra, araya giren zamir ya da farklı kip kalıbın dışına düşüyor
   (İP-29 birinci parça: %53,3). Kural tabanlı bir katman Türkçe deyim ve

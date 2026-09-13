@@ -1240,12 +1240,24 @@ class UslupDetailsScreen extends StatelessWidget {
       (
         kume: '6. ayrık küme (İP-29)',
         boyut: '90',
-        kesinlik: '%96,4',
-        duyarlilik: '%45,0',
-        f1: '%61,4',
-        durum: 'GEÇERLİ — bugünkü motor, ölçümden önce kilitlenmiş küme. '
-            'Açık saldırı %83, örtük saldırı %32, masum 30\'da 29 temiz',
+        kesinlik: '%96,2',
+        duyarlilik: '%41,7',
+        f1: '%58,1',
+        durum: 'GEÇERLİ — ölçümden önce kilitlenmiş küme. İlk geçiş %96,4 · '
+            '%45,0; bugünkü sayı küme dışı bir yanlış alarm onarımından '
+            'sonra (2 saldırı kaçtı). Açık %75, örtük %29, masum 30\'da 29',
         vurgu: true,
+      ),
+      (
+        kume: 'Yönelim (İP-31)',
+        boyut: '50',
+        kesinlik: '—',
+        duyarlilik: '%100,0',
+        f1: '—',
+        durum: '"Sana köpeğimin fotoğrafını atayım" türü 30 masum cümlede '
+            'yanlış alarm 29 → 2; 20 hitap/yüklem saldırısının hepsi '
+            'yakalanıyor',
+        vurgu: false,
       ),
       (
         kume: 'Gündelik metin (İP-30)',

@@ -83,7 +83,7 @@ kapalı. Göreceğiniz her şey burada, yerelde çalışıyor."
 Uygulamaya geçin. Sol menü → **Üslup Paneli**.
 
 **① Başlık kartı (10 sn)** — işaret edin:
-> "256 sözlük girdisi, 209 örüntü, 761 etiketli örnek. Bu sayılar bir
+> "256 sözlük girdisi, 199 örüntü, 931 etiketli örnek. Bu sayılar bir
 > slayttan değil, motorun kendisinden sayılıyor."
 
 **② Doğrudan saldırı (60 sn)** — `Doğrudan saldırı` çipine dokunun.
@@ -169,7 +169,7 @@ yanıt kutusunda da aynı çalıştığını gösterir.)*
 nefret → gönderge → bağlam → öneri.
 
 **Slayt 5 — ölçüm tablosu** (`docs/18_IP29_ILK_GECIS.md`). Söylenecek:
-> "Geliştirme kümesinde kesinlik %100, duyarlılık %99. Bu bir genelleme
+> "Geliştirme kümesinde kesinlik %100, duyarlılık %97. Bu bir genelleme
 > kanıtı DEĞİL — kümeyi de örüntüleri de biz yazdık. Bu yüzden her
 > onarımdan sonra motora hiç göstermediğimiz yeni bir küme yazdık. Önceki
 > beş kümenin beşi de 'yandı': motor her birine bakılarak düzeltildi."
@@ -184,6 +184,12 @@ nefret → gönderge → bağlam → öneri.
 > yapıların yeni kuruluşlarında %80 bekliyorduk, %53 çıktı. Bunu
 > düzeltmedik — düzeltirsek küme yanar. Kural tabanlı bir katmanın tavanı
 > bu, ve yol haritamızdaki öğrenen modelin gerekçesi de bu ölçüm."
+>
+> "Sonra bu kümenin göremediği bir açık bulduk: 'Sana köpeğimin fotoğrafını
+> atayım' gibi gündelik cümleler hakaret sayılıyordu. Düzeltmeyi önce kayda
+> yazdık, sonra yaptık: o tür cümlelerde yanlış alarm 30'da 29'dan 2'ye indi.
+> Bedeli bu kümede iki kaçan saldırı oldu — duyarlılık %45'ten %42'ye düştü.
+> İki sayıyı da yazıyoruz."
 
 > *Jüri bu bölümü sever. Ölçmeyi bilen bir ekip olduğunuzu gösteren tek şey,
 > kötü sayıyı da göstermenizdir.*
@@ -225,13 +231,14 @@ bitirmeyi** hedefleyin.
 
 ## 3. Beklenen sorular — hazır cevaplar
 
-**"Duyarlılık %45 düşük değil mi?"**
+**"Duyarlılık %42 düşük değil mi?"** *(ilk geçişte %45)*
 > Evet, gizlemiyoruz. Ürünün hedefi F0.5 — yanlış pozitif, yanlış
 > negatiften pahalı: mağduru ya da sert ama meşru eleştiriyi susturmaktansa
 > bir hakareti kaçırmayı tercih ediyoruz. Bu yüzden kesinlik %96. Açık
-> saldırıda %83 yakalıyoruz; zayıf olduğumuz yer küfürsüz, örtük
-> düşmanlık (%32) ve cinsiyet/yaş hedefli genellemeler. Hangi cümlelerin
-> kaçtığı tek tek kayıtlı (`docs/18`).
+> saldırıda %75 yakalıyoruz; zayıf olduğumuz yer küfürsüz, örtük
+> düşmanlık (%29) ve cinsiyet/yaş hedefli genellemeler. Son düşüşü bilerek
+> kabul ettik: gündelik cümlelerde 29 yanlış alarmı kapatmanın bedeliydi.
+> Hangi cümlelerin kaçtığı tek tek kayıtlı (`docs/18`, `docs/21`).
 
 **"Bu sayıya neden güvenelim?"**
 > Küme ölçümden önce ayrı bir commit olarak depoya girdi; beklentilerimizi
@@ -364,13 +371,15 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | Sayı | Değer | Kaynak |
 |---|---|---|
 | Sözlük girdisi | 256 | çalışma anında sayılır |
-| Örüntü ve deyim | 209 | çalışma anında sayılır |
-| Etiketli örnek | 761 (7 küme) | çalışma anında sayılır |
+| Örüntü ve deyim | 199 | çalışma anında sayılır |
+| Etiketli örnek | 931 (9 küme) | çalışma anında sayılır |
 | Mesaj çözümleme (p50 · p99) | 206 µs · 2.519 µs | `bin/benchmark.dart`, AOT |
 | 2.400 karakterlik gönderi (p99) | 10,2 ms · kare bütçesinin %64'ü | aynı |
 | Hızlanma (aynı makine, aynı gün) | mesajda ~5×, uzun gönderide ~7× · çıktı birebir aynı | docs/19 |
-| **Geçerli ayrık küme (İP-29)** | **kesinlik %96,4 · duyarlılık %45,0 · F0.5 %78,5** | docs/18 · `--genelleme5` |
-| İP-29 dilimleri | açık saldırı %83,3 · örtük %32,4 · masum 30'da 29 temiz | docs/18 |
+| **Geçerli ayrık küme (İP-29) · ilk geçiş** | **kesinlik %96,4 · duyarlılık %45,0 · F0.5 %78,5** | docs/18 · `--genelleme5` |
+| **İP-29 · bugünkü motor** | **kesinlik %96,2 · duyarlılık %41,7 · F0.5 %76,2** | docs/18 §7 |
+| İP-29 dilimleri (bugün) | açık saldırı %75,0 · örtük %29,4 · masum 30'da 29 temiz | docs/18 §7 |
+| Yönelim (İP-31) | somut ad + ikinci şahıs: yanlış alarm 29 → 2 · saldırı 20/20 | `--yonelim` · docs/21 |
 | Önceki kayıt (İP-22) | kesinlik %90,5 · duyarlılık %54,3 — yandı | docs/14 §5 |
 | Geliştirme kümesi | kesinlik %100 · duyarlılık %97,0 | `evaluate.dart` |
 | Katman katkısı | duyarlılık %45,1 → %97,0, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |

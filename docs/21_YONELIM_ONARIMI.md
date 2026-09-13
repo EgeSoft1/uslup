@@ -74,4 +74,52 @@ girdilerin elenip elenmeyeceğine karar verir.
 
 ## 4. Sonuçlar
 
-*(Ölçümden sonra eklenecek.)*
+Kayıt `030b409` ile girdi; D7 ondan sonraki commit'tedir. Kural listesi
+değiştirilmedi.
+
+### İP-31 · yönelim kümesi
+
+| | Önce | Sonra |
+|---|--:|--:|
+| A · masum, somut anlam (30) | **1** temiz (29 yanlış alarm, 7'si Yüksek risk) | **28** temiz |
+| B · yüklem/hitap saldırısı (20) | 20 yakalandı | **20** yakalandı |
+
+Kalan iki yanlış alarm, önceden kaydedilen kural 2'den ("sen" + ad)
+gelir: "Sen maymunlar hakkında ödev hazırlıyordun…", "Sen sülük
+tedavisine inanıyor musun?". Ad burada yüklem değil, özne ya da tamlayandır;
+kural bunu ayırt etmez. Ölçüme bakılarak kural değiştirilmedi.
+
+### İP-29 · ikinci geçiş
+
+| Metrik | İlk geçiş | D7 sonrası |
+|---|--:|--:|
+| Kesinlik | %96,4 | %96,2 |
+| Duyarlılık | %45,0 | **%41,7** |
+| F0.5 | %78,5 | %76,2 |
+
+Değişen üç örnek (başka hiçbir etiketli kümede değişiklik yok):
+
+| Örnek | Önce → sonra | Neden |
+|---|---|---|
+| "tam bir kaz kafalısın" | Riskli → **Temiz** (kaçtı) | Ek bileşik yükleme ("kafalı-sın") gelir; D7 yapılarında yok |
+| "dilini eşek arısı soksun" | Riskli → **Temiz** (kaçtı) | "soksun" 3. şahıs isteği; eski yakınlık kuralı 2. şahıs sanıyordu |
+| "eşek hoşaftan ne anlar, sen de bundan anlamazsın" | Yüksek risk → Riskli | Bayrak aynı; "eşek" bulgusu düştü, örüntü bulgusu kaldı |
+
+Bu örneklere bakılarak kural eklenmeyecek (docs/18 §7).
+
+### Diğer ölçümler
+
+- İP-30 gündelik: 120/120 temiz (değişmedi).
+- Geliştirme kümesi: kesinlik %100 · duyarlılık %97,0 (değişmedi).
+- Birim testi bedeli: "senin gibi bir köpeği kimse istemez" artık
+  yakalanmıyor (kayıtta öngörülen "senin gibi X" kaybı). Testin amacı k→ğ
+  yumuşamasıydı; aynı biçimbilim "köpeğin tekisin sen" ile sınanıyor.
+
+### Değerlendirme
+
+D7, bir geçerli ölçümde 2 saldırı örneği (duyarlılık −3,3 puan) karşılığında
+ikinci şahıs geçen gündelik cümlelerde yanlış alarmı 29/30'dan 2/30'a indirdi.
+Ürünün hedef fonksiyonu F0.5'tir ve yanlış alarmın bedeli kullanıcının
+katmanı kapatmasıdır; takas bu yüzden kabul edildi. Kaçan kuruluşlar
+("X kafalısın", "senin gibi X") ancak yeni bir ayrık kümeyle ölçülerek
+eklenebilir.

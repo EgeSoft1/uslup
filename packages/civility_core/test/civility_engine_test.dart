@@ -112,7 +112,12 @@ void main() {
     test('ünsüz yumuşaması içeren çekimli hakaretler yakalanır (k->ğ, p->b)', () {
       const softenedInflections = [
         'sen tam bir salağın tekisin',
-        'senin gibi bir köpeği kimse istemez',
+        // Önceki cümle "senin gibi bir köpeği kimse istemez" idi. Somut
+        // adlarda yönelim artık yapıyla aranıyor (docs/21, D7) ve "senin
+        // gibi X" kuruluşu o yapılardan biri değil — bu, kayıtta öngörülen
+        // bedeldir. Test biçimbilimi (k→ğ) sınar; aynı yumuşama D7'nin
+        // tanıdığı bir hitapla sınanıyor.
+        'köpeğin tekisin sen',
         'sen tam bir dalyarağın tekisin',
       ];
       for (final text in softenedInflections) {
@@ -261,6 +266,38 @@ void main() {
         expect(result.risk, RiskLevel.temiz,
             reason: 'YANLIŞ POZİTİF: "$text" → '
                 '${result.findings.map((f) => f.term).toList()}');
+      }
+    });
+
+    test('somut adlar ikinci şahıs geçen gündelik cümlede hakaret sayılmaz (D7)',
+        () {
+      const everyday = [
+        'Sana köpeğimin fotoğrafını atayım',
+        'Senin için domuz eti yok, merak etme',
+        'Sana yeni bir fare aldım, eskisi bozulmuştu',
+        'Sana hıyar turşusu getirdim',
+        'Senin köpek havlıyor, sesini duyuyor musun?',
+        'Sen hiç maymun gördün mü hayvanat bahçesinde?',
+        'Sana bir komedi filmi önereyim',
+      ];
+      for (final text in everyday) {
+        final result = engine.analyze(text);
+        expect(result.risk, RiskLevel.temiz,
+            reason: 'YANLIŞ POZİTİF: "$text" → '
+                '${result.findings.map((f) => f.term).toList()}');
+      }
+      const insults = [
+        'sen tam bir eşeksin',
+        'seni gidi maymun',
+        'köpek herif sen',
+        'köpek misin sen',
+        'maymun gibi davranıyorsun',
+        'sen hıyarın tekisin',
+        '@ali tam bir domuz',
+      ];
+      for (final text in insults) {
+        expect(engine.analyze(text).risk, isNot(RiskLevel.temiz),
+            reason: 'KAÇTI: $text');
       }
     });
 

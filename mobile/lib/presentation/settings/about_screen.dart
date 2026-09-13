@@ -119,8 +119,8 @@ class AboutScreen extends StatelessWidget {
                 const _FeatureRow(
                   icon: Icons.science_rounded,
                   label: 'Ayrık küme ölçümü',
-                  detail: 'İP-29 ilk geçiş · kesinlik %96,4 · '
-                      'duyarlılık %45,0 · F0.5 %78,5',
+                  detail: 'İP-29 · kesinlik %96,2 · duyarlılık %41,7 · '
+                      'F0.5 %76,2 (ilk geçiş %96,4 · %45,0)',
                   status: FeatureStatus.working,
                 ),
                 const _FeatureRow(

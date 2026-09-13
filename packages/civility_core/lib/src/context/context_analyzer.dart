@@ -435,6 +435,88 @@ class ContextAnalyzer {
     );
   }
 
+  // ─── Yapısal yönelim (D7 · docs/21) ───────────────────────────────────────
+
+  /// Hitapta ad ile zamir arasına girebilen kelimeler: "sen TAM BİR öküz",
+  /// "seni GİDİ domuz", "sen NE BİÇİM bir hayvan".
+  static const Set<String> _addressFillers = {
+    'tam', 'bir', 'gidi', 'resmen', 'koca', 'ne', 'bicim',
+  };
+
+  /// Yalın ve belirtme hâlindeki ikinci şahıs zamirleri — hitap ve yüklem
+  /// kurabilen biçimler. "sana", "senin", "senden" BİLEREK yoktur.
+  static const Set<String> _addressPronouns = {'sen', 'seni', 'siz', 'sizi'};
+
+  /// İkinci şahsa yönelik soru ekleri (normalize): "köpek MİSİN".
+  static const Set<String> _secondPersonQuestion = {
+    'misin', 'musun', 'misiniz', 'musunuz',
+  };
+
+  /// Yalnızca ikinci şahıs BİLDİRME ekleri (görülen geçmiş hariç).
+  static const List<String> _copulaSuffixes = ['siniz', 'sunuz', 'sin', 'sun'];
+
+  /// Somut bir ad muhataba YAKIŞTIRILMIŞ mı? (D7)
+  ///
+  /// `evaluateMatch` yönelimi yakınlıkla arar: dört kelime içinde "sana"
+  /// geçmesi yeter. Hayvan adları ve somut anlamı yaygın adlar için bu,
+  /// "Sana köpeğimin fotoğrafını atayım" cümlesini Yüksek risk yapıyordu.
+  /// Bu yöntem YAPI arar; biri yeterlidir:
+  ///
+  ///   1. kelimenin kendi bildirme eki   → "öküzsün"
+  ///   2. önünde hitap zamiri            → "sen tam bir öküz", "seni gidi domuz"
+  ///   3. ardında zamir ya da soru eki   → "köpek sen", "köpek misin"
+  ///   4. yakınında aşağılayıcı baş      → "eşek herif", "sırtlanın tekisin"
+  ///   5. "gibi" + ikinci şahıs yüklem   → "maymun gibi davranıyorsun"
+  ///   6. @bahsetme                      → "@ali köpek"
+  bool isPredicativelyDirected({
+    required List<Token> tokens,
+    required int matchIndex,
+    required ContextSignals signals,
+  }) {
+    final token = tokens[matchIndex];
+
+    // 1
+    if (_endsWithAny(token.text, _copulaSuffixes)) return true;
+
+    // 2
+    for (var i = matchIndex - 1, skipped = 0; i >= 0 && skipped <= 3; i--) {
+      final text = tokens[i].text;
+      if (_addressPronouns.contains(text)) return true;
+      if (!_addressFillers.contains(text)) break;
+      skipped++;
+    }
+
+    // 3
+    if (matchIndex + 1 < tokens.length) {
+      final next = tokens[matchIndex + 1].text;
+      if (_addressPronouns.contains(next) ||
+          _secondPersonQuestion.contains(next)) {
+        return true;
+      }
+    }
+
+    // 4
+    if (_windowContains(tokens, matchIndex, matchIndex, _pejorativeHeads,
+        backward: 2, forward: 2)) {
+      return true;
+    }
+
+    // 5
+    if (matchIndex + 1 < tokens.length) {
+      final next = tokens[matchIndex + 1].text;
+      if (next == 'gibisin' || next == 'gibisiniz') return true;
+      if (next == 'gibi') {
+        final to = (matchIndex + 4).clamp(0, tokens.length);
+        for (var i = matchIndex + 2; i < to; i++) {
+          if (_endsWithAny(tokens[i].text, _secondPersonSuffixes)) return true;
+        }
+      }
+    }
+
+    // 6
+    return signals.hasMention;
+  }
+
   // ─── Yardımcılar ──────────────────────────────────────────────────────────
 
   /// Token'ın çevresindeki pencerede verilen kümeden bir kelime var mı?

@@ -185,8 +185,8 @@ abstract final class SeedData {
           body: 'Üslup artık akışın her metin kutusunda çalışıyor: gönderi, '
               'yorum, biyografi.\n\n'
               'Çözümleme cihazda yapılıyor — yazdığınız hiçbir cümle sunucuya '
-              'gitmiyor. Ortalama 159 mikrosaniye; 60 FPS kare bütçesinin '
-              'yüzde biri bile değil.\n\n'
+              'gitmiyor. Tipik bir mesaj 206 mikrosaniyede çözümleniyor; '
+              '60 FPS kare bütçesinin yüzde ikisi bile değil.\n\n'
               'Engellemiyoruz. Öneriyoruz, gerekçesini yazıyoruz, kararı '
               'size bırakıyoruz. #Üslup #SosyalYapayZekâ',
           createdAt: now.subtract(const Duration(minutes: 48)),

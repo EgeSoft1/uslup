@@ -234,6 +234,31 @@ class ToxicityLexicon {
   };
 
   // ───────────────────────────────────────────────────────────────────────────
+  // YAPISAL YÖNELİM İSTEYEN SOMUT ADLAR (D7 · docs/21 · 13 Eylül 2026)
+  //
+  // Bu girdiler zaten `requiresDirection` taşır. Fark: yönelim YAKINLIKLA
+  // değil, YAPIYLA aranır. "Sana köpeğimin fotoğrafını atayım" cümlesinde
+  // "sana" dört kelime içindedir ama köpek muhataba yakıştırılmamıştır;
+  // "köpeksin", "seni gidi köpek", "köpek misin", "köpek gibi
+  // davranıyorsun" ise yakıştırmadır. Kurallar:
+  // `ContextAnalyzer.isPredicativelyDirected`.
+  //
+  // Seçim ölçütü: gündelik metinde GERÇEK anlamıyla sık geçen ad. Sıfatlar
+  // ("terbiyesiz"), taciz ve tehdit öbekleri bu listede YOKTUR — onlarda
+  // "sana" zaten hedefin kendisidir.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Set<String> predicativeDirectionTerms = {
+    // hayvanlar
+    'eşek', 'öküz', 'domuz', 'maymun', 'köpek', 'hayvan', 'it', 'kaz', 'ayı',
+    'keçi', 'katır', 'manda', 'fare', 'sıçan', 'solucan', 'böcek',
+    'hamamböceği', 'kurbağa', 'karga', 'akbaba', 'çakal', 'yılan', 'sırtlan',
+    'kene', 'sülük',
+    // gündelik somut anlamı olan diğer adlar
+    'hıyar', 'parazit', 'asalak', 'mal', 'kof',
+    'komedi', 'trajikomik', 'saçmalık', 'palavra', 'zırva', 'gevezelik',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
   // SÖZLÜK
   //
   // Terimler okunabilirlik için Türkçe aksanlarıyla yazılmıştır;
