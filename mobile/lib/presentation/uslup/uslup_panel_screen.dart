@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/civility/civility_runtime.dart';
+import '../../core/civility/naive_wordlist_filter.dart';
 import '../../core/social/social_store.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
@@ -57,8 +58,7 @@ class UslupPanelScreen extends StatelessWidget {
             const _Hero(),
             const SectionLabel(text: 'CANLI DENEME'),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -90,8 +90,7 @@ class UslupPanelScreen extends StatelessWidget {
             ),
             const SectionLabel(text: 'CANLI GECİKME · BU CİHAZDA ÖLÇÜLÜYOR'),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
               child: Container(
                 height: 190,
                 width: double.infinity,
@@ -106,8 +105,7 @@ class UslupPanelScreen extends StatelessWidget {
             ),
             const SectionLabel(text: 'DAHA FAZLASI'),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: AppSpacing.base),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
               child: Column(
                 children: [
                   _NavCard(
@@ -247,9 +245,9 @@ class _Hero extends StatelessWidget {
                   builder: (context, constraints) {
                     // Dar ekranda 2×2, geniş ekranda tek sıra.
                     final perRow = constraints.maxWidth >= 520 ? 4 : 2;
-                    final chipWidth = (constraints.maxWidth -
-                            AppSpacing.sm * (perRow - 1)) /
-                        perRow;
+                    final chipWidth =
+                        (constraints.maxWidth - AppSpacing.sm * (perRow - 1)) /
+                            perRow;
                     return Wrap(
                       spacing: AppSpacing.sm,
                       runSpacing: AppSpacing.sm,
@@ -440,19 +438,38 @@ class _HeroCounter extends StatelessWidget {
 /// verir ve her satırda BEKLENTİYİ de yazar: "Sen tam bir aptalsın"
 /// işaretlenir, "Bana 'aptal' dedi" işaretlenmez — ve bu satırlar bir
 /// slayttan değil, motorun kendisinden gelir.
-class _ContextScorecard extends StatelessWidget {
+///
+/// ── KELİME LİSTESİ ANAHTARI ───────────────────────────────────────────────
+/// Aynı on iki cümle, aynı sözlük ve aynı gizleme çözücüyle kurulmuş bir
+/// kelime listesi filtresinden de geçirilebilir (`NaiveWordlistFilter`).
+/// Sunumcu anahtara dokunduğunda masum cümleler kırmızıya döner, küfürsüz
+/// saldırılar kaçar — farkın sebebi bir slayt değil, ekrandaki iki kolondur.
+class _ContextScorecard extends StatefulWidget {
   const _ContextScorecard();
+
+  @override
+  State<_ContextScorecard> createState() => _ContextScorecardState();
+}
+
+class _ContextScorecardState extends State<_ContextScorecard> {
+  bool _liste = false;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final results = [
-      for (final s in demoScenarios) (s, Civility.engine.analyze(s.text)),
+    final rows = [
+      for (final s in demoScenarios)
+        if (_liste)
+          _ScoreResult.fromWordlist(
+              s, NaiveWordlistFilter.instance.match(s.text), p)
+        else
+          _ScoreResult.fromEngine(s, Civility.engine.analyze(s.text), p),
     ];
-    final matched = results
-        .where((r) => (r.$2.risk != RiskLevel.temiz) == r.$1.expectFlag)
-        .length;
-    final allMatched = matched == results.length;
+    final matched = rows.where((r) => r.ok).length;
+    final allMatched = matched == rows.length;
+    final yanlisAlarm =
+        rows.where((r) => r.flagged && !r.scenario.expectFlag).length;
+    final kacan = rows.where((r) => !r.flagged && r.scenario.expectFlag).length;
 
     return Container(
       decoration: BoxDecoration(
@@ -465,8 +482,8 @@ class _ContextScorecard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.base, AppSpacing.base, AppSpacing.base, AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.base, AppSpacing.base,
+                AppSpacing.base, AppSpacing.sm),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -484,8 +501,12 @@ class _ContextScorecard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Her satır şu anda bu cihazda motordan geçirildi. '
-                        'Beklenti, motor çalışmadan önce yazıldı.',
+                        _liste
+                            ? 'Aynı sözlük ve aynı gizleme çözücü — ama bağlam '
+                                've cümle kuruluşu yok. Yaygın filtreler böyle '
+                                'çalışır.'
+                            : 'Her satır şu anda bu cihazda motordan geçirildi. '
+                                'Beklenti, motor çalışmadan önce yazıldı.',
                         style: appBody(
                             fontSize: 12, color: p.textTertiary, height: 1.35),
                       ),
@@ -494,8 +515,8 @@ class _ContextScorecard extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 AppBadgePill(
-                  label: '$matched/${results.length} beklendiği gibi',
-                  color: allMatched ? p.success : p.warning,
+                  label: '$matched/${rows.length} beklendiği gibi',
+                  color: allMatched ? p.success : p.danger,
                   icon: allMatched
                       ? Icons.check_circle_rounded
                       : Icons.error_outline_rounded,
@@ -503,10 +524,59 @@ class _ContextScorecard extends StatelessWidget {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.base, 0, AppSpacing.base, AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Dar telefonda ve 1,3× yazı ölçeğinde iki segment kart
+                // genişliğini aşabilir; taşmak yerine orantılı küçülür.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Üslup'),
+                        icon: Icon(Icons.shield_rounded, size: 16),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text('Kelime listesi'),
+                        icon: Icon(Icons.list_alt_rounded, size: 16),
+                      ),
+                    ],
+                    selected: {_liste},
+                    showSelectedIcon: false,
+                    onSelectionChanged: (s) => setState(() => _liste = s.first),
+                    style: SegmentedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      textStyle:
+                          appBody(fontSize: 12.5, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+                if (_liste) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '$yanlisAlarm masum cümle işaretlendi · '
+                    '$kacan saldırı kaçtı',
+                    style: appBody(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: p.danger,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
           Divider(height: 1, color: p.divider),
-          for (var i = 0; i < results.length; i++) ...[
-            _ScorecardRow(scenario: results[i].$1, analysis: results[i].$2),
-            if (i < results.length - 1)
+          for (var i = 0; i < rows.length; i++) ...[
+            _ScorecardRow(result: rows[i]),
+            if (i < rows.length - 1)
               Divider(
                   height: 1,
                   indent: AppSpacing.base,
@@ -519,26 +589,66 @@ class _ContextScorecard extends StatelessWidget {
   }
 }
 
-class _ScorecardRow extends StatelessWidget {
-  const _ScorecardRow({required this.scenario, required this.analysis});
+/// Karnedeki tek satırın sonucu — motordan ya da kelime listesinden.
+class _ScoreResult {
+  const _ScoreResult({
+    required this.scenario,
+    required this.flagged,
+    required this.label,
+    required this.color,
+    this.note,
+  });
+
+  factory _ScoreResult.fromEngine(
+      DemoScenario s, CivilityAnalysis analysis, AppPalette p) {
+    return _ScoreResult(
+      scenario: s,
+      flagged: analysis.risk != RiskLevel.temiz,
+      label: analysis.risk.label,
+      color: switch (analysis.risk) {
+        RiskLevel.temiz => p.success,
+        RiskLevel.dikkat => p.info,
+        RiskLevel.riskli => p.warning,
+        RiskLevel.yuksek => p.danger,
+      },
+    );
+  }
+
+  factory _ScoreResult.fromWordlist(
+      DemoScenario s, String? match, AppPalette p) {
+    return _ScoreResult(
+      scenario: s,
+      flagged: match != null,
+      label: match != null ? 'İşaretler' : 'Geçer',
+      color: match != null ? p.danger : p.success,
+      note: match != null ? 'listede: "$match"' : null,
+    );
+  }
 
   final DemoScenario scenario;
-  final CivilityAnalysis analysis;
+  final bool flagged;
+  final String label;
+  final Color color;
+
+  /// Kelime listesi kipinde hangi terimin eşleştiği.
+  final String? note;
+
+  bool get ok => flagged == scenario.expectFlag;
+}
+
+class _ScorecardRow extends StatelessWidget {
+  const _ScorecardRow({required this.result});
+
+  final _ScoreResult result;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final flagged = analysis.risk != RiskLevel.temiz;
-    final ok = flagged == scenario.expectFlag;
-    final riskColor = switch (analysis.risk) {
-      RiskLevel.temiz => p.success,
-      RiskLevel.dikkat => p.info,
-      RiskLevel.riskli => p.warning,
-      RiskLevel.yuksek => p.danger,
-    };
+    final scenario = result.scenario;
+    final ok = result.ok;
 
     return Semantics(
-      label: '${scenario.label}: ${scenario.text}. Sonuç ${analysis.risk.label}. '
+      label: '${scenario.label}: ${scenario.text}. Sonuç ${result.label}. '
           '${ok ? "Beklendiği gibi" : "Beklenenden farklı"}.',
       child: ExcludeSemantics(
         child: Padding(
@@ -566,6 +676,11 @@ class _ScorecardRow extends StatelessWidget {
                       style: appBody(
                           fontSize: 12.5, color: p.textSecondary, height: 1.3),
                     ),
+                    if (result.note != null)
+                      Text(
+                        result.note!,
+                        style: appBody(fontSize: 11, color: p.textTertiary),
+                      ),
                   ],
                 ),
               ),
@@ -578,8 +693,8 @@ class _ScorecardRow extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   widthFactor: 1,
                   child: AppBadgePill(
-                    label: analysis.risk.label,
-                    color: riskColor,
+                    label: result.label,
+                    color: result.color,
                   ),
                 ),
               ),
@@ -999,8 +1114,8 @@ class UslupDetailsScreen extends StatelessWidget {
         children: [
           for (var i = 0; i < steps.length; i++)
             Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.base, AppSpacing.sm, AppSpacing.base, AppSpacing.sm),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.base, AppSpacing.sm,
+                  AppSpacing.base, AppSpacing.sm),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1191,8 +1306,7 @@ class UslupDetailsScreen extends StatelessWidget {
             'Aynı 256 örnek üzerinde, yalnız sözlük katmanı ile bütün '
             'örüntü katmanları ayrı ayrı ölçüldü '
             '(bin/evaluate.dart --karsilastir).',
-            style:
-                appBody(fontSize: 13, color: p.textSecondary, height: 1.45),
+            style: appBody(fontSize: 13, color: p.textSecondary, height: 1.45),
           ),
           const SizedBox(height: AppSpacing.base),
           _CompareBar(
@@ -1217,8 +1331,8 @@ class UslupDetailsScreen extends StatelessWidget {
             'Duyarlılık 54,1 puan arttı ve kesinlikten hiçbir şey '
             'götürmedi. Örtük saldırı diliminde kazanç %1,8 → %100,0: '
             'küfürsüz düşmanlığı yalnızca örüntü katmanı görüyor.',
-            style: appBody(
-                fontSize: 12.5, color: p.textSecondary, height: 1.45),
+            style:
+                appBody(fontSize: 12.5, color: p.textSecondary, height: 1.45),
           ),
         ],
       ),
@@ -1234,7 +1348,8 @@ class UslupDetailsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _metricTile(p, Civility.gecikmeP50, 'tipik (p50)')),
+              Expanded(
+                  child: _metricTile(p, Civility.gecikmeP50, 'tipik (p50)')),
               Expanded(child: _metricTile(p, Civility.gecikmeP99, 'p99')),
               Expanded(
                   child: _metricTile(
@@ -1247,16 +1362,15 @@ class UslupDetailsScreen extends StatelessWidget {
             '60 FPS\'te bir kare 16 ms sürer; en kötü durumda bile bunun '
             'yedide birinden azını harcıyoruz. Bu yüzden gecikmeli tetikleme '
             '(debounce) yok — çözümleme her tuş vuruşunda çalışıyor.',
-            style: appBody(
-                fontSize: 12.5, color: p.textSecondary, height: 1.45),
+            style:
+                appBody(fontSize: 12.5, color: p.textSecondary, height: 1.45),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Bu sayı iki kez bayatladı: önce 219 µs\'den 159 µs\'ye indi, '
             'deyim katmanı ve sözlük genişledikten sonra 357 µs\'ye çıktı. '
             'Ölçülmeyen bir gecikme iddiası, motor büyüdükçe yanlışa döner.',
-            style: appBody(
-                fontSize: 11.5, color: p.textTertiary, height: 1.45),
+            style: appBody(fontSize: 11.5, color: p.textTertiary, height: 1.45),
           ),
         ],
       ),
@@ -1328,8 +1442,8 @@ class UslupDetailsScreen extends StatelessWidget {
         children: [
           for (final item in items)
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.base,
-                  AppSpacing.sm, AppSpacing.base, AppSpacing.sm),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.base, AppSpacing.sm,
+                  AppSpacing.base, AppSpacing.sm),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

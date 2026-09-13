@@ -16,6 +16,7 @@ import 'package:civility_core/civility_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:turkiye_mesajlasma/core/civility/civility_runtime.dart';
+import 'package:turkiye_mesajlasma/core/civility/naive_wordlist_filter.dart';
 import 'package:turkiye_mesajlasma/main.dart';
 import 'package:turkiye_mesajlasma/presentation/uslup/demo_scenarios.dart';
 import 'package:turkiye_mesajlasma/presentation/uslup/engine_chat_screen.dart';
@@ -115,6 +116,40 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Neden uyarıldın?'), findsNothing);
+    });
+
+    testWidgets('kelime listesi anahtarı aynı cümlelerde farkı gösterir',
+        (tester) async {
+      await paneliAc(tester);
+      final anahtar = find.text('Kelime listesi');
+      await tester.ensureVisible(anahtar);
+      await tester.tap(anahtar);
+      await tester.pumpAndSettle();
+
+      final filtre = NaiveWordlistFilter.instance;
+      final yanlisAlarm = demoScenarios
+          .where((s) => !s.expectFlag && filtre.flags(s.text))
+          .length;
+      final kacan = demoScenarios
+          .where((s) => s.expectFlag && !filtre.flags(s.text))
+          .length;
+      expect(yanlisAlarm + kacan, greaterThan(0),
+          reason: 'Anahtar hiçbir fark göstermiyorsa sunumdaki an boştur.');
+      expect(
+          find.text('$yanlisAlarm masum cümle işaretlendi · '
+              '$kacan saldırı kaçtı'),
+          findsOneWidget);
+      expect(
+          find.text('${demoScenarios.length - yanlisAlarm - kacan}/'
+              '${demoScenarios.length} beklendiği gibi'),
+          findsOneWidget);
+
+      // Geri dönünce karne yine motorun sonucunu gösterir.
+      await tester.tap(find.descendant(
+          of: find.byType(SegmentedButton<bool>), matching: find.text('Üslup')));
+      await tester.pumpAndSettle();
+      expect(find.text('${demoScenarios.length}/${demoScenarios.length} '
+          'beklendiği gibi'), findsOneWidget);
     });
 
     testWidgets('sahte ağ düğmesi ve yanlış LLM etiketi geri gelmedi',

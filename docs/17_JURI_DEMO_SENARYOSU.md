@@ -83,7 +83,7 @@ kapalı. Göreceğiniz her şey burada, yerelde çalışıyor."
 Uygulamaya geçin. Sol menü → **Üslup Paneli**.
 
 **① Başlık kartı (10 sn)** — işaret edin:
-> "256 sözlük girdisi, 209 örüntü, 671 etiketli örnek. Bu sayılar bir
+> "256 sözlük girdisi, 209 örüntü, 761 etiketli örnek. Bu sayılar bir
 > slayttan değil, motorun kendisinden sayılıyor."
 
 **② Doğrudan saldırı (60 sn)** — `Doğrudan saldırı` çipine dokunun.
@@ -126,7 +126,7 @@ sonra `Nefret söylemi` → **Yüksek risk ✓**.
 > susturur. Bizim sözlüğümüzde tek bir kimlik adı yok ve bunu bir test
 > koruyor."
 
-**⑤ Küfürsüz düşmanlık + gizleme (40 sn)** — `Küfürsüz düşmanlık`
+**⑤ Küfürsüz düşmanlık + gizleme (30 sn)** — `Küfürsüz düşmanlık`
 ("Senin gibilerden zaten bu beklenirdi") → işaretlenir; `Gizleme denemesi`
 ("sen $3r3fsizsin") → işaretlenir.
 
@@ -134,10 +134,24 @@ sonra `Nefret söylemi` → **Yüksek risk ✓**.
 > dizilişte. İkincisinde kullanıcı filtreden kaçmaya çalışıyor; motor
 > rakamları harfe geri çeviriyor."
 
-**⑥ Bağlam karnesi (30 sn)** — aşağı kaydırın → **"12/12 beklendiği gibi"**.
+**⑥ Bağlam karnesi (45 sn)** — aşağı kaydırın → **"12/12 beklendiği gibi"**.
 
 > "On iki senaryonun hepsi burada, her satırda beklenti ve gerçek sonuç yan
 > yana. Beklentiyi motoru çalıştırmadan önce yazdık."
+
+Karnenin üstündeki anahtarda **Kelime listesi**'ne dokunun → rozet
+**"6/12 beklendiği gibi"**, altında **"3 masum cümle işaretlendi · 3 saldırı
+kaçtı"**.
+
+> "Aynı on iki cümle, aynı sözlük, aynı gizleme çözücü — tek fark bağlam
+> yok. Mağdur, olumsuzlama ve öz-ifade işaretlendi; küfürsüz düşmanlık, deyim
+> ve nefret söylemi kaçtı. Aradaki altı satır, bu projenin katkısı."
+
+Tekrar **Üslup**'a dokunun, karne 12/12'ye döner.
+
+*(Sorulursa "saman adam mı kurdunuz?": filtre motorun kendi 256 girdilik
+sözlüğünü ve aynı normalizasyonu kullanıyor, "$3r3fsiz"i o da yakalıyor;
+"mal"/"it" gibi kısa kelimeleri "malzeme"de aramıyor. Bunu bir test koruyor.)*
 
 **⑦ Canlı gecikme (15 sn)** — altındaki siyah kart:
 
@@ -228,7 +242,8 @@ bitirmeyi** hedefleyin.
 
 **"Bu bir yapay zekâ mı, yoksa kelime listesi mi?"**
 > Kelime listesi değil: aynı kelime dört bağlamda dört farklı sonuç veriyor
-> (demodaki dörtlü). Türkçe biçimbilim, bağlam çözümleme, edimbilimsel
+> (demodaki dörtlü). Karnedeki anahtar aynı sözlükle kurulmuş bir kelime
+> listesini yan yana gösteriyor: 12'de 6 ile 12'de 12. Türkçe biçimbilim, bağlam çözümleme, edimbilimsel
 > örüntüler ve gönderge çözümlemesi var. Denetimli bir model de eğitip
 > ölçtük; kural motorunu geçemedi. Veri büyüdükçe öğrenen model yol
 > haritamızda.
@@ -297,7 +312,7 @@ Dört kısa klip yeterli (her biri ≤ 20 sn, sessiz):
 | 1 | Yanıt kutusuna elle "sen tam bir aptalsın" yazmak → uyarı → "Bunu kullan" | Demo yedeği ② |
 | 2 | Dört çip sırayla: Doğrudan → Olumsuzlama → Mağdur → Öz-ifade | Demo yedeği ③ |
 | 3 | Kimlik beyanı → Nefret söylemi | Demo yedeği ④ |
-| 4 | Bağlam karnesine kaydırma, "12/12" | Demo yedeği ⑥ |
+| 4 | Bağlam karnesine kaydırma, "12/12" → Kelime listesi anahtarı "6/12" → geri | Demo yedeği ⑥ |
 
 Çekimden önce: açık tema, Edge yakınlaştırma %110, fare imleci görünür.
 
@@ -340,4 +355,5 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | Geliştirme kümesi | kesinlik %100 · duyarlılık %99,2 | `evaluate.dart` |
 | Katman katkısı | duyarlılık %45,1 → %99,2, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |
 | Demo senaryoları | 12/12 beklendiği gibi | Üslup Paneli → Bağlam karnesi |
+| Aynı 12 cümlede kelime listesi | 6/12 · 3 yanlış alarm · 3 kaçan | Karnedeki anahtar |
 | Otomatik testler | 294 (motor) + 21 (arayüz) | `dart test`, `flutter test` |
