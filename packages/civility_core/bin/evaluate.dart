@@ -12,6 +12,7 @@
 //   dart run bin/evaluate.dart --genelleme5    → İP-29 altıncı ayrık küme ✅
 //   dart run bin/evaluate.dart --gundelik      → İP-30 gündelik metin (yanlış alarm)
 //   dart run bin/evaluate.dart --yonelim       → İP-31 somut adlar + ikinci şahıs
+//   dart run bin/evaluate.dart --savunma       → İP-32 aktarılan düşmanca görüş
 //   dart run bin/evaluate.dart --karsilastir   → katman katkısı (A/B)
 //   dart run bin/evaluate.dart --hepsi         → hepsi birden
 //
@@ -49,6 +50,7 @@ void main(List<String> args) {
   final wantsGeneralization5 = wantsAll || args.contains('--genelleme5');
   final wantsEveryday = wantsAll || args.contains('--gundelik');
   final wantsDirection = wantsAll || args.contains('--yonelim');
+  final wantsStance = wantsAll || args.contains('--savunma');
   final wantsDev = wantsAll ||
       (!wantsHoldout &&
           !wantsCompare &&
@@ -58,7 +60,8 @@ void main(List<String> args) {
           !wantsGeneralization4 &&
           !wantsGeneralization5 &&
           !wantsEveryday &&
-          !wantsDirection);
+          !wantsDirection &&
+          !wantsStance);
 
   if (wantsDev) {
     stdout.write(
@@ -256,6 +259,39 @@ void main(List<String> args) {
       ..writeln()
       ..writeln('  ⓘ  Hata sınıfı bilindikten SONRA, düzeltmeden ÖNCE yazıldı.')
       ..writeln('     Kayıt: docs/21.')
+      ..writeln();
+  }
+
+  if (wantsStance) {
+    // İP-32 — Aktarılan düşmanca görüş. A masum (kınama), B ve C saldırı.
+    final cases = StanceDataset.cases;
+    final engine = LexicalTurkishClassifier();
+    final hatalar = [
+      for (final c in cases)
+        if (engine.analyze(c.text) case final a
+            when (a.risk != RiskLevel.temiz) != c.shouldFlag)
+          '    ${c.shouldFlag ? "KAÇTI      " : "YANLIŞ ALARM"} '
+              '${a.risk.label.padRight(12)} ${c.text}  '
+              '[${a.findings.map((f) => f.term).join(", ")}]',
+    ];
+    stdout
+      ..writeln('═' * 78)
+      ..writeln('İP-32 · SAVUNMA DİLİ KÜMESİ — ${cases.length} örnek')
+      ..writeln('═' * 78)
+      ..writeln('  A. aktarıp kınayan (masum)        : '
+          '${_parca(evaluator, engine, cases.sublist(0, 20))}')
+      ..writeln('  B. konuşanın kendi görüşü         : '
+          '${_parca(evaluator, engine, cases.sublist(20, 30))}')
+      ..writeln('  C. aktarıp onaylayan (D8 bedeli)  : '
+          '${_parca(evaluator, engine, cases.sublist(30, 40))}')
+      ..writeln();
+    for (final satir in hatalar) {
+      stdout.writeln(satir);
+    }
+    stdout
+      ..writeln()
+      ..writeln('  ⓘ  Hata sınıfı bilindikten SONRA, düzeltmeden ÖNCE yazıldı.')
+      ..writeln('     Kayıt: docs/22.')
       ..writeln();
   }
 

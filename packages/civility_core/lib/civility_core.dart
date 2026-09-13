@@ -33,3 +33,4 @@ export 'src/eval/generalization4_dataset.dart';
 export 'src/eval/generalization5_dataset.dart';
 export 'src/eval/everyday_dataset.dart';
 export 'src/eval/direction_dataset.dart';
+export 'src/eval/stance_dataset.dart';
