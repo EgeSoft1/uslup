@@ -218,6 +218,27 @@ void main() {
       }
     });
 
+    test('tersten okununca sözlüğe denk gelen gündelik kelimeler temiz kalır', () {
+      // 13 Eylül 2026'ya kadar 4+ harfli her token tersten de aranıyordu.
+      // "atma" → "amta" = am + ta, küfür, YÜKSEK RİSK: çöpü yere atma diyen
+      // kişi gönderimde "suç teşkil edebilir" onayı görüyordu. Gerekçe:
+      // `LexicalTurkishClassifier._matchTokens`.
+      const everyday = [
+        'Sen taş atma',
+        'Sen de çöpü yere atma lütfen',
+        'sen de adım atma korkusunu yen',
+        'Sen bizden uzak dur',
+        'sen uzak kalma bizden',
+        'Bahçeye kalas taşıdık',
+      ];
+      for (final text in everyday) {
+        final result = engine.analyze(text);
+        expect(result.risk, RiskLevel.temiz,
+            reason: 'YANLIŞ POZİTİF: "$text" → '
+                '${result.findings.map((f) => f.term).toList()}');
+      }
+    });
+
     test('boş ve boşluk metin çökmez', () {
       expect(engine.analyze('').risk, RiskLevel.temiz);
       expect(engine.analyze('   ').risk, RiskLevel.temiz);

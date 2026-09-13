@@ -578,18 +578,24 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       // Agresif varyant da meşru bir kelimeye denk geliyorsa elenir.
       if (aggressiveText != token.text && _isMasked(aggressiveText)) continue;
 
-      var matched = _lookup(token.text) ??
+      final matched = _lookup(token.text) ??
           (aggressiveText == token.text ? null : _lookup(aggressiveText));
 
-      // ── İP-29: Ters Yazım Tespiti ("kallas" -> "sallak", "latpa" -> "aptal") ──
-      // Yanlış pozitifleri (çip -> piç) önlemek için yalnızca 4 harf ve üzeri
-      // kelimelerde tersten okuma denemesi yapılır.
-      if (matched == null && token.text.length > 3) {
-        final reversedText = token.text.split('').reversed.join('');
-        if (!_isMasked(reversedText)) {
-          matched = _lookup(reversedText);
-        }
-      }
+      // ── KALDIRILAN: ters yazım denemesi (13 Eylül 2026) ─────────────────────
+      // Burada 4+ harfli her token TERSTEN de sözlükte aranıyordu ("latpa" →
+      // "aptal"). Tersten okunan kelime kök + ek denetiminden geçtiği için
+      // Türkçenin en sık kelimeleri saldırıya dönüşüyordu:
+      //
+      //   "Sen taş atma"                → "amta" = am + ta   → Yüksek risk ✗
+      //   "Sen de çöpü yere atma"       → aynı                → Yüksek risk ✗
+      //   "Sen bizden uzak dur"         → "kazu" = kaz + u   → Riskli      ✗
+      //   "Bahçeye kalas taşıdık"       → "salak"             → Riskli      ✗
+      //
+      // Yüksek risk gönderimde onay diyaloğu açar; yani çöpü yere atma diyen
+      // kişi "suç teşkil edebilir" uyarısı alıyordu. Karşılığında yakaladığı
+      // kaçış ek alınca ("latpasın") zaten çalışmıyordu ve hiçbir etiketli
+      // kümede örneği yoktu. Kesinlik önce gelir; deneme kaldırıldı ve
+      // `test/civility_engine_test.dart` bu cümleleri koruyor.
 
       if (matched == null) continue;
 
