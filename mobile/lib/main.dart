@@ -12,6 +12,7 @@
 // açılmaz hâle getirmez — yalnızca melez katmanı kapatır.
 // =============================================================================
 
+import 'package:civility_core/civility_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -52,6 +53,17 @@ Future<void> main() async {
 ///
 /// Katmanın uygulama sınırının DIŞINDA da çalıştığı yer burasıdır: kullanıcı
 /// başka bir uygulamada yazarken bile aynı motor, aynı cihazda çalışır.
+///
+/// ── 13 EYLÜL 2026 DÜZELTMELERİ ────────────────────────────────────────────
+/// • Şerit `toxicity > 0.5` eşiğine bakıyordu; uygulamadaki kutu ise öneriyi
+///   `riskli` basamağında (≥ 0,40) açıyor. 0,40–0,50 arasındaki metinler
+///   klavyede hiç uyarı almıyordu. Artık basamak adı gönderilir, iki yüzey
+///   aynı kuralı izler.
+/// • Öneri üretilemediğinde kullanıcının KENDİ metni "Öneri: …" diye
+///   gösteriliyor, dokununca metin kendisiyle değiştiriliyordu. Artık
+///   gerekçe gösterilir ve dokunulacak bir öneri yoktur.
+/// • Klavye yazma hızı ve silme oranı gönderiyordu; motor bunları skora
+///   ceza olarak ekliyordu. Kaldırıldı (gerekçe: `civility_engine.dart`).
 void _bindKeyboardService() {
   const methodChannel = MethodChannel('uslup/ime');
 
@@ -62,27 +74,22 @@ void _bindKeyboardService() {
     final text = args?['text'] as String?;
     if (text == null || text.isEmpty) return null;
 
-    final analysis = Civility.engine.analyze(
-      text,
-      typingSpeedMs: (args?['typing_speed_ms'] as num?)?.toDouble(),
-      backspaceRatio: (args?['backspace_ratio'] as num?)?.toDouble(),
-    );
+    final analysis = Civility.engine.analyze(text);
 
-    if (!analysis.hasFindings) {
-      await methodChannel.invokeMethod('updateSuggestion', {
-        'toxicity': 0.0,
-        'message': '',
-      });
+    if (analysis.risk.index < RiskLevel.riskli.index ||
+        analysis.findings.isEmpty) {
+      await methodChannel.invokeMethod('updateSuggestion', {'risk': 'temiz'});
       return null;
     }
 
     final suggestion = await Civility.suggester.suggest(analysis);
-    final cleanText = suggestion?.text ?? text;
 
     await methodChannel.invokeMethod('updateSuggestion', {
-      'toxicity': analysis.toxicity,
-      'message': 'Öneri: $cleanText',
-      'cleanText': cleanText,
+      'risk': analysis.risk.name,
+      'message': suggestion != null
+          ? 'Öneri: ${suggestion.text}'
+          : analysis.findings.first.explanation,
+      'cleanText': suggestion?.text,
     });
     return null;
   });

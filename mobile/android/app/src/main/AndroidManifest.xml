@@ -26,14 +26,19 @@
          Hata ayıklama ve profil sürümleri INTERNET iznini ayrı manifest
          dosyalarından alır (src/debug, src/profile); Flutter'ın sıcak
          sürümü bu dosyadan üretilir ve izinsizdir.
+
+         13 Eylül 2026: INTERNET, VIBRATE ve usesCleartextTraffic="true"
+         bir ara commit'le (9a3f7b8) buraya geri girmişti — klavye servisine
+         eklenen, metni şifresiz HTTP ile sunucuya gönderen yollar içindi.
+         Yollar ve izinler kaldırıldı. Klavyenin titreşimi
+         `performHapticFeedback` ile yapılır ve izin gerektirmez. Bu yorumun
+         yeniden yalana dönmemesi için `kapsam_degismezi_test.dart` artık bu
+         dosyayı okur.
          ═══════════════════════════════════════════════════════════════════ -->
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:label="Üslup"
         android:name="${applicationName}"
-        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

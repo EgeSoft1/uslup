@@ -23,7 +23,7 @@ class StubClassifier implements ToxicityClassifier {
   String get modelName => 'sahte';
 
   @override
-  CivilityAnalysis analyze(String text, {double? typingSpeedMs, double? backspaceRatio}) {
+  CivilityAnalysis analyze(String text) {
     const signals = ContextSignals(
       hasSecondPersonPronoun: false,
       hasFirstPersonMarker: false,

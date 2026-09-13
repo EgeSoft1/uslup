@@ -82,16 +82,8 @@ class HybridOnnxClassifier implements ToxicityClassifier {
       : _baseClassifier.modelName;
 
   @override
-  CivilityAnalysis analyze(
-    String text, {
-    double? typingSpeedMs,
-    double? backspaceRatio,
-  }) {
-    final baseResult = _baseClassifier.analyze(
-      text,
-      typingSpeedMs: typingSpeedMs,
-      backspaceRatio: backspaceRatio,
-    );
+  CivilityAnalysis analyze(String text) {
+    final baseResult = _baseClassifier.analyze(text);
 
     // Temiz/işaretli kararı kural motorunundur. Temiz bir metinde model
     // hiç çalışmaz — hem sözleşme hem de maliyet gereği.
@@ -116,8 +108,6 @@ class HybridOnnxClassifier implements ToxicityClassifier {
         findings: baseResult.findings,
         signals: baseResult.signals,
         elapsed: baseResult.elapsed,
-        typingSpeedMs: baseResult.typingSpeedMs,
-        backspaceRatio: baseResult.backspaceRatio,
       );
     } catch (e) {
       debugPrint('ONNX çıkarım hatası: $e');

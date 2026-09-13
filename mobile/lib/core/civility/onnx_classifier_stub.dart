@@ -34,15 +34,5 @@ class HybridOnnxClassifier implements ToxicityClassifier {
   String get modelName => _baseClassifier.modelName;
 
   @override
-  CivilityAnalysis analyze(
-    String text, {
-    double? typingSpeedMs,
-    double? backspaceRatio,
-  }) {
-    return _baseClassifier.analyze(
-      text,
-      typingSpeedMs: typingSpeedMs,
-      backspaceRatio: backspaceRatio,
-    );
-  }
+  CivilityAnalysis analyze(String text) => _baseClassifier.analyze(text);
 }

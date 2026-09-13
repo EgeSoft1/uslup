@@ -167,6 +167,62 @@ void main() {
             'kısıttır. Bir avatar görselini indirmek bile onu bozar.',
       );
     });
+
+    // ── NATIVE KATMAN (13 Eylül 2026) ─────────────────────────────────────
+    // Bu grup yalnızca `lib/` altını tarıyordu. Android klavye servisine
+    // metni şifresiz HTTP ile sunucuya POST eden üç yol eklendi, manifeste
+    // INTERNET izni ve düz metin trafiği geri girdi — ve bu test yeşil kaldı.
+    // Manifestin kendi yorumu "bu dosyada hiçbir izin yok" demeye devam
+    // ediyordu. Artık native kaynak ve üretim manifesti de okunur.
+    test('Android native kaynaklarında ağ çağrısı yok', () {
+      final dir = Directory('android/app/src/main');
+      if (!dir.existsSync()) fail('android/app/src/main bulunamadı');
+
+      final nativeKaliplari = <String, RegExp>{
+        'java.net.URL': RegExp(r'\bjava\.net\.URL\b|\bURL\s*\('),
+        'HttpURLConnection': RegExp(r'\bHttps?URLConnection\b'),
+        'Socket': RegExp(r'\bSocket\s*\('),
+        'OkHttp': RegExp(r'\bokhttp3?\b', caseSensitive: false),
+        'Retrofit': RegExp(r'\bretrofit2?\b', caseSensitive: false),
+        'Volley': RegExp(r'\bcom\.android\.volley\b'),
+      };
+
+      final ihlaller = <String>[];
+      for (final f in dir.listSync(recursive: true).whereType<File>()) {
+        if (!f.path.endsWith('.kt') && !f.path.endsWith('.java')) continue;
+        final source = f.readAsStringSync();
+        for (final entry in nativeKaliplari.entries) {
+          if (entry.value.hasMatch(source)) {
+            ihlaller.add('${f.path.replaceAll(r'\', '/')} → ${entry.key}');
+          }
+        }
+      }
+
+      expect(ihlaller, isEmpty,
+          reason: 'Native katmanda ağ çağrısı:\n${ihlaller.join("\n")}');
+    });
+
+    test('üretim manifesti hiçbir izin ve düz metin trafiği istemez', () {
+      final manifest = File('android/app/src/main/AndroidManifest.xml');
+      if (!manifest.existsSync()) fail('AndroidManifest.xml bulunamadı');
+
+      // Yorumlar çıkarılır: gerekçe yorumu izin adlarını ANLATIR.
+      final source = manifest
+          .readAsStringSync()
+          .replaceAll(RegExp(r'<!--[\s\S]*?-->'), '');
+
+      final izinler = RegExp(r'<uses-permission[^>]*android:name="([^"]+)"')
+          .allMatches(source)
+          .map((m) => m.group(1))
+          .toList();
+      expect(izinler, isEmpty,
+          reason: 'Üretim manifesti izin istiyor: $izinler. Kullanıcının '
+              'Ayarlar\'dan doğrulayabileceği "internet izni yok" kanıtı '
+              'bozulur. Geliştirme izni src/debug ve src/profile altındadır.');
+
+      expect(source.contains('usesCleartextTraffic="true"'), isFalse,
+          reason: 'Düz metin (HTTP) trafiğine izin verilmiş.');
+    });
   });
 
   group('Değişmez 3 · Devralınan mesajlaşma arayüzü geri gelmemiştir', () {

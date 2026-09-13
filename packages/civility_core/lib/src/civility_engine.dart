@@ -180,10 +180,6 @@ class CivilityAnalysis {
   /// Çözümlemenin sürdüğü süre — performans iddiasının kanıtı.
   final Duration elapsed;
 
-  /// Davranışsal biyometri (varsa) — Kullanıcının klavye vuruş hızı (ms) ve silme oranı.
-  final double? typingSpeedMs;
-  final double? backspaceRatio;
-
   const CivilityAnalysis({
     required this.text,
     required this.toxicity,
@@ -192,12 +188,10 @@ class CivilityAnalysis {
     required this.findings,
     required this.signals,
     required this.elapsed,
-    this.typingSpeedMs,
-    this.backspaceRatio,
   });
 
   /// Boş/temiz metin için sonuç.
-  factory CivilityAnalysis.clean(String text, ContextSignals signals, {double? typingSpeedMs, double? backspaceRatio}) {
+  factory CivilityAnalysis.clean(String text, ContextSignals signals) {
     return CivilityAnalysis(
       text: text,
       toxicity: 0.0,
@@ -206,8 +200,6 @@ class CivilityAnalysis {
       findings: const [],
       signals: signals,
       elapsed: Duration.zero,
-      typingSpeedMs: typingSpeedMs,
-      backspaceRatio: backspaceRatio,
     );
   }
 
@@ -231,7 +223,7 @@ class CivilityAnalysis {
 ///   • `OnnxTurkishClassifier`    — ince ayarlı BERTurk, ONNX Runtime (planlı)
 abstract class ToxicityClassifier {
   /// Metni çözümler ve nezaket raporu döndürür.
-  CivilityAnalysis analyze(String text, {double? typingSpeedMs, double? backspaceRatio});
+  CivilityAnalysis analyze(String text);
 
   /// Sınıflandırıcının insan-okunur adı — şeffaflık panelinde gösterilir.
   String get modelName;
@@ -417,7 +409,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   }
 
   @override
-  CivilityAnalysis analyze(String text, {double? typingSpeedMs, double? backspaceRatio}) {
+  CivilityAnalysis analyze(String text) {
     final stopwatch = Stopwatch()..start();
 
     if (text.trim().isEmpty) {
@@ -469,29 +461,17 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     deduped.sort((a, b) => b.adjustedSeverity.compareTo(a.adjustedSeverity));
 
     // ── 6. Skor birleştirme ─────────────────────────────────────────────────
-    double toxicity = _combineSeverities(deduped);
+    final toxicity = _combineSeverities(deduped);
 
-    // ── 7. Davranışsal Biyometri (Madde 60) ─────────────────────────────────
-    // Hızlı yazım (<150ms) ve yoğun silme (>%30) yüksek öfke belirtisidir.
-    // Siber Kalkan, içeriği sınırda (dikkat) olan bir mesajı, salt klavye 
-    // şiddetinden dolayı (riskli) seviyesine çekebilir.
-    if (typingSpeedMs != null && backspaceRatio != null && toxicity > 0) {
-      double stressPenalty = 0.0;
-      if (typingSpeedMs < 120.0) {
-        stressPenalty += 0.15; // Çok hızlı, agresif yazım
-      } else if (typingSpeedMs < 180.0) {
-        stressPenalty += 0.08;
-      }
-
-      if (backspaceRatio > 0.3) {
-        stressPenalty += 0.10; // Cümleyi sürekli bozup yeniden yazma
-      } else if (backspaceRatio > 0.15) {
-        stressPenalty += 0.05;
-      }
-
-      // Maksimum %25 biyometrik ceza eklenebilir. Eşik atlatıcı görevi görür.
-      toxicity = (toxicity + stressPenalty).clamp(0.0, 1.0);
-    }
+    // ── KALDIRILAN: "davranışsal biyometri" (13 Eylül 2026) ─────────────────
+    // Burada, Android klavyesinin gönderdiği yazma hızı ve silme oranına göre
+    // skora +0,25'e kadar "öfke cezası" ekleyen bir adım vardı. Kaldırıldı:
+    //   • Hiç ölçülmedi. Hiçbir etiketli kümede, hiçbir değerlendirmede
+    //     çalışmıyordu; raporlanan her sayı onsuz üretildi.
+    //   • Hızlı yazmayı ve çok silmeyi öfke saymak, hızlı yazanı, yeni
+    //     öğreneni ve motor güçlüğü olan kullanıcıyı sistematik olarak daha
+    //     sert yargılar. Aynı cümle, yazanın parmağına göre farklı karar almaz.
+    //   • Klavyede tuş vuruşu zamanlaması toplamayı gerektiriyordu.
 
     stopwatch.stop();
 
@@ -503,8 +483,6 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       findings: deduped,
       signals: signals,
       elapsed: stopwatch.elapsed,
-      typingSpeedMs: typingSpeedMs,
-      backspaceRatio: backspaceRatio,
     );
   }
 

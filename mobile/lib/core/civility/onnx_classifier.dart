@@ -4,10 +4,12 @@
 //
 // ── NEDEN KOŞULLU DIŞA AKTARIM ────────────────────────────────────────────
 // `onnxruntime` paketi yalnızca Android, iOS, macOS, Windows ve Linux için
-// derlenir; web hedefi yoktur. Ayrıca gerçek uygulama `dart:io` üzerinden
-// OTA model dosyasını okur — `dart:io` web'de hiç yoktur.
+// derlenir; web hedefi yoktur (yerel kitaplığa `dart:ffi` ile bağlanır).
+// Model uygulamanın kendi varlıklarından yüklenir; ağdan model indirilmez
+// (13 Eylül 2026'da klavye servisindeki HTTP'den model indirme yolu
+// kaldırıldı).
 //
-// Bu iki kısıt, tek bir dosyada yazıldığında ürünü tarayıcıda DERLENMEZ
+// Bu kısıt, tek bir dosyada yazıldığında ürünü tarayıcıda DERLENMEZ
 // hâle getiriyordu. Jüri demosunun masaüstü kabuğu tarayıcıda çalışacağı
 // için bu, gösterilemeyen bir ürün demekti.
 //
