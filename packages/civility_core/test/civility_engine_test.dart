@@ -312,9 +312,31 @@ void main() {
     });
 
     test('uzun metinde de doğrusal ölçeklenir', () {
-      final long = 'Bu normal bir cümledir. ' * 200;
-      final result = engine.analyze(long);
-      expect(result.elapsed.inMilliseconds, lessThan(100));
+      // Önceki hâli ısınmamış TEK bir çağrının süresine bakıyordu ve
+      // doğrusallığı hiç ölçmüyordu; yüklü makinede 102 ms ile kırılıyordu.
+      // Şimdi: ısınma + beş ölçümün en küçüğü (gürültüye dayanıklı), ve
+      // metin dört katına çıkınca süre en fazla sekiz katına çıkabilir.
+      int enKucuk(String text) {
+        for (var i = 0; i < 3; i++) {
+          engine.analyze(text);
+        }
+        var best = 1 << 62;
+        for (var i = 0; i < 5; i++) {
+          final us = engine.analyze(text).elapsed.inMicroseconds;
+          if (us < best) best = us;
+        }
+        return best;
+      }
+
+      final kisa = enKucuk('Bu normal bir cümledir. ' * 50);
+      final uzun = enKucuk('Bu normal bir cümledir. ' * 200);
+      // ignore: avoid_print
+      print('1.200 kr: $kisa µs · 4.800 kr: $uzun µs');
+
+      expect(uzun, lessThan(100000));
+      expect(uzun, lessThan(kisa * 8 + 2000),
+          reason: 'Metin 4× uzadı, süre ${uzun / kisa}× arttı — '
+              'doğrusalın üstünde bir maliyet var.');
     });
   });
 }

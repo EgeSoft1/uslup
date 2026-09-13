@@ -294,6 +294,38 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// Normalize edilmiş maskeleme ön ekleri (yanlış pozitif engelleyici).
   final List<String> _maskedPrefixes = [];
 
+  // ── İLK HARF KOVALARI (gecikme optimizasyonu) ─────────────────────────────
+  // `_lookup` her token için bütün kök girdilerini ve bütün tam girdileri
+  // sırayla dener. Ölçülen maliyet: 4.800 karakterlik bir metinde 69 ms'nin
+  // ~58 ms'i buradaydı (token başına ~73 µs) — 600 karakterlik sıradan bir
+  // gönderi bile her tuş vuruşunda kare bütçesine dayanıyordu.
+  //
+  // Bir token bir köke ancak o kökle YA DA kökün yumuşamış hâliyle
+  // başlıyorsa bağlanabilir (`TurkishMorphology.isValidInflectedForm`) ve
+  // yumuşama yalnızca SON harfi değiştirir. Yani ilk harfi tutmayan aday
+  // hiçbir koşulda eşleşemez. Adaylar ilk harfe göre kovalanır; kova içi
+  // sıra korunur, bu yüzden "ilk eşleşen aday" değişmez.
+  //
+  // Kovalar bir hızlandırmadır; sonucu değiştirmeleri bir hatadır.
+  // `test/lookup_index_test.dart` kovalı ve kovasız motorun aynı çıktıyı
+  // ürettiğini etiketli kümelerin tamamında ve üretilmiş varyantlarda kanıtlar.
+
+  /// Kök girdileri, ilk harfe göre — `_prefixEntries` ile aynı sırada.
+  final Map<int, List<_StemCandidate>> _prefixByFirst = {};
+
+  /// Çekime girebilen tam girdiler (verbatim hariç), ilk harfe göre —
+  /// `_exactEntries` sırasıyla.
+  final Map<int, List<_StemCandidate>> _inflectableExactByFirst = {};
+
+  /// Maskeleme ön ekleri, ilk harfe göre.
+  final Map<int, List<String>> _maskedByFirst = {};
+
+  /// İlk harf kovaları açık mı?
+  ///
+  /// Üründe her zaman açıktır. Kapalı hâli YALNIZCA doğrulama içindir
+  /// (bkz. `ImplicitDetector.fastGate` — aynı yaklaşım).
+  final bool fastLookup;
+
   /// Örtük saldırı katmanı açık mı?
   ///
   /// Kapatılabilir olması bir hata ayıklama kolaylığı değil, ÖLÇÜM
@@ -309,6 +341,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     ContextAnalyzer contextAnalyzer = const ContextAnalyzer(),
     ImplicitDetector? implicitDetector,
     this.enableImplicitPatterns = true,
+    this.fastLookup = true,
   })  : _normalizer = normalizer,
         _tokenizer = tokenizer,
         _contextAnalyzer = contextAnalyzer,
@@ -358,6 +391,28 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     for (final masked in ToxicityLexicon.maskedPrefixes) {
       final normalized = _normalizer.normalize(masked).value;
       if (normalized.isNotEmpty) _maskedPrefixes.add(normalized);
+    }
+
+    for (final candidate in _prefixEntries) {
+      final entry = candidate.entry;
+      _prefixByFirst
+          .putIfAbsent(candidate.normalized.codeUnitAt(0), () => [])
+          .add(_StemCandidate(
+            candidate.normalized,
+            entry,
+            isVerbal: entry.category == ToxicityCategory.tehdit ||
+                entry.term.endsWith('mek') ||
+                entry.term.endsWith('mak'),
+          ));
+    }
+    for (final exact in _exactEntries.entries) {
+      if (exact.value.matchMode == MatchMode.verbatim) continue;
+      _inflectableExactByFirst
+          .putIfAbsent(exact.key.codeUnitAt(0), () => [])
+          .add(_StemCandidate(exact.key, exact.value, isVerbal: false));
+    }
+    for (final masked in _maskedPrefixes) {
+      _maskedByFirst.putIfAbsent(masked.codeUnitAt(0), () => []).add(masked);
     }
   }
 
@@ -829,6 +884,8 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     final exact = _exactEntries[text];
     if (exact != null) return exact;
 
+    if (fastLookup) return _lookupIndexed(text);
+
     // 1. Kök eşleşmesi: Önce prefix (ön ek) girdilerini dene.
     // Prefix girdileri uzundan kısaya sıralıdır; bu sayede "siktir" (6 harf)
     // "sik" (3 harf, exact) girdisinden ÖNCE bulunur. Bu kritiktir:
@@ -863,8 +920,47 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     return null;
   }
 
+  /// `_lookup`'ın 1. ve 2. adımı, ilk harf kovalarıyla. Sonucu kovasız
+  /// yolla birebir aynıdır; gerekçe `_prefixByFirst` alanında.
+  LexiconEntry? _lookupIndexed(String text) {
+    if (text.isEmpty) return null;
+    final first = text.codeUnitAt(0);
+
+    final prefixes = _prefixByFirst[first];
+    if (prefixes != null) {
+      for (final c in prefixes) {
+        if (c.canStart(text) &&
+            TurkishMorphology.isValidInflectedForm(text, c.normalized,
+                isVerbal: c.isVerbal)) {
+          return c.entry;
+        }
+      }
+    }
+
+    final exacts = _inflectableExactByFirst[first];
+    if (exacts != null) {
+      for (final c in exacts) {
+        if (c.canStart(text) &&
+            TurkishMorphology.isValidInflectedForm(text, c.normalized)) {
+          return c.entry;
+        }
+      }
+    }
+
+    return null;
+  }
+
   /// Token meşru bir kelimenin başlangıcı mı?
   bool _isMasked(String token) {
+    if (fastLookup) {
+      if (token.isEmpty) return false;
+      final bucket = _maskedByFirst[token.codeUnitAt(0)];
+      if (bucket == null) return false;
+      for (final masked in bucket) {
+        if (token.startsWith(masked)) return true;
+      }
+      return false;
+    }
     for (final masked in _maskedPrefixes) {
       if (token.startsWith(masked)) return true;
     }
@@ -989,4 +1085,25 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     if (toxicity < 0.70) return RiskLevel.riskli;
     return RiskLevel.yuksek;
   }
+}
+
+/// İlk harf kovasındaki tek aday. Kurulumda bir kez hesaplanır.
+class _StemCandidate {
+  _StemCandidate(this.normalized, this.entry, {required this.isVerbal})
+      : softened = TurkishMorphology.softenNormalizedStem(normalized);
+
+  final String normalized;
+
+  /// `TurkishMorphology.softenNormalizedStem` sonucu; yumuşamayan kökte null.
+  final String? softened;
+
+  final LexiconEntry entry;
+  final bool isVerbal;
+
+  /// Token bu köke bağlanabilir mi? `isValidInflectedForm`'un iki dalı da
+  /// token'ın kökle ya da yumuşamış kökle başlamasını şart koşar; bu ucuz
+  /// ön eleme, pahalı çağrıyı eşleşemeyecek adaylarda hiç yapmaz.
+  bool canStart(String text) =>
+      text.startsWith(normalized) ||
+      (softened != null && text.startsWith(softened!));
 }
