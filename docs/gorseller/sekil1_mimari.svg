@@ -44,7 +44,7 @@
 <text x="84" y="538.0" font-size="15" fill="#fff" font-weight="bold" text-anchor="middle" dominant-baseline="central">7</text>
 <text x="118" y="538.0" font-size="16" fill="#1a1a1a" font-weight="bold" text-anchor="start" dominant-baseline="central">Öneri üretimi</text>
 <text x="396" y="538.0" font-size="14.5" fill="#6e6864" text-anchor="start" dominant-baseline="central">Yerel, deterministik yeniden yazım</text>
-<text x="450" y="584" font-size="12.5" fill="#6e6864" text-anchor="middle" dominant-baseline="central">Tipik çözümleme: 357 µs (AOT, p50) — p99'da bile 16 ms kare bütçesinin %13,8'i</text>
+<text x="450" y="584" font-size="12.5" fill="#6e6864" text-anchor="middle" dominant-baseline="central">Mesaj: 206 µs (AOT, p50) — 2.400 karakterlik gönderide bile p99, 16 ms kare bütçesinin %64'ü</text>
 <line x1="450" y1="600" x2="450" y2="621" stroke="#6e6864" stroke-width="1.6"/>
 <polygon points="444,620 456,620 450,628" fill="#6e6864"/>
 <rect x="250" y="628" width="400" height="52" rx="10" fill="#e9f6ee" stroke="#2e7d5b" stroke-width="1.6"/>

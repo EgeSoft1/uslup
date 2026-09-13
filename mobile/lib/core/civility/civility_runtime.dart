@@ -105,12 +105,22 @@ abstract final class Civility {
   /// AOT derlenmiş motorun ölçülen gecikmesi.
   ///
   /// Kaynak: `packages/civility_core/bin/benchmark.dart`, 13 Eylül 2026,
-  /// 9 senaryo × 2000 tekrar. Önceki değer (159 µs) deyim katmanı ve sözlük
-  /// genişlemesinden ÖNCE ölçülmüştü ve bayatlamıştı; motor büyüdükçe
-  /// yeniden ölçülmeyen bir gecikme iddiası yanlışa döner.
-  static const String gecikmeP50 = '357 µs';
-  static const String gecikmeP99 = '2.212 µs';
-  static const String kareButcesiP99 = '%13,8';
+  /// 11 senaryo × 2000 tekrar, üç turun ortancası. "Mesaj" 200 karakterin
+  /// altındaki 9 senaryodur (önceki raporların kapsamı); "uzun gönderi"
+  /// ~600 ve ~2.400 karakterdir.
+  ///
+  /// Geçmiş: 219 → 159 → 357 µs. Uzun gönderi ilk kez 13 Eylül'de ölçüldü
+  /// ve 600 karakterde kare bütçesinin AŞILDIĞI görüldü (p99 16,5 ms).
+  /// Sözlük dizini ve örüntü ön filtresinden sonra AYNI makinede, aynı
+  /// araçla: mesaj p50 1.104 → 206 µs, 2.400 kr p99 75,9 → 10,2 ms.
+  /// (O oturumda makine sabahkinden yavaştı; eski motor mesajda 357 değil
+  /// 1.104 µs verdi. Karşılaştırma bu yüzden aynı turda yapıldı.)
+  static const String gecikmeP50 = '206 µs';
+  static const String gecikmeP99 = '2.519 µs';
+
+  /// En pahalı senaryo: ~2.400 karakterlik gönderi.
+  static const String gecikmeUzunP99 = '10,2 ms';
+  static const String kareButcesiUzunP99 = '%64';
 
   /// Etiketli değerlendirme örneklerinin toplamı — çalışma anında sayılır.
   static int get etiketliOrnek =>

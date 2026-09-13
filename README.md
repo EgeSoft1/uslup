@@ -134,7 +134,7 @@ düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); ta
 | F1 | %67,9 → %70,4 |
 | Duyarlılık | **%54,3** |
 | **Yapısal ailenin genelleme oranı** | **%90,0** — aynı yapının hiç görülmemiş örneklerinde |
-| Çözümleme süresi | **p50 357 µs · p99 2.212 µs** (AOT; p99'da 16 ms kare bütçesinin %13,8'i · 13 Eylül 2026) |
+| Çözümleme süresi | Mesaj **p50 206 µs · p99 2.519 µs** · 2.400 karakterlik gönderi **p99 10,2 ms** (kare bütçesinin %64'ü) — AOT, 13 Eylül 2026, `bin/benchmark.dart`. Aynı gün, aynı makinede eski motor 600 karakterde bütçeyi aşıyordu (p99 16,5 ms); sözlük dizini ve örüntü ön filtresi çıktıyı değiştirmeden 5–7 kat hızlandırdı |
 
 ### Ölçüm geçmişi — neden tek bir sayı yok
 

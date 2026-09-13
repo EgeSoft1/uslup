@@ -196,9 +196,10 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Her tuş vuruşunda çalışır.
   ///
   /// Gecikmeli tetikleme (debounce) KASITLI OLARAK YOKTUR. AOT derlemede
-  /// tipik çözümleme 357 µs; p99 bile (2.212 µs) 16 ms'lik kare bütçesinin
-  /// %13,8'i. Geciktirmek yalnızca geri bildirimi yavaşlatırdı.
-  /// Ölçüm: `packages/civility_core/bin/benchmark.dart` (13 Eylül 2026).
+  /// mesajda p50 206 µs; 2.400 karakterlik gönderide p99 bile 10,2 ms,
+  /// 16 ms'lik kare bütçesinin %64'ü. Geciktirmek yalnızca geri bildirimi
+  /// yavaşlatırdı. Kutuda karakter sınırı yok; bu yüzden uzun gönderi de
+  /// ölçülür. Ölçüm: `packages/civility_core/bin/benchmark.dart` (13 Eylül 2026).
   void _onTextChanged() {
     if (_analyzing) return;
     _analyzing = true;

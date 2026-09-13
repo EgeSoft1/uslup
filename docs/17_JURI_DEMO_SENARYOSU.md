@@ -347,8 +347,9 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | Sözlük girdisi | 256 | çalışma anında sayılır |
 | Örüntü ve deyim | 209 | çalışma anında sayılır |
 | Etiketli örnek | 761 (7 küme) | çalışma anında sayılır |
-| Tipik çözümleme (p50) | 357 µs | `bin/benchmark.dart`, AOT |
-| En kötü %1 (p99) | 2.212 µs · kare bütçesinin %13,8'i | aynı |
+| Mesaj çözümleme (p50 · p99) | 206 µs · 2.519 µs | `bin/benchmark.dart`, AOT |
+| 2.400 karakterlik gönderi (p99) | 10,2 ms · kare bütçesinin %64'ü | aynı |
+| Hızlanma (aynı makine, aynı gün) | mesajda ~5×, uzun gönderide ~7× · çıktı birebir aynı | docs/19 |
 | **Geçerli ayrık küme (İP-29)** | **kesinlik %96,4 · duyarlılık %45,0 · F0.5 %78,5** | docs/18 · `--genelleme5` |
 | İP-29 dilimleri | açık saldırı %83,3 · örtük %32,4 · masum 30'da 29 temiz | docs/18 |
 | Önceki kayıt (İP-22) | kesinlik %90,5 · duyarlılık %54,3 — yandı | docs/14 §5 |
@@ -356,4 +357,4 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 | Katman katkısı | duyarlılık %45,1 → %99,2, kesinlik kaybı 0 | `evaluate.dart --karsilastir` |
 | Demo senaryoları | 12/12 beklendiği gibi | Üslup Paneli → Bağlam karnesi |
 | Aynı 12 cümlede kelime listesi | 6/12 · 3 yanlış alarm · 3 kaçan | Karnedeki anahtar |
-| Otomatik testler | 294 (motor) + 21 (arayüz) | `dart test`, `flutter test` |
+| Otomatik testler | 320 (motor) + 39 (arayüz) | `dart test`, `flutter test` |

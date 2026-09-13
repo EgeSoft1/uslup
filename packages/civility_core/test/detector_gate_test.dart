@@ -11,13 +11,17 @@
 //      KAPISI            gerektirdiği sözvarlıklarından hiçbiri yoksa
 //                         yine denenmez.
 //
-// İkisi de yalnızca HIZ içindir. Sonuç kümesini değiştirmeleri bir hatadır
+// Bunlara iki genel kapı eklendi: deyimlerin kapı kelimesi (İP-28) ve her
+// örüntünün ifadesinden türetilen DEĞİŞMEZ PARÇA kapısı
+// (`LiteralPrefilter`, 13 Eylül 2026). `fastGate: false` hepsini kapatır.
+//
+// Hepsi yalnızca HIZ içindir. Sonuç kümesini değiştirmeleri bir hatadır
 // ve o hata SESSİZDİR: kapı fazla dar olursa gerçek bir nefret söylemi
 // kaçar, hiçbir test kırılmaz, hiçbir metrik değişmez — çünkü kaçan örnek
 // kümede yoksa kimse fark etmez.
 //
 // Bu dosya o sessizliği kaldırır: kapılı ve kapısız dedektör, elimizdeki
-// BÜTÜN etiketli örneklerde (beş küme, 581 cümle) karşılaştırılır. Tek bir
+// BÜTÜN etiketli örneklerde (yedi küme, 761 cümle) karşılaştırılır. Tek bir
 // bulgu farkı testi kırar.
 //
 // ── NEDEN BULGULAR, NEDEN SADECE RİSK DEĞİL ───────────────────────────────
@@ -52,6 +56,8 @@ void main() {
     'ip15': GeneralizationDataset.cases,
     'ip20': Generalization2Dataset.cases,
     'ip22': Generalization3Dataset.cases,
+    'ip27': Generalization4Dataset.cases,
+    'ip29': Generalization5Dataset.cases,
   };
 
   group('1. Ön kapılar sonucu değiştirmiyor — etiketli kümelerin tamamı', () {

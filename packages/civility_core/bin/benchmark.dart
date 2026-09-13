@@ -41,6 +41,17 @@ import 'package:civility_core/civility_core.dart';
 /// çözümlemenin bunun altında kalması gerekir.
 const int _kareButcesiUs = 16000;
 
+/// Sıradan, saldırgan olmayan bir topluluk duyurusu (~600 karakter).
+const String _uzunGonderi =
+    'Bu hafta sonu mahalledeki parkın temizliği için toplanacağız. '
+    'Belediyeden çöp poşeti ve eldiven istedik, gelen olursa çok seviniriz. '
+    'Geçen sefer yirmi kişiydik ve iki saatte bütün alanı bitirdik. '
+    'Çocuklar için de küçük bir resim etkinliği düşünüyoruz, boya '
+    'kalemlerini getirebilecek olan varsa haber versin. Hava yağışlı olursa '
+    'etkinliği bir hafta erteleyeceğiz. Sorusu olan bana buradan yazabilir, '
+    'cumartesi sabah dokuzda parkın girişinde buluşalım. Lütfen su şişenizi '
+    'unutmayın, öğlene doğru güneş epey bastırıyor ve gölge az.';
+
 void main(List<String> args) {
   final iterations =
       int.tryParse(_arg(args, '--tekrar') ?? '') ?? 2000;
@@ -66,6 +77,15 @@ void main(List<String> args) {
     ('En kötü durum · çok kimlik', 'Kürtler Ermeniler Aleviler Suriyeliler '
         'Romanlar Yahudiler eşcinseller mülteciler engelliler yaşlılar '
         'hepsi burada yaşıyor ve hepsi bu ülkenin vatandaşı'),
+    // ── UZUN GÖNDERİ (13 Eylül 2026) ────────────────────────────────────────
+    // Önceki senaryoların en uzunu 170 karakterdi ve maliyetin metin
+    // uzunluğuyla büyüdüğünü göstermiyordu. Ölçülmediği için görünmedi:
+    // 600 karakterlik sıradan bir gönderi her tuş vuruşunda ~12 ms (JIT)
+    // sürüyordu. Motor her tuş vuruşunda METNİN TAMAMINI çözümler; yani
+    // gecikme iddiası en uzun makul gönderi için de geçerli olmalıdır.
+    ('Uzun gönderi · ~600 kr', _uzunGonderi),
+    ('Çok uzun · ~2.400 kr', '$_uzunGonderi $_uzunGonderi '
+        '$_uzunGonderi $_uzunGonderi'),
   ];
 
   // ── Isınma ───────────────────────────────────────────────────────────────
@@ -88,6 +108,11 @@ void main(List<String> args) {
     ..writeln();
 
   final tumOlcumler = <double>[];
+  // Mesaj (≤ 200 kr) ve uzun gönderi ayrı özetlenir: 13 Eylül öncesi
+  // raporlanan "genel p50" yalnızca mesaj senaryolarını kapsıyordu ve
+  // karşılaştırılabilirlik bu ayrımla korunur.
+  final mesajOlcumleri = <double>[];
+  final uzunOlcumler = <double>[];
   var enKotuSenaryo = '';
   var enKotuP99 = 0.0;
 
@@ -107,6 +132,7 @@ void main(List<String> args) {
     }
     olcumler.sort();
     tumOlcumler.addAll(olcumler);
+    (metin.length <= 200 ? mesajOlcumleri : uzunOlcumler).addAll(olcumler);
 
     final p99 = _yuzdelik(olcumler, 0.99);
     if (p99 > enKotuP99) {
@@ -122,6 +148,8 @@ void main(List<String> args) {
   }
 
   tumOlcumler.sort();
+  mesajOlcumleri.sort();
+  uzunOlcumler.sort();
   final genelP99 = _yuzdelik(tumOlcumler, 0.99);
   final butceOrani = genelP99 / _kareButcesiUs * 100;
 
@@ -136,8 +164,15 @@ void main(List<String> args) {
     ..writeln('  Genel p95     : ${_yuzdelik(tumOlcumler, 0.95)
         .toStringAsFixed(1)} µs')
     ..writeln('  Genel p99     : ${genelP99.toStringAsFixed(1)} µs')
+    ..writeln('  Mesaj ≤200 kr : p50 ${_yuzdelik(mesajOlcumleri, 0.50)
+        .toStringAsFixed(1)} µs · p99 ${_yuzdelik(mesajOlcumleri, 0.99)
+        .toStringAsFixed(1)} µs')
+    ..writeln('  Uzun gönderi  : p50 ${_yuzdelik(uzunOlcumler, 0.50)
+        .toStringAsFixed(1)} µs · p99 ${_yuzdelik(uzunOlcumler, 0.99)
+        .toStringAsFixed(1)} µs')
     ..writeln('  En pahalı     : $enKotuSenaryo '
-        '(p99 ${enKotuP99.toStringAsFixed(1)} µs)')
+        '(p99 ${enKotuP99.toStringAsFixed(1)} µs · kare bütçesinin '
+        '%${(enKotuP99 / _kareButcesiUs * 100).toStringAsFixed(1)}\'i)')
     ..writeln()
     ..writeln('  Kare bütçesinin p99\'da kullanılan oranı: '
         '%${butceOrani.toStringAsFixed(2)}')

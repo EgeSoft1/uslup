@@ -210,8 +210,8 @@ class _FeedScreenState extends State<FeedScreen>
   ///
   /// Gerçek yazım kutusu burada AÇILMAZ; tam ekran açılır. Akışın içinde
   /// canlı çözümleme yapan bir kutu tutmak, kullanıcı akışı kaydırırken de
-  /// motoru çalışır durumda bırakırdı — ölçülen 159 µs, boşuna harcanacak
-  /// bir bütçe değil.
+  /// motoru çalışır durumda bırakırdı — tuş vuruşu başına yüzlerce µs,
+  /// boşuna harcanacak bir bütçe değil.
   Widget _composerShortcut(AppPalette p) {
     return Container(
       color: p.surface,

@@ -14,6 +14,7 @@
 import 'hate_patterns.dart';
 import 'idiom_patterns.dart';
 import 'implicit_patterns.dart';
+import 'literal_prefilter.dart';
 
 /// Normalize metinde bulunan tek bir örüntü eşleşmesi.
 class ImplicitMatch {
@@ -53,6 +54,23 @@ class ImplicitDetector {
   /// gönderge yakınlıkla çalışır. Türkçe ortalama cümle uzunluğu göz önüne
   /// alınarak seçilmiştir ve bir kesinlik mekanizmasıdır.
   static const int _antecedentWindow = 160;
+
+  /// Örüntülerin zorunlu parçalarının tek geçişli dizini. İlk kullanımda
+  /// bir kez kurulur. Aynı katalog paylaşıldığı için ürün motorunda tek
+  /// kurulumdur.
+  late final LiteralIndex _literalIndex =
+      _sharedIndex(patterns);
+
+  static LiteralIndex? _defaultIndex;
+
+  static LiteralIndex _sharedIndex(List<ImplicitPattern> patterns) {
+    LiteralIndex build() =>
+        LiteralIndex([for (final p in patterns) p.pattern]);
+    if (identical(patterns, ImplicitPatterns.all)) {
+      return _defaultIndex ??= build();
+    }
+    return build();
+  }
 
   /// Metindeki kimlik terimlerinin başlangıç konumları (artan sırada).
   List<int> _identityMentions(String normalized) {
@@ -136,7 +154,16 @@ class ImplicitDetector {
     // etiketli örneklerde aynı bulguları ürettiğini kanıtlar.
     Set<String>? idiomAnchors;
 
-    for (final pattern in patterns) {
+    // ── DEĞİŞMEZ PARÇA KAPISI (gecikme optimizasyonu) ───────────────────────
+    // Her örüntü için ifadenin KENDİSİNDEN türetilmiş zorunlu parçalar,
+    // metnin tek bir taramasında aranır; hiçbiri geçmiyorsa ifade
+    // çalıştırılmaz. Gerekçe ve güvenlik ilkesi: `LiteralPrefilter`.
+    final hits = fastGate ? _literalIndex.scan(normalized) : null;
+
+    for (var index = 0; index < patterns.length; index++) {
+      final pattern = patterns[index];
+      if (hits != null && !hits.mayMatch(index)) continue;
+
       if (fastGate && pattern.id.startsWith(HatePatterns.idPrefix)) {
         identityMentions ??= _identityMentions(normalized);
         if (identityMentions.isEmpty) continue;

@@ -1349,27 +1349,30 @@ class UslupDetailsScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _metricTile(p, Civility.gecikmeP50, 'tipik (p50)')),
-              Expanded(child: _metricTile(p, Civility.gecikmeP99, 'p99')),
+                  child: _metricTile(p, Civility.gecikmeP50, 'mesaj (p50)')),
               Expanded(
-                  child: _metricTile(
-                      p, Civility.kareButcesiP99, 'p99\'da kare bütçesi')),
+                  child: _metricTile(p, Civility.gecikmeP99, 'mesaj (p99)')),
+              Expanded(
+                  child: _metricTile(p, Civility.gecikmeUzunP99,
+                      '2.400 kr gönderi (p99)')),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'AOT derlenmiş ikili üzerinde, 9 senaryo × 2000 tekrar ölçüldü. '
-            '60 FPS\'te bir kare 16 ms sürer; en kötü durumda bile bunun '
-            'yedide birinden azını harcıyoruz. Bu yüzden gecikmeli tetikleme '
-            '(debounce) yok — çözümleme her tuş vuruşunda çalışıyor.',
+            'AOT derlenmiş ikili üzerinde, 11 senaryo × 2000 tekrar ölçüldü. '
+            '60 FPS\'te bir kare 16 ms sürer; 2.400 karakterlik bir gönderinin '
+            'en kötü %1\'inde bile bunun ${Civility.kareButcesiUzunP99}\'ünü '
+            'harcıyoruz. Bu yüzden gecikmeli tetikleme (debounce) yok — '
+            'çözümleme her tuş vuruşunda metnin tamamında çalışıyor.',
             style:
                 appBody(fontSize: 12.5, color: p.textSecondary, height: 1.45),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Bu sayı iki kez bayatladı: önce 219 µs\'den 159 µs\'ye indi, '
-            'deyim katmanı ve sözlük genişledikten sonra 357 µs\'ye çıktı. '
-            'Ölçülmeyen bir gecikme iddiası, motor büyüdükçe yanlışa döner.',
+            'Bu sayı üç kez bayatladı (219 → 159 → 357 µs). Uzun gönderi ilk '
+            'kez ölçüldüğünde 600 karakterde kare bütçesinin aşıldığı görüldü. '
+            'Sözlük dizini ve örüntü ön filtresiyle aynı makinede mesajda 5, '
+            'uzun gönderide 7 kat hızlandı — çıktı karakteri karakterine aynı.',
             style: appBody(fontSize: 11.5, color: p.textTertiary, height: 1.45),
           ),
         ],
