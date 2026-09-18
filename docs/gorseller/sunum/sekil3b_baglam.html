@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Şekil 3 — Aynı kelime, dört bağlam</title>
+<link rel="stylesheet" href="ortak.css">
+<style>
+  .head { display: flex; justify-content: space-between; align-items: baseline; background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 20px; margin-bottom: 16px; }
+  .head b { font-size: 22px; }
+  .head span { font-size: 16px; color: var(--muted); }
+  .rows { display: grid; gap: 12px; }
+  .row { display: grid; grid-template-columns: 6px 1.55fr 1fr 110px 44px 90px 150px; align-items: center; gap: 16px; border: 1.5px solid var(--line); border-radius: 14px; padding: 16px 18px 16px 0; overflow: hidden; }
+  .bar { align-self: stretch; margin: -16px 0; }
+  .say { font-size: 23px; font-weight: 700; }
+  .ctx { font-size: 17px; color: var(--muted); }
+  .k { font-size: 17px; font-weight: 700; text-align: center; border-radius: 999px; padding: 6px 0; }
+  .arrow { color: var(--faint); font-size: 22px; text-align: center; }
+  .v { font-size: 28px; font-weight: 700; text-align: right; }
+  .pill { text-align: center; font-weight: 700; font-size: 16px; border-radius: 999px; padding: 8px 0; }
+  .atk .bar { background: var(--harm); } .atk .k { background: var(--harm-bg); color: var(--harm); } .atk .v { color: var(--harm); } .atk .pill { background: var(--harm); color: #fff; }
+  .ok .bar { background: var(--green); } .ok .k { background: var(--green-bg); color: var(--green); } .ok .v { color: var(--green); } .ok .pill { background: var(--green-bg); color: var(--green); }
+  .foot { margin-top: 16px; }
+</style>
+</head>
+<body>
+  <div class="head"><b>Taban şiddet: aptal = 0,55</b><span>Eşik: skor &lt; 0,15 → uyarı üretilmez</span></div>
+  <div class="rows">
+    <div class="row atk"><span class="bar"></span><span class="say">“Sen tam bir aptalsın”</span><span class="ctx">Doğrudan saldırı</span><span class="k">×1,25</span><span class="arrow">→</span><span class="v num">0,69</span><span class="pill">UYARI</span></div>
+    <div class="row ok"><span class="bar"></span><span class="say">“Sen hiç aptal değilsin”</span><span class="ctx">Olumsuzlama · iltifat</span><span class="k">×0,15</span><span class="arrow">→</span><span class="v num">0,08</span><span class="pill">uyarı yok</span></div>
+    <div class="row ok"><span class="bar"></span><span class="say">“Bana ‘aptal’ dedi, çok üzüldüm”</span><span class="ctx">Alıntı · şikâyet</span><span class="k">×0,20</span><span class="arrow">→</span><span class="v num">0,11</span><span class="pill">uyarı yok</span></div>
+    <div class="row ok"><span class="bar"></span><span class="say">“Kendimi çok aptal hissettim”</span><span class="ctx">Öz-ifade</span><span class="k">×0,20</span><span class="arrow">→</span><span class="v num">0,11</span><span class="pill">uyarı yok</span></div>
+  </div>
+  <p class="note foot">Yumuşatma yalnızca bir çarpan değil, bir tavandır: mağdurun anlatısı eşiğin üstüne çıkamaz.</p>
+</body>
+</html>

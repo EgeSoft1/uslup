@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Şekil 9 — Proje özeti ve kapsamı</title>
+<link rel="stylesheet" href="ortak.css">
+<style>
+  /* Şablonun "Proje Özeti ve Kapsamı" sayfası için infografik.
+     Tablo hâli slayda sığmıyordu; aynı yedi madde kart düzenine alındı.
+     Satır başlıkları şablonun kendi kelimeleridir — jüri madde madde
+     işaretlerken hepsini bulabilsin diye değiştirilmemelidir. */
+  .konu {
+    border: 2px solid var(--brand); background: var(--brand-soft);
+    border-radius: 16px; padding: 14px 20px; display: grid;
+    grid-template-columns: 148px 1fr; gap: 18px; align-items: center;
+  }
+  .etiket {
+    font-size: 12.5px; font-weight: 700; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--brand);
+    border-right: 2px solid #c3d4e6; padding-right: 14px; line-height: 1.25;
+  }
+  .konu p { font-size: 16.5px; line-height: 1.4; color: var(--ink); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .kart {
+    border: 1.5px solid var(--line); border-radius: 14px; background: var(--white);
+    padding: 11px 14px; display: grid; grid-template-columns: 124px 1fr; gap: 12px;
+  }
+  .kart .etiket { border-right: 1.5px solid var(--line); font-size: 11.5px; color: var(--accent); }
+  .kart p { font-size: 13.8px; line-height: 1.38; color: var(--muted); }
+  .kart p b { color: var(--ink); }
+
+  .genis { grid-column: 1 / -1; }
+  .kapsam { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kapsam div { border-radius: 10px; padding: 8px 11px; font-size: 13.3px; line-height: 1.35; }
+  .kapsam .ic { background: var(--green-bg); color: #1d5f43; }
+  .kapsam .dis { background: var(--harm-bg); color: #8f2d22; }
+  .kapsam b { display: block; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; margin-bottom: 2px; }
+
+  .alt { display: grid; grid-template-columns: 300px 1fr; gap: 12px; margin-top: 12px; }
+  .tema {
+    border: 2px solid var(--accent); background: var(--accent-soft);
+    border-radius: 14px; padding: 11px 16px; text-align: center;
+  }
+  .tema span { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #9a6207; }
+  .tema b { display: block; font-size: 20px; color: var(--brand); margin-top: 3px; }
+</style>
+</head>
+<body>
+  <div class="eyebrow">Üslup — gönderilmeden önce müdahale eden, cihaz üstü Türkçe katman</div>
+  <div class="rule"></div>
+
+  <section class="konu">
+    <div class="etiket">Konu</div>
+    <p>Türkçe sosyal medya metinlerinde saldırgan dilin, <b>gönderilmeden önce ve kullanıcının kendi cihazında</b> tespiti; kararın gerekçesiyle birlikte gösterilmesi ve alternatif bir ifade önerilmesi.</p>
+  </section>
+
+  <div class="grid">
+    <div class="kart">
+      <div class="etiket">Problemin seçilme gerekçesi</div>
+      <p>Yayın sonrası moderasyon ancak <b>zarar oluştuktan sonra</b> devreye giriyor. Türkçe için araç da yetersiz: alanın en yaygın servisi Türkçe’yi desteklemiyor ve 31 Aralık 2026’da kapanıyor. Kelime listeleri ise tacize uğradığını anlatan kişiyi de işaretleyerek <b>mağduru susturuyor</b>.</p>
+    </div>
+    <div class="kart">
+      <div class="etiket">Temel amaç</div>
+      <p>Göndermeden önce durup düşünme anını dijital ortama geri kazandırmak: <b>ceza değil, ayna</b>. Son karar her zaman kullanıcıda kalır.</p>
+    </div>
+
+    <div class="kart genis">
+      <div class="etiket">Yöntem</div>
+      <p><b>Yedi katmanlı, tamamı cihaz üzerinde çalışan çözümleme hattı:</b> normalizasyon · sözlük ve Türkçe biçimbilim · edimbilimsel örüntü · nefret söylemi · gönderge çözümleme · bağlam · öneri üretimi. Doğrulama, motorun hiç görmediği ve <b>ölçümden önce kilitlenen kör kümelerle</b> yapılır.</p>
+    </div>
+
+    <div class="kart genis">
+      <div class="etiket">Kapsam</div>
+      <div class="kapsam">
+        <div class="ic"><b>Kapsam içi</b>Türkçe metin · yazma anı · cihaz üstü çözümleme · gerekçeli uyarı ve öneri</div>
+        <div class="dis"><b>Kapsam dışı</b>Görsel ve video içerik · otomatik silme veya engelleme · kullanıcı profilleme</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alt">
+    <div class="tema">
+      <span>Tematik alan</span>
+      <b>Sosyal Yapay Zekâ</b>
+    </div>
+    <div class="kart">
+      <div class="etiket">Sosyal medya ekosistemine katkı</div>
+      <p>İçerik moderasyonu, nefret söylemi tespiti ve topluluk yönetimi süreçlerine <b>yayın öncesinde</b> katkı sağlar: ihlal kaynağında azalır, moderasyon kuyruğu kısalır, moderatörlerin maruz kaldığı içerik azalır ve her karar açıklanabilir olduğu için moderasyona güven artar.</p>
+    </div>
+  </div>
+</body>
+</html>

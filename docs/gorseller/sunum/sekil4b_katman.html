@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Şekil 4 — Katman katkısı (14 Eylül 2026)</title>
+<link rel="stylesheet" href="ortak.css">
+<style>
+  .legend { display: flex; gap: 28px; font-size: 16px; color: var(--muted); margin-bottom: 14px; }
+  .legend i { display: inline-block; width: 18px; height: 18px; border-radius: 4px; vertical-align: -3px; margin-right: 8px; }
+  .row { display: grid; grid-template-columns: 250px 1fr; column-gap: 20px; align-items: center; padding: 10px 0; }
+  .row + .row { border-top: 1px solid var(--line); }
+  .label { text-align: right; font-size: 17px; color: var(--muted); line-height: 1.25; }
+  .label b { color: var(--ink); display: block; font-size: 18px; }
+  .label .gain { color: var(--green); font-weight: 700; font-size: 15px; }
+  .bars { display: grid; gap: 7px; }
+  .track { position: relative; height: 26px; }
+  .bar { height: 26px; border-radius: 6px; }
+  .bar.sozluk { background: var(--slate); }
+  .bar.tam { background: var(--brand); }
+  .val { position: absolute; top: 50%; transform: translateY(-50%); font-size: 15px; font-weight: 700; padding-left: 10px; }
+  .val.sozluk { color: var(--muted); }
+  .val.tam { color: var(--brand); }
+  .scale { display: grid; grid-template-columns: 250px 1fr; column-gap: 20px; font-size: 12.5px; color: var(--faint); margin-bottom: 4px; }
+  .ticks { position: relative; height: 16px; margin-right: 70px; }
+  .ticks span { position: absolute; transform: translateX(-50%); }
+  .plot { margin-right: 70px; }
+  .foot { margin-top: 16px; }
+  .src { margin-top: 10px; font-size: 13px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+  <div class="eyebrow">Aynı 256 örnek · yalnız sözlük katmanı ve tam motor</div>
+  <div class="rule"></div>
+  <div class="legend">
+    <span><i style="background:var(--slate)"></i>Yalnız sözlük (kelime listesi)</span>
+    <span><i style="background:var(--brand)"></i>Tam motor (örüntü + nefret + bağlam)</span>
+  </div>
+
+  <div class="scale"><span></span>
+    <div class="ticks"><span style="left:0%">0</span><span style="left:25%">25</span><span style="left:50%">50</span><span style="left:75%">75</span><span style="left:100%">100</span></div>
+  </div>
+
+  <div id="rows"></div>
+
+  <p class="note foot">Kesinlik iki yapılandırmada da %100 — kazanç, masum metinden hiçbir şey götürmeden elde edildi.</p>
+  <p class="src">Geliştirme kümesi (n=256, ezberleme payı içerir). Hiç görülmemiş kümedeki sayılar ayrıca verilmiştir. Komut: dart run bin/evaluate.dart --karsilastir · 14 Eylül 2026</p>
+
+<script>
+  const rows = [
+    ["Örtük saldırı", "duyarlılık", 1.8, 94.7],
+    ["Nefret söylemi", "F1", 41.7, 97.3],
+    ["Bağlam dilimi", "F1", 80.0, 100.0],
+    ["Açık saldırı", "F1", 98.1, 100.0],
+    ["GENEL", "duyarlılık", 45.1, 97.0],
+  ];
+  const fmt = v => v.toFixed(1).replace(".", ",");
+  const host = document.getElementById("rows");
+  for (const [name, metric, a, b] of rows) {
+    const gain = b - a;
+    host.insertAdjacentHTML("beforeend", `
+      <div class="row">
+        <div class="label"><b>${name}</b>${metric}<br><span class="gain">+${fmt(gain)} puan</span></div>
+        <div class="plot bars">
+          <div class="track"><div class="bar sozluk" style="width:${Math.max(a, 0.6)}%"></div><span class="val sozluk num" style="left:${Math.max(a, 0.6)}%">${fmt(a)}</span></div>
+          <div class="track"><div class="bar tam" style="width:${b}%"></div><span class="val tam num" style="left:${b}%">${fmt(b)}</span></div>
+        </div>
+      </div>`);
+  }
+</script>
+</body>
+</html>

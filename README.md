@@ -83,6 +83,20 @@ oturup hakaret yazmaz, birinin söylediği bir şeye sinirlenip yazar.** Katman
 yalnızca gönderi kutusunda çalışsaydı, hedeflediği anın büyük bölümünü
 ıskalardı.
 
+### Üslup Asistanı
+
+Kabuk ayrıca bir **Türkçe niyet çözümleyici** taşır (docs/29): kullanıcı
+"bana nefret söylemi örnekleri sun" ya da "yazdıklarım nereye gidiyor" yazar,
+asistan niyeti çıkarıp içeriği getirir; düz bir cümle yazılırsa motora verip
+gerekçeli sonucu gösterir.
+
+**Dil modeli yoktur, ağ çağrısı yoktur.** Motorun kendi normalizasyon ve
+biçimbilim katmanlarını kullanır — bu yüzden "NEFRET SÖYLEMİ", "nefret
+soylemi" ve "nefrét söylemi" aynı yere düşer. Sunduğu her örnek cümle, "bu
+işaretlenir / bu temiz" iddiasıyla birlikte gelir ve `test/asistan_test.dart`
+her iddiayı gerçek motordan geçirip doğrular: motor değişirse test kırılır,
+ekranda yanlış bir iddia kalmaz.
+
 ### İki iddia, iki yapısal test
 
 `mobile/test/kapsam_degismezi_test.dart` kaynak kodu okur ve iki cümleyi
@@ -114,19 +128,54 @@ hiç görmediği 90 cümle, küme ölçümden ÖNCE commit edildi (`9179ee4`), s
 düzeltilmeden raporlanıyor. Kayıt:
 [`docs/18_IP29_ILK_GECIS.md`](docs/18_IP29_ILK_GECIS.md)
 
-| İP-29 | İlk geçiş | Bugünkü motor (ikinci geçiş) |
-|---|---|---|
-| **Kesinlik** | **%96,4** — 30 masum cümlenin 29'u temiz | **%96,2** |
-| **Duyarlılık** | **%45,0** | **%41,7** |
-| **F0.5** — ürünün hedef fonksiyonu | **%78,5** | **%76,2** |
-| Açık saldırı · örtük saldırı (duyarlılık) | %83,3 · %32,4 | %75,0 · %29,4 |
-| Bilinen yeteneklerin yeni kuruluşları | 16/30 (%53,3) | 16/30 |
-| Serbest düşmanca ifadeler (deyim, lanet, cinsiyet/yaş hedefli) | 11/30 (%36,7) | 9/30 |
+| İP-29 | İlk geçiş | İkinci geçiş (D7) | Üçüncü geçiş (D9) | Dördüncü geçiş (docs/25) | Beşinci geçiş (docs/26) | Bugünkü motor (altıncı geçiş · docs/30) |
+|---|---|---|---|---|---|---|
+| **Kesinlik** | **%96,4** — 30 masum cümlenin 29'u temiz | %96,2 | %100,0 | %100,0 | %100,0 | **%100,0** — 30 masumun 30'u temiz |
+| **Duyarlılık** | **%45,0** | %41,7 | %41,7 | %43,3 | %45,0 | **%46,7** |
+| **F0.5** — ürünün hedef fonksiyonu | **%78,5** | %76,2 | %78,1 | %79,3 | %80,4 | **%81,4** |
+| Açık saldırı · örtük saldırı (duyarlılık) | %83,3 · %32,4 | %75,0 · %29,4 | %75,0 · %29,4 | %83,3 · %29,4 | %83,3 · %29,4 | %83,3 · %32,4 |
+| Bilinen yeteneklerin yeni kuruluşları | 16/30 (%53,3) | 16/30 | 16/30 | 17/30 | 17/30 | 17/30 |
+| Serbest düşmanca ifadeler (deyim, lanet, cinsiyet/yaş hedefli) | 11/30 (%36,7) | 9/30 | 9/30 | 9/30 | 10/30 | 11/30 |
 
 İkinci geçiş, kümenin DIŞINDA bulunan bir kesinlik açığının onarımından
 sonradır (somut adlarda yapısal yönelim, docs/21): ikinci şahıs geçen gündelik
 cümlelerde yanlış alarm 30'da 29'dan 30'da 2'ye indi, karşılığında İP-29'da iki
 saldırı örneği kaçtı. Değişiklik bu kümeye bakılarak yapılmadı; küme yanmadı.
+
+Üçüncü geçiş, 13 Eylül kod denetiminin (docs/23) düzeltmelerinden sonradır.
+Kümenin tek yanlış pozitifi (`Selin'e "senin gibilerden bu beklenirdi"
+demişler`) bir bağlam kuralının değil, **kesme işaretinin tırnak sayılmasının**
+sonucuymuş: "Selin'e"deki `'` tırnak açıyor, gerçek tırnaklar yanlış eşleşiyor
+ve alıntı görülmüyordu. Hata bu cümleye bakılarak değil, kaynak kod
+okunurken bulundu ("Ali'ye söyle sen şerefsizsin Veli'ye de" → Temiz kaçışı);
+ancak bu yanlış pozitif README'de önceden yazılı olduğu için sayı **yarı-kör**
+kabul edilmeli. Diğer dokuz kümede tek bir örnek değişmedi.
+
+Dördüncü geçiş, küfür kapsamı çalışmasından sonradır (docs/25, 14 Eylül).
+Çalışma İP-29'a hiç bakılmadan, 317 cümlelik ayrı bir çekişmeli tarama ve
+91.861 biçimlik Türkçe kelime listesiyle yürütüldü: taramada kaçan 111 küfür
+biçimi 5'e indi ve kelime listesinde tek bir masum biçim yeni işaretlenmedi.
+İP-29'da değişen tek örnek `ahmakk mısın nesin` — kelime sonunda çift harfle
+uzatılmış hakaret kuralının hiç görülmemiş bir örneği. Diğer dokuz kümede tek
+bir örnek değişmedi.
+
+Beşinci geçiş, kimlik eksenleri çalışmasından sonradır (docs/26, 15 Eylül):
+cinsiyet, yaş, engellilik ve göç hedefli genellemeler için 12 yeni kuruluş.
+İP-29'da değişen tek örnek `engelliler evde otursun` — istek kipli yer biçme
+onarımı İP-34'ün kaçak sınıfından geldi, İP-29'a bakılmadı; ama İP-29'un
+kaçak listesi bu README'de yazılı olduğu için sayı **yarı-kör** kabul
+edilmeli. Kimlik eksenlerinin kendi geçerli ölçümü aşağıdaki İP-35 satırıdır.
+
+Altıncı geçiş, docs/27–29 çalışmalarından sonradır (18 Eylül). İP-29'da değişen
+tek örnek `karşıma çıkma, iyi olmaz` — koşullu örtük tehdit. **Bu örnek kör
+sayılmamalıdır:** onu yakalayan `tehdit.denk_gelme` örüntüsünün kaynak
+kodundaki açıklaması kümenin kendi cümlesini ("karşıma çıkma") alıntılar, yani
+örüntü bu örneğe bakılarak yazılmıştır. Değişikliğin kendisi yazıldığı sırada
+hiçbir belgeye geçirilmemişti; kayıt 18 Eylül'de, sayı ölçülüp kaynağı kod
+okunarak bulunduktan sonra eklendi ([`docs/30`](docs/30_ALTINCI_GECIS_VE_KULLANILABILIRLIK.md)).
+Bunun anlamı açıktır: **duyarlılıktaki +%1,7 bir genelleme kanıtı değildir.**
+Kesinlik tarafında tek bir masum cümle bile işaretlenmedi (30/30) ve diğer
+dokuz kümede tek bir örnek değişmedi.
 
 Önceki beş ayrık kümenin beşi de yanmıştır — motor her birine bakılarak
 düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); tam geçmiş:
@@ -139,7 +188,7 @@ düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); ta
 | F1 | %67,9 → %70,4 |
 | Duyarlılık | **%54,3** |
 | **Yapısal ailenin genelleme oranı** | **%90,0** — aynı yapının hiç görülmemiş örneklerinde |
-| Çözümleme süresi | Mesaj **p50 206 µs · p99 2.519 µs** · 2.400 karakterlik gönderi **p99 10,2 ms** (kare bütçesinin %64'ü) — AOT, 13 Eylül 2026, `bin/benchmark.dart`. Aynı gün, aynı makinede eski motor 600 karakterde bütçeyi aşıyordu (p99 16,5 ms); sözlük dizini ve örüntü ön filtresi çıktıyı değiştirmeden 5–7 kat hızlandırdı |
+| Çözümleme süresi | Mesaj **p50 84 µs · p99 1.219 µs** · 2.400 karakterlik gönderi **p99 2,7 ms** (kare bütçesinin %17'si) — AOT, 15 Eylül 2026, `bin/benchmark.dart`. İki geçişte hızlandırıldı: sözlük dizini + örüntü ön filtresi (docs/19) ve karakter başına ayırmanın kaldırılması (docs/28). İkisi de çıktıyı değiştirmedi; denklik testle kilitli |
 
 ### Ölçüm geçmişi — neden tek bir sayı yok
 
@@ -151,9 +200,13 @@ düzeltildi. Aşağıdaki tablo **önceki** raporlanan ölçümdür (İP-22); ta
 | 3. ayrık (İP-20) | 80 | %100 | %50,0 | %66,7 | Yanmış (İP-21 onarımında kullanıldı) |
 | 4. ayrık (İP-22) | 65 | %90,5 | %54,3 | %67,9 | Yanmış (İP-26 genişletmesinde kullanıldı) |
 | 5. ayrık (İP-27) | 90 | kayıt yok | ≈%48 | — | Yanmış (İP-28 deyim katmanında kullanıldı) |
-| **6. ayrık (İP-29)** | **90** | **%96,4 → %96,2** | **%45,0 → %41,7** | **%61,4 → %58,1** | **Geçerli — ilk geçiş → bugünkü motor (docs/18 §7)** |
+| **6. ayrık (İP-29)** | **90** | **%96,4 → %96,2 → %100 → %100 → %100 → %100** | **%45,0 → %41,7 → %43,3 → %45,0 → %46,7** | **%61,4 → %58,1 → %58,8 → %60,5 → %62,1 → %63,6** | **Geçerli kesinlik tarafında; duyarlılık artık kör değil — ilk geçiş → D7 → D9 → docs/25 → docs/26 yarı-kör → docs/30 kör değil (docs/18 §7, docs/23, docs/30)** |
+| Kimlik eksenleri (İP-33) | 32 saldırı + 32 masum | — | 0/32 → 31/32 | — | Düzeltmeden önce yazıldı, düzeltme ona bakılarak yapıldı — yanmış. Masum 31/32 → 32/32 (docs/26) |
+| Kimlik eksenleri · 1. ayrık (İP-34) | 20 + 20 | %100 | **%15,0** | %26,1 | Birinci turdan sonra yazıldı; ilk geçiş. İkinci tur bu kümenin hata sınıflarıyla yapıldı — yanmış (bugün 19/20) |
+| **Kimlik eksenleri · 2. ayrık (İP-35)** | **20 + 20** | **%100** | **%15,0** | **%26,1** | **Geçerli — ikinci turdan sonra, tek geçiş. 20 masumun 20'si temiz. Kural katmanı bu eksende kesinlik bekçisi; duyarlılık kaynağı değil (docs/26 §8)** |
+| Küfür kapsamı (docs/25) | 317 çekişmeli + 91.861 kelime | — | 111 kaçak → 5 | — | Bitişik, çekimli ve gizlenmiş küfür; kelime listesinde yeni yanlış alarm **0**. Taramanın masum cümlelerinde yanlış alarm **6 → 4**: üçü önceden vardı, biri yeni ve bilinçli bedel (`skm` kısaltması, "SKM" gibi bir kurum adıyla çakışır — docs/25) |
 | Gündelik metin (İP-30) | 120 masum | — | — | — | Yanlış alarm **17 → 0** (özgüllük %85,8 → %100). Hata türleri bilindikten sonra, düzeltmeden önce yazıldı — o türlere kör değil |
-| Yönelim (İP-31) | 30 masum + 20 saldırı | — | 20/20 | — | Somut adlar + ikinci şahıs: yanlış alarm **29 → 2**, saldırıların hepsi yakalanmaya devam (docs/21) |
+| Yönelim (İP-31) | 30 masum + 20 saldırı | — | 20/20 | — | Somut adlar + ikinci şahıs: yanlış alarm **29 → 2 → 0**, saldırıların hepsi yakalanmaya devam (docs/21, docs/24 · 15) |
 | Savunma dili (İP-32) | 20 masum + 20 saldırı | — | — | — | Düşmanca görüşü aktarıp **kınayan** cümlede yanlış alarm **7 → 0**; konuşanın kendi nefret söylemi 10/10; aktarıp **onaylayan** cümle 4/10 → **0/10** (bilinen bedel, docs/22) |
 
 ### Gündelik metin — İP-29'un göremediği kesinlik açığı
@@ -258,7 +311,7 @@ Sunum akışı ve hazır cevaplar: [`docs/17_JURI_DEMO_SENARYOSU.md`](docs/17_JU
 |---|---|
 | `packages/civility_core/` | **Nezaket motoru** — saf Dart, bağımlılıksız. Projenin çekirdeği. |
 | `mobile/` | Flutter istemci — sosyal akış kabuğu, gönderi ve yanıt kutuları (katman burada çalışır), Üslup ölçüm paneli, topluluk sağlığı paneli |
-| `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Uygulamada yalnızca ONNX **ikinci görüş** olarak durur: temiz/işaretli kararını hiçbir zaman değiştiremez, yalnızca kural motorunun zaten işaretlediği bir metnin basamağını yükseltebilir. Böylece ölçülen kesinlik uygulamada da birebir geçerlidir. |
+| `ml/` | **Denetimli taban çizgisi** — Python/scikit-learn ile eğitilen karşılaştırma modeli. Uygulamada yalnızca ONNX **ikinci görüş** olarak durur ve **hiçbir karara dokunmaz**: ne temiz/işaretli kararını ne de risk basamağını değiştirir; şeffaflık panelinde bilgi amaçlı bir satırdır. Önceki sözleşmede basamağı yükseltebiliyordu; paketlenen model ölçülünce (`ml/04_paket_modeli_olc.py`) gündelik 120 masum cümlenin 86'sını saldırgan bulduğu ve 53 cümlenin basamağını değiştirdiği görüldü — aynı cümle telefonda Yüksek risk, web sunumunda Riskli oluyordu (docs/24 · madde 22). Böylece ölçülen motor davranışı her platformda birebir geçerlidir. |
 | `docs/` | Ürün tanımı, model değerlendirme, kullanıcı akışları, teknik rapor, erişilebilirlik denetimi |
 > **Not.** Bu depo, devralınan bir mesajlaşma platformu iskeletinin üzerine
 > kurulmuştur. Devralınan sunucu altyapısı (`crates/`, `db/`, `devops/`)
@@ -299,25 +352,35 @@ packages/civility_core/lib/src/
   Ölçüm altyapısı hazırdır — `bin/annotate_export.dart` kör etiketleme dosyası
   üretir, `bin/kappa.dart` Cohen's kappa'yı hesaplar; eksik olan ikinci insandır.
 - **Duyarlılık sınırlıdır ve örtük saldırıda düşüktür.** Geçerli ayrık
-  kümede (İP-29) bugünkü motorla toplam %41,7 (ilk geçiş %45,0): açık
-  saldırıda %75,0, örtük saldırıda %29,4.
+  kümede (İP-29) bugünkü motorla toplam %46,7 (ilk geçiş %45,0; aradaki fark
+  kör değil — docs/30): açık saldırıda %83,3, örtük saldırıda %32,4.
   İP-22'de ölçülen "yazılmış ailenin yeni örneklerinde %90" genellenmedi —
   devrik sıra, araya giren zamir ya da farklı kip kalıbın dışına düşüyor
-  (İP-29 birinci parça: %53,3). Kural tabanlı bir katman Türkçe deyim ve
-  kuruluş uzayını kapsayamaz.
-- **Cinsiyet, yaş, engellilik ve göç statüsü hedefli genellemeler
-  yakalanmıyor.** Kimlik söz varlığı etnik köken, inanç ve yönelim
-  ağırlıklıdır (İP-29 üçüncü parça).
-- **Alıntılanan örüntüde mağdur koruması eksik.** Sözlük bulgularında alıntı
-  ve aktarım yumuşatılıyor; örüntü bulgusu tırnak içinde kınanarak
-  aktarıldığında yumuşatma çalışmadı (İP-29'un tek yanlış pozitifi).
+  (İP-29 birinci parça: %56,7). Kural tabanlı bir katman Türkçe deyim ve
+  kuruluş uzayını kapsayamaz. İP-29'un 60 saldırı örneğinden 32'si hâlâ
+  kaçmaktadır ve bu kaçakların büyük bölümü örtük dilimdedir.
+- **Cinsiyet, yaş, engellilik ve göç statüsü hedefli genellemelerde
+  duyarlılık düşük.** 12 yeni kuruluş yazıldı (docs/26) ve bu gruplardan söz
+  eden masum cümlelerde yanlış alarm üretmiyor (iki ayrık kümede 40/40), ama
+  hiç görülmemiş ifadelerde duyarlılık **%15,0** (İP-35, tek geçiş). Geçmiş
+  zaman, tekil genel ad ("kadın şoför"), eğretileme ("vergimizi yiyor") ve iki
+  cümlecikli yapılar kuruluş listesinin dışına düşüyor.
+- ~~**Alıntılanan örüntüde mağdur koruması eksik.**~~ **Düzeltildi (D9 ·
+  docs/23).** İP-29'un tek yanlış pozitifinin sebebi örüntü değil, özel
+  addaki kesme işaretinin (`Selin'e`) tırnak sayılmasıydı. Kalan sınır:
+  tırnak kullanılmadan, yalnızca "demişler" gibi bir aktarma fiiliyle kınanan
+  örüntü hâlâ pencereye (4 kelime) bağlıdır.
+- **Kimlik adı yalın çoğul olmayan tamlamada hâlâ işaretlenebilir.** "Kadınlar
+  tuvaleti kirli" artık temiz (D9); "Ermeni mahallesi kirli" gibi tekil
+  niteleyici kuruluşlar denetimin dışındadır.
 - **Yazılı tek cümlede alay ile içten övgü ayırt edilemiyor.** "Helal olsun
   valla", "bravo gerçekten" gibi kalıplar içten övgüyü de işaretlediği için
   kaldırıldı; alaycı kullanımları artık kaçıyor (docs/20, D3 + D5).
 - **Somut adlarda yönelim yapıyla aranıyor; bazı kuruluşlar dışarıda kalıyor.**
-  "senin gibi bir köpek", "tam bir kaz kafalısın" artık yakalanmıyor; "Sen
-  maymunlar hakkında ödev hazırlıyordun" hâlâ yanlış alarm veriyor (özne
-  konumundaki ad, "sen" + ad kuralına takılıyor) (docs/21, D7).
+  "senin gibi bir köpek", "tam bir kaz kafalısın" artık yakalanmıyor (docs/21,
+  D7). D7'nin kalan iki yanlış alarmı ("Sen maymunlar hakkında ödev
+  hazırlıyordun", "Sen sülük tedavisine inanıyor musun?") 14 Eylül'de konu
+  ilgeci ve tamlama korumasıyla giderildi (docs/24 · madde 15).
 - **Düşmanca görüşü aktaran cümlede kınama ile onay ayırt edilemiyor.**
   "…yok edilmesini savunanlar yargılanmalı" (kınama) temiz kalsın diye
   "…yok edilmesini savunanlar çok haklı" (onay) da yumuşuyor. Ürün kınayanı
@@ -330,13 +393,21 @@ packages/civility_core/lib/src/
   aynı hâle getiriyor ve ayırt etmenin normalize metin üzerinde yolu yok.
 - Öncülsüz gönderge **kasıtlı olarak** kaçırılır — hedefin kim olduğu metinden
   bilinemez ve zamirden kimlik uydurmak kesinlik iddiasını çürütür.
-- Kimlik söz varlığı 94 terimdir (İP-17'de 35'ten genişletildi); siyasi
+- Kimlik söz varlığı 104 terimdir (İP-17'de 35'ten 94'e, docs/26'da 104'e
+  genişletildi); siyasi
   görüş **kasıtlı olarak** kapsam dışıdır — korunan nitelik değildir.
 - Tüm veri sentetiktir; hiçbir örnek gerçek kullanıcıdan gelmemiştir.
-- **Öneri çeşitliliği sınırlı.** En sık öneri, üretilen tüm önerilerin
-  %30,8'ini kaplıyor (13 Eylül'de %28,9'dan yükseldi: bozuk Türkçe üreten
-  iki yeniden yazım yolu kapatıldı ve o cümleler genel kalıba düşüyor). Daha ileri gitmek her örüntüye kendi nötr karşılığını
-  yazmayı gerektirir — algoritma işi değil, veri işi.
+- **Öneri çeşitliliği sınırlı.** 300 öneride 92 benzersiz metin var:
+  **çeşitlilik oranı %30,7**, en sık önerinin payı **%15,7**
+  ("Bu yaklaşımı doğru bulmuyorum", 47 kez). Ölçüm:
+  `dart run bin/rewrite_audit.dart --hepsi`, 18 Eylül 2026. Daha ileri gitmek
+  her örüntüye kendi nötr karşılığını yazmayı gerektirir — algoritma işi
+  değil, veri işi.
+
+  > Önceki sürümde bu madde "en sık öneri tüm önerilerin %30,8'ini kaplıyor"
+  > diyordu; o sayı aracın **çeşitlilik oranıydı**, en sık önerinin payı
+  > değil. İki metrik karıştırılmıştı ve ürünü olduğundan kötü gösteriyordu.
+  > Düzeltildi (18 Eylül).
 - Yalnızca Türkçe desteklenmektedir.
 - Bir Büyük Dil Modeli **kullanılmamaktadır** — yazılmış, ölçülmüş ve kasıtlı
   olarak kaldırılmıştır. Gerekçe: [`docs/03_LLM_SERVISI.md`](docs/03_LLM_SERVISI.md)

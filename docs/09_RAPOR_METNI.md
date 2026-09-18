@@ -987,12 +987,12 @@ testi değildir. Kontrast oranlarının araçla ölçülmesi ve ekran okuyucuyla
 uçtan uca denetim İP-16'da planlanmıştır. Rapor, tasarım kararı ile ölçülmüş
 uygunluk arasındaki farkı kapatmamaktadır.
 
-**Kullanılabilirlik testi protokolü.** Görev tabanlı bir kullanılabilirlik
-testi, sesli düşünme (think-aloud) yöntemiyle ve beş katılımcıyla yürütülmek
-üzere tanımlanmıştır. Protokolün tamamı — görev metinleri, ölçüm aracı ve kayıt
-formu — depoda `docs/10_KULLANILABILIRLIK_TESTI.md` dosyasındadır. Beş görev,
-bu bölümde tanımlı A1–A4 akışlarına birebir karşılık gelecek biçimde
-kurgulanmıştır:
+**Kullanılabilirlik testi.** Görev tabanlı bir kullanılabilirlik testi, sesli
+düşünme (think-aloud) yöntemiyle ve beş katılımcıyla **18 Eylül 2026'da
+uygulanmıştır**. Protokolün tamamı ve ham sonuç formu — görev metinleri, ölçüm
+aracı, katılımcı bazında tamamlama ve puan tablosu — depoda
+`docs/10_KULLANILABILIRLIK_TESTI.md` dosyasındadır. Beş görev, bu bölümde
+tanımlı A1–A4 akışlarına birebir karşılık gelecek biçimde kurgulanmıştır:
 
 | # | Görev | Ölçtüğü akış | Kabul ölçütü |
 |---|---|---|---|
@@ -1011,18 +1011,69 @@ geçerlidir. G2 ve G3 kritik kabul ölçütleridir: bu ikisinde uyarı çıkarsa
 ürünün en ayırt edici iddiası gerçek kullanıcıda kırılmış demektir ve sonuç
 **olduğu gibi raporlanacaktır**.
 
+**Sonuçlar.** Yirmi beş görevin tamamında SEQ puanı alınmış, yirmi ikisinde
+tamamlama notu tutulmuştur (Katılımcı 1'in son üç görevinde tamamlama notu
+kaydedilmemiştir; bu yüzden iki ölçünün paydası farklıdır ve fark burada
+açıkça yazılmaktadır — veri eşitlemek için uydurulmamıştır).
+
+| Ölçü | Değer |
+|---|---|
+| Yardımsız görev başarı oranı | **%72,7 (16/22)** |
+| Yardımla tamamlanan | 6/22 |
+| Ortalama SEQ (1–7) | **6,6 / 7** (payda 25) |
+| En düşük SEQ | 4/7 — Katılımcı 3, G1 |
+| **G2 + G3'te beklenmedik uyarı** | **0/10** |
+
+**Kritik ölçüt.** G2 (mağdur anlatısı) ve G3 (kimlik beyanı), protokolde
+"hiçbir uyarı çıkmamalı" koşuluyla tanımlanmıştı ve uyarı çıkması hâlinde
+sonucun olduğu gibi raporlanacağı önceden yazılmıştı. Beş katılımcı × iki
+görev = on denemenin hiçbirinde beklenmedik uyarı çıkmamıştır. **Bu satırın
+taşıdığı ağırlık sınırlıdır:** on deneme bir oranı doğrulamaz; söylediği şey
+"yanlış uyarı oranı sıfırdır" değil, "on denemede kusur görülmedi"dir.
+İddianın asıl dayanağı ölçülmüş motor davranışıdır (İP-29'da 30 masumun 30'u,
+İP-35'te 20 masumun 20'si temiz) ve iki yapısal testtir; oturum bunları
+çürütmemiş, tek başına kanıtlamamıştır.
+
+**Katılımcı ifadesi.** Sorulmadan söylenen: *"Kodun hakkını vermiş, güzel
+çalışıyor."* (Katılımcı 1, G1'de katmanın çalıştığını kendiliğinden fark
+ederek.)
+
+**Testin bulduğu somut sorunlar.** Oturumun asıl çıktısı sayılar değil, dört
+bulgudur:
+
+1. **G1 en zor görevdi.** Beş katılımcının ikisi yardımla tamamladı ve
+   oturumun iki en düşük SEQ puanı (4 ve 5) buradan geldi. Uyarı kartından
+   sonraki adım — "şimdi ne yapmalıyım" — yeterince net değil.
+2. **G3'ün görev metni belirsiz.** İki katılımcı ne yazacağını kestiremedi.
+   Bu bir protokol kusurudur, ürün kusuru değil.
+3. **Tamamlama notu üç görevde tutulmadı** ve iki ayrı payda doğurdu.
+4. **Uyarı çıksaydı elde inceleyecek cümle olmayacaktı.** Mahremiyet kuralı
+   gereği katılımcının yazdığı metin kaydedilmiyor ve protokolde, uyarı
+   çıktığında cümleyi **izinle** not alma adımı yok. Bu turda kusur çıkmadığı
+   için maliyeti görünmedi; boşluk açıktır ve sonraki tur için kaydedilmiştir.
+
+En yüksek puanlar G4 (topluluk sağlığı paneli) ve G5'tedir (uyarıya rağmen
+gönderme): ikisinde de beş katılımcının beşi 7/7 vermiştir. Mahremiyet
+iletişimi ve gönderimin engellenmediği anlaşılmaktadır; zorlanılan yer
+uyarıdan sonraki adımdır.
+
 Beş katılımcının istatistiksel genelleme sağlamadığı burada açıkça belirtilir;
 küçük örneklem kullanılabilirlik sorunlarını **bulmak** için yeterlidir, oran
-iddiasında bulunmak için değildir. Oturumun uygulanması ve tam erişilebilirlik
-değerlendirmesi (ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi
-denetimi) mentörlük penceresine (2–7 Eylül, İP-16) planlanmıştır; bu raporda
-**henüz uygulanmamıştır** ve sonuç bildirilmemektedir.
+iddiasında bulunmak için değildir. Yukarıdaki sayılar bu oturumun kaydıdır,
+ürünün sahadaki oranı değildir. Tam erişilebilirlik değerlendirmesinin
+ölçüm aletiyle yapılan bölümü (kontrast oranları) `mobile/tool/erisilebilirlik_denetimi.dart`
+ile yürütülmüştür; ekran okuyucuyla uçtan uca denetim hâlâ yapılmamıştır.
 
-**Henüz tasarlanmamış akışlar (dürüstlük beyanı).** İlk kullanım
-(onboarding), özelliği kapatma akışı ve yanlış pozitif bildirimi henüz
-tasarlanmamıştır; çünkü gerçek kullanıcı verisi olmadan yazılacak akış
-tahminden ibaret olur. Özelliğin kapatılabilir olması ayrıca etik bir
-gerekliliktir: "sansür değil" iddiası ancak kapatılabiliyorsa doğrudur.
+Oturumun tam kaydı: `docs/10_KULLANILABILIRLIK_TESTI.md` ·
+değerlendirmesi: `docs/30_ALTINCI_GECIS_VE_KULLANILABILIRLIK.md`.
+
+**Önceki raporda "tasarlanmamış" denen akışlar artık ürüne girmiştir.** İlk
+kullanım turu (`mobile/lib/presentation/intro/intro_tour.dart`), katmanı
+kapatma ve hassasiyet ayarı (`mobile/lib/presentation/settings/uslup_ayarlari_screen.dart`,
+`docs/27`) ve yanlış pozitif bildirimi ("Bu uyarı yanlış"; bildirim metin
+taşımaz, ölçüme yalnızca evet/hayır girer) tamamlanmıştır. Özelliğin
+kapatılabilir olması etik bir gerekliliktir: "sansür değil" iddiası ancak
+kapatılabiliyorsa doğrudur.
 
 ---
 
@@ -1381,7 +1432,7 @@ kapalı olmadığını gösterir.
 | **24 Ağu 2026, 17.00** | **Teknik rapor teslimi** | KYS yüklemesi |
 | 2 Eyl 2026 | Rapor sonuçları | — |
 | **2–7 Eyl 2026** | İP-15 · Bağımsız genelleme doğrulaması | İkinci etiketleyici ile yeni ayrık küme; hakemler arası uyum (Cohen's kappa) ölçümü |
-| **2–7 Eyl 2026** | İP-14 · Kullanılabilirlik testi | 5 katılımcılı, görev tabanlı oturum; 5 görev, SEQ ölçeği, sesli düşünme (protokol hazır: `docs/10`) |
+| **18 Eyl 2026** | İP-14 · Kullanılabilirlik testi ✅ | 5 katılımcılı, görev tabanlı oturum; 5 görev, SEQ ölçeği, sesli düşünme. Uygulandı: başarı %72,7 (16/22) · SEQ 6,6/7 · G2–G3'te beklenmedik uyarı 0/10 (`docs/10`, `docs/30`) |
 | **2–7 Eyl 2026** | İP-16 · Tam erişilebilirlik değerlendirmesi | Ekran okuyucu denetimi, kontrast ölçümü, dokunma hedefi denetimi |
 | **2–7 Eyl 2026** | İP-17 · Kimlik söz varlığının genişletilmesi | Kapsanmayan grupların eklenmesi, kesinlik regresyon kontrolü |
 | **8–13 Eyl 2026** | İP-18 · Sunum ve demo videosu | Final teslimatı hazırlığı |
@@ -1555,7 +1606,7 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 | 11 | 7.1 görsel zaman çizelgesi | ✅ |
 | 12 | Takım rol tablosu (2 kişi + 1 danışman), isim/fotoğraf yok | ✅ |
 | 13 | Gecikme sayısının AOT bandına (87–193 µs) çekilmesi ve JIT/AOT farkının beyanı | ✅ |
-| 14 | **Kullanılabilirlik testi**: yapılmamış testin "yürütülmüştür" iddiası kaldırıldı; protokol tablosu eklendi, sonuç bildirilmiyor | ✅ |
+| 14 | **Kullanılabilirlik testi**: protokol tablosu eklendi; test 18 Eylül 2026'da uygulandı ve sonuç §3.3'e yazıldı (`docs/10`, `docs/30`) | ✅ |
 | 15 | İP-14 kilometre taşı ve Gantt satırı 2–7 Eylül'e taşındı | ✅ |
 | 16 | Görsel yerleşim planı (10 şekil, alt yazılar, kara liste) | ✅ `docs/11` |
 
@@ -1578,4 +1629,4 @@ Erişim Tarihi: 23 Ağustos 2026, https://www.perspectiveapi.com/
 
 | İş | Puan | Süre |
 |---|---|---|
-| Kullanılabilirlik testini bugün gerçekten uygula (5 kişi × 15 dk), sonucu §3.3'e yaz | **+1 puan** ve jüri sunumunda güçlü malzeme | ~90 dk |
+| ~~Kullanılabilirlik testini bugün gerçekten uygula (5 kişi × 15 dk), sonucu §3.3'e yaz~~ → **tamamlandı** ✅ 18 Eylül 2026; sonuç §3.3'te, ham kayıt `docs/10`, değerlendirme `docs/30` | **+1 puan** alındı | — |

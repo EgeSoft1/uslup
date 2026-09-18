@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Şekil 7 — Dürüst ölçüm</title>
+<link rel="stylesheet" href="ortak.css">
+<style>
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel { border-radius: 16px; padding: 18px 20px; border: 2px solid var(--line); background: var(--paper); }
+  .panel.kor { border-color: var(--brand); background: var(--white); }
+  .panel h2 { font-size: 19px; margin-bottom: 2px; }
+  .panel .sub { font-size: 14px; color: var(--muted); margin-bottom: 14px; line-height: 1.35; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .kpi { background: var(--white); border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .panel.kor .kpi { background: var(--paper); }
+  .kpi b { display: block; font-size: 30px; line-height: 1.05; }
+  .kpi span { font-size: 13px; color: var(--muted); }
+  .kpi.p b { color: var(--green); }
+  .kpi.r b { color: var(--orange); }
+  .kpi.f b { color: var(--ink); }
+  .slices { margin-top: 12px; font-size: 14.5px; color: var(--muted); line-height: 1.5; }
+  .slices b { color: var(--ink); }
+  .strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 18px; }
+  .fact { border-top: 3px solid var(--green); padding-top: 10px; }
+  .fact b { display: block; font-size: 26px; color: var(--green); }
+  .fact span { font-size: 14.5px; color: var(--muted); line-height: 1.35; display: block; margin-top: 2px; }
+  .foot { margin-top: 18px; }
+</style>
+</head>
+<body>
+  <div class="eyebrow">Ezber ile genelleme ayrı ölçülür</div>
+  <div class="rule"></div>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Geliştirme kümesi</h2>
+      <p class="sub">256 örnek · kümeyi ve kuralları aynı ekip yazdı — genelleme kanıtı değildir.</p>
+      <div class="kpis">
+        <div class="kpi p"><b class="num">%100</b><span>kesinlik</span></div>
+        <div class="kpi r"><b class="num">%97,0</b><span>duyarlılık</span></div>
+        <div class="kpi f"><b class="num">%99,4</b><span>F0.5</span></div>
+      </div>
+      <p class="slices">Rapor edilen hiçbir iddia yalnızca bu sayıya dayanmaz.</p>
+    </section>
+
+    <section class="panel kor">
+      <h2>İP-29 · hiç görülmemiş küme</h2>
+      <p class="sub">90 cümle · ölçümden önce depoya kilitlendi, sonuç düzeltilmeden raporlanır.</p>
+      <div class="kpis">
+        <div class="kpi p"><b class="num">%100</b><span>kesinlik</span></div>
+        <div class="kpi r"><b class="num">%46,7</b><span>duyarlılık</span></div>
+        <div class="kpi f"><b class="num">%81,4</b><span>F0.5</span></div>
+      </div>
+      <p class="slices">Açık saldırı <b class="num">%83,3</b> · örtük saldırı <b class="num">%32,4</b> · masum cümle <b class="num">30/30</b> temiz</p>
+    </section>
+  </div>
+
+  <div class="strip">
+    <div class="fact"><b class="num">17 → 0</b><span>120 gündelik masum cümlede yanlış alarm, kayıtlı onarımdan sonra (İP-30)</span></div>
+    <div class="fact"><b class="num">%100 · %15</b><span>cinsiyet, yaş, engellilik, göç: hiç görülmemiş kümede kesinlik · duyarlılık (İP-35)</span></div>
+    <div class="fact"><b class="num">1.115</b><span>etiketli örnek · 13 küme · her onarımdan önce kayda geçirildi</span></div>
+  </div>
+
+  <p class="note foot">Hedef fonksiyon F0.5: masum bir cümleyi susturmak, bir hakareti kaçırmaktan pahalıdır.</p>
+</body>
+</html>

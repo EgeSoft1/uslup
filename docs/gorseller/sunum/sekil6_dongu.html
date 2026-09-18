@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>Şekil 6 — Yayın sonrası ve yazma anı</title>
+<link rel="stylesheet" href="ortak.css">
+<style>
+  .lane { border-radius: 16px; padding: 16px 18px 18px; margin-bottom: 18px; }
+  .lane.bugun { background: var(--paper); border: 2px solid var(--line); }
+  .lane.uslup { background: var(--green-bg); border: 2px solid var(--green); }
+  .lane h2 { font-size: 20px; margin-bottom: 4px; }
+  .lane.bugun h2 { color: var(--muted); }
+  .lane.uslup h2 { color: var(--green); }
+  .lane p.sub { font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+  .steps { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; align-items: stretch; }
+  .step { position: relative; background: var(--white); border: 1.5px solid var(--line); border-radius: 12px;
+          padding: 12px 10px; margin-right: 26px; text-align: center; font-size: 15px; font-weight: 700; line-height: 1.25;
+          display: flex; flex-direction: column; justify-content: center; min-height: 86px; }
+  .step:last-child { margin-right: 0; }
+  .step small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+  .step:not(:last-child)::after { content: "→"; position: absolute; right: -22px; top: 50%; transform: translateY(-52%);
+          font-size: 22px; color: var(--faint); font-weight: 400; }
+  .step.harm { border-color: var(--harm); background: var(--harm-bg); color: var(--harm); }
+  .step.harm small { color: var(--harm); }
+  .step.good { border-color: var(--green); color: var(--green); }
+  .step.good small { color: var(--green); }
+  .tags { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .tag { font-size: 13.5px; border-radius: 999px; padding: 5px 12px; font-weight: 700; }
+  .bugun .tag { background: var(--harm-bg); color: var(--harm); }
+  .uslup .tag { background: var(--white); color: var(--green); border: 1.5px solid var(--green); }
+</style>
+</head>
+<body>
+  <div class="eyebrow">Müdahale anı</div>
+  <div class="rule"></div>
+
+  <section class="lane bugun">
+    <h2>Bugün — yayın sonrası moderasyon</h2>
+    <p class="sub">İçerik kaldırılana kadar hedef kişi onu çoktan okumuştur.</p>
+    <div class="steps">
+      <div class="step">Yazılır</div>
+      <div class="step">Yayınlanır</div>
+      <div class="step harm">Hedef kişi görür<small>zarar burada oluşur</small></div>
+      <div class="step">Şikâyet edilir</div>
+      <div class="step">Moderatör inceler<small>saatler · günler</small></div>
+      <div class="step">Silinir<small>görmüş olmayı geri almaz</small></div>
+    </div>
+    <div class="tags">
+      <span class="tag">Metin sunucuya gider</span>
+      <span class="tag">Gerekçe ve alternatif yok</span>
+      <span class="tag">Mağdurun anlatısı da işaretlenir</span>
+    </div>
+  </section>
+
+  <section class="lane uslup">
+    <h2>Üslup — yazma anında, cihazın içinde</h2>
+    <p class="sub">Karar noktası platformdan kullanıcıya taşınır; hiçbir gönderi engellenmez.</p>
+    <div class="steps">
+      <div class="step">Yazılır</div>
+      <div class="step good">Cihazda çözümlenir<small>her tuş vuruşunda · ağ yok</small></div>
+      <div class="step good">Gerekçe + öneri<small>hangi ifade, neden</small></div>
+      <div class="step good">Kullanıcı karar verir<small>uygular · düzeltir · gönderir</small></div>
+      <div class="step">Yayınlanır<small>hedef kişi hakareti hiç görmez</small></div>
+    </div>
+    <div class="tags">
+      <span class="tag">Metin cihazdan çıkmaz</span>
+      <span class="tag">Her uyarı açıklanır</span>
+      <span class="tag">Mağdur ve kimlik beyanı korunur</span>
+    </div>
+  </section>
+</body>
+</html>
