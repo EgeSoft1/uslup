@@ -39,6 +39,7 @@ import 'normalization/turkish_normalizer.dart';
 import 'context/context_analyzer.dart';
 import 'detect/implicit_detector.dart';
 import 'detect/implicit_patterns.dart';
+import 'detect/literal_prefilter.dart';
 
 // ─── SONUÇ MODELLERİ ─────────────────────────────────────────────────────────
 
@@ -255,6 +256,27 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// Çok kelimeli öbekler ("kapa çeneni"). Doğrudan metin içinde aranır.
   final List<({String normalized, LexiconEntry entry})> _phraseEntries = [];
 
+  /// Öbek katmanının ön filtresi: tek taramada hangi öbeklerin metinde
+  /// GEÇEBİLECEĞİNİ söyler (docs/28).
+  ///
+  /// Öbeklerin tamamı için `indexOf` çağırmak, uzun metinde motorun en pahalı
+  /// ikinci adımıydı — 2.760 karakterde 983 µs. Sıradan bir gönderide bu
+  /// öbeklerin hemen hiçbiri geçmez; kapı, geçmeyeni hiç aratmaz.
+  ///
+  /// `_buildIndex` sonunda kurulur; sıralama orada bittiği için sıra
+  /// numaraları `_phraseEntries` ile aynıdır.
+  late final LiteralIndex _phraseGate;
+
+  /// Birleştirme yolunda BİREBİR aranan tabloların (`_surfaceForms`,
+  /// `_despacedPhrases`) en uzun anahtarı ve anahtarların ilk kod birimleri.
+  ///
+  /// İki komşu kelimeyi birleştirip tabloda aramak, birleşimi kurmayı
+  /// gerektirir; oysa birleşim bu iki kapıdan geçemiyorsa tabloda olamaz.
+  /// Sıradan bir cümlede komşu kelimelerin neredeyse hiçbiri geçmez ve
+  /// birleşim hiç kurulmaz (docs/28).
+  int _joinMaxLength = 0;
+  final Set<int> _joinFirstCodes = {};
+
   /// Boşlukları silinmiş öbekler: "amina koyim" → "aminakoyim".
   ///
   /// Öbek katmanı boşluğu sabit bir ayraç sayar; kullanıcı bitişik yazınca
@@ -321,12 +343,57 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// Maskeleme ön ekleri, ilk harfe göre.
   final Map<int, List<String>> _maskedByFirst = {};
 
+  /// Çekime girmeyen, yalnızca birebir eşleşen yüzeyler — birebir kipteki
+  /// kısaltmalar ("amk") ve boşluksuz öbekler ("orospucocugu") — ilk harfe
+  /// göre. Birleşik yazım bölmesinin ucuz ön elemesi içindir (`_mayStartEntry`).
+  final Map<int, List<String>> _literalsByFirst = {};
+
   /// Normalize uzunluğu ≤ 3 olan tek kelimelik girdiler (D1, D2).
   final Set<LexiconEntry> _shortRoots = {};
 
-  /// Kısa köklerin Türkçe yazılışı — yalnızca normalizasyonun harf harf
-  /// (1:1) katladığı kökler için; yüzey kanıtı konum konum karşılaştırır.
+  /// Yüzey kanıtıyla denetlenen girdilerin Türkçe yazılışı: kısa kökler (D1)
+  /// ve `ToxicityLexicon.spellingSensitiveTerms` (docs/25). Yalnızca
+  /// normalizasyonun harf harf (1:1) katladığı yazılışlar; yüzey kanıtı
+  /// konum konum karşılaştırır.
   final Map<LexiconEntry, String> _shortRootSpelling = {};
+
+  /// Her girdinin normalize terimi.
+  final Map<LexiconEntry, String> _normalizedTerms = {};
+
+  /// Bitişik yazımda ÖN EK olarak aranan öbekler (boşluksuz uzunluk ≥ 7):
+  /// "aminakoy" → "amınakoydum", "amınakoyarım" (docs/25).
+  ///
+  /// `_despacedPhrases` token'ın öbeğe BİREBİR eşit olmasını ister; öbek
+  /// yolu ise sağ sınır denetlemediği için ayrı yazılmış çekimleri zaten
+  /// görür. İki yol arasındaki asimetri bitişik çekimli yazımı kaçırıyordu.
+  /// Kısa öbekler bu tabloya alınmaz: ön ek olarak meşru kelimelerin başında
+  /// geçme olasılıkları uzunlukla hızla düşer.
+  final List<({String despaced, LexiconEntry entry})> _despacedPrefixes = [];
+
+  /// `_despacedPrefixes`, ilk harfe göre — uzundan kısaya sırası korunur.
+  final Map<int, List<({String despaced, LexiconEntry entry})>>
+      _despacedPrefixByFirst = {};
+
+  /// Nesne + fiil küfürleri: normalize nesne → kabul edilen normalize fiiller.
+  final Map<String, Set<String>> _profanePairs = {};
+
+  /// Nesne → fiil KÖKLERİ ("am" → koy, kod, sok). Gerekçe:
+  /// `ToxicityLexicon.profanePairs` içindeki `stems` alanı.
+  final Map<String, Set<String>> _profanePairStems = {};
+
+  /// Normalize biçim → okunur Türkçe yazılış (nesne + fiil bulgularının terimi).
+  final Map<String, String> _pairSpelling = {};
+
+  /// `_profanePairs` nesneleri, ilk harfe göre (bitişik yazım araması).
+  final Map<int, List<String>> _pairObjectsByFirst = {};
+
+  final Set<String> _ellipticalObjects = {};
+  final Set<String> _ellipticalFillers = {};
+
+  /// Birleşik yazım yapıştırıcıları: soldaki parça için ilk harfe (≥ 3 harf),
+  /// sağdaki parça için son harfe göre kovalanmış.
+  final Map<int, List<String>> _leftGlueByFirst = {};
+  final Map<int, List<String>> _rightGlueByLast = {};
 
   /// İlk harf kovaları açık mı?
   ///
@@ -357,6 +424,25 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     _buildIndex();
   }
 
+  /// İlk çözümlemenin maliyetini öne alır (docs/24 · madde 38).
+  ///
+  /// Düzenli ifadeleri derler ve motoru her katmana dokunan birkaç cümleyle
+  /// çalıştırır. Üründe uygulama ilk kareyi çizdikten SONRA çağrılır; böylece
+  /// ne açılış gecikir ne de kullanıcının ilk tuş vuruşu kare kaybeder.
+  /// Motor durumsuzdur: ısıtma hiçbir sonucu değiştirmez.
+  void warmUp() {
+    _implicitDetector.warmUp();
+    for (final cumle in const [
+      'sen tam bir aptalsın',
+      'Bütün Suriyeliler hırsızdır, bunların hepsi hırsız',
+      'senin gibilerden zaten bu beklenirdi',
+      'takke düştü kel göründü',
+      r'$3r3fsiz a m k oros pu',
+    ]) {
+      analyze(cumle);
+    }
+  }
+
   @override
   String get modelName => enableImplicitPatterns
       ? 'Dilbilimsel Sınıflandırıcı v2 — sözlük + örüntü (cihaz-üstü)'
@@ -380,8 +466,12 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
           .toSet();
       if (folded.isNotEmpty) _surfaceLetterEvidence[entry.term] = folded;
 
-      if (!normalized.contains(' ') && normalized.length <= 3) {
-        _shortRoots.add(entry);
+      _normalizedTerms[entry] = normalized;
+
+      final isShortRoot = !normalized.contains(' ') && normalized.length <= 3;
+      if (isShortRoot) _shortRoots.add(entry);
+      if (isShortRoot ||
+          ToxicityLexicon.spellingSensitiveTerms.contains(normalized)) {
         final spelling = TurkishMorphology.toLowerTr(entry.term);
         if (spelling.length == normalized.length) {
           _shortRootSpelling[entry] = spelling;
@@ -390,7 +480,11 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
 
       if (normalized.contains(' ')) {
         _phraseEntries.add((normalized: normalized, entry: entry));
-        _despacedPhrases[normalized.replaceAll(' ', '')] = entry;
+        final despaced = normalized.replaceAll(' ', '');
+        _despacedPhrases[despaced] = entry;
+        if (despaced.length >= 7) {
+          _despacedPrefixes.add((despaced: despaced, entry: entry));
+        }
       } else if (entry.matchMode != MatchMode.prefix) {
         _exactEntries[normalized] = entry;
         _surfaceForms[normalized] = entry;
@@ -403,6 +497,43 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     // Uzun kökler önce denenir: "gerizekali" > "geri"
     _prefixEntries.sort((a, b) => b.normalized.length.compareTo(a.normalized.length));
     _phraseEntries.sort((a, b) => b.normalized.length.compareTo(a.normalized.length));
+    _despacedPrefixes.sort((a, b) => b.despaced.length.compareTo(a.despaced.length));
+    for (final p in _despacedPrefixes) {
+      _despacedPrefixByFirst.putIfAbsent(p.despaced.codeUnitAt(0), () => []).add(p);
+    }
+
+    String norm(String s) => _normalizer.normalize(s).value;
+    for (final pair in ToxicityLexicon.profanePairs) {
+      final verbs = <String>{};
+      for (final verb in pair.verbs) {
+        verbs.add(norm(verb));
+        _pairSpelling[norm(verb)] = verb;
+      }
+      final stems = <String>{};
+      for (final stem in pair.stems) {
+        stems.add(norm(stem));
+        _pairSpelling[norm(stem)] = stem;
+      }
+      for (final object in pair.objects) {
+        _profanePairs.putIfAbsent(norm(object), () => {}).addAll(verbs);
+        _profanePairStems.putIfAbsent(norm(object), () => {}).addAll(stems);
+        _pairSpelling[norm(object)] = object;
+      }
+    }
+    for (final object in _profanePairs.keys) {
+      _pairObjectsByFirst.putIfAbsent(object.codeUnitAt(0), () => []).add(object);
+    }
+    _ellipticalObjects.addAll(ToxicityLexicon.ellipticalProfanity.map(norm));
+    _ellipticalFillers.addAll(ToxicityLexicon.ellipticalFillers.map(norm));
+    for (final glue in ToxicityLexicon.compoundGlue.map(norm).toSet()) {
+      // Soldaki yapıştırıcı en az üç harf: gerekçe `_splitCompound`.
+      if (glue.length >= 3) {
+        _leftGlueByFirst.putIfAbsent(glue.codeUnitAt(0), () => []).add(glue);
+      }
+      _rightGlueByLast
+          .putIfAbsent(glue.codeUnitAt(glue.length - 1), () => [])
+          .add(glue);
+    }
 
     for (final masked in ToxicityLexicon.maskedPrefixes) {
       final normalized = _normalizer.normalize(masked).value;
@@ -429,6 +560,25 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     }
     for (final masked in _maskedPrefixes) {
       _maskedByFirst.putIfAbsent(masked.codeUnitAt(0), () => []).add(masked);
+    }
+    for (final exact in _exactEntries.entries) {
+      if (exact.value.matchMode != MatchMode.verbatim) continue;
+      _literalsByFirst.putIfAbsent(exact.key.codeUnitAt(0), () => []).add(exact.key);
+    }
+    for (final despaced in _despacedPhrases.keys) {
+      _literalsByFirst.putIfAbsent(despaced.codeUnitAt(0), () => []).add(despaced);
+    }
+
+    // Öbek kapısı en sonda kurulur: `_phraseEntries` sıralaması bitmiş
+    // olmalı, çünkü kapı sıra numarasıyla sorgulanır.
+    _phraseGate =
+        LiteralIndex.literals([for (final p in _phraseEntries) p.normalized]);
+
+    // Birleştirme kapıları — iki tablonun anahtarları üzerinden.
+    for (final key in [..._surfaceForms.keys, ..._despacedPhrases.keys]) {
+      if (key.isEmpty) continue;
+      if (key.length > _joinMaxLength) _joinMaxLength = key.length;
+      _joinFirstCodes.add(key.codeUnitAt(0));
     }
   }
 
@@ -461,7 +611,10 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     final tokens = _withEvasionTokens(baseTokens);
 
     // ── 5a. Genel bağlam sinyalleri ─────────────────────────────────────────
-    final signals = _contextAnalyzer.analyze(text, tokens);
+    // Kaynak indeksleri, bağlam pencerelerini cümle sınırında durdurmak
+    // için verilir (docs/24 · madde 13).
+    final signals = _contextAnalyzer.analyze(text, tokens,
+        sourceIndices: normalized.sourceIndices);
 
     // ── 4. Eşleştirme ───────────────────────────────────────────────────────
     final findings = <ToxicityFinding>[];
@@ -474,6 +627,13 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
 
     // 4b2. Bölme/bitişik yazma kaçışları ("oros pu", "aminakoyim").
     findings.addAll(_matchEvasionJoins(normalized, tokens, signals));
+
+    // 4b3. Nesne + fiil küfürleri ve tek başına küfür nesnesi (docs/25).
+    findings.addAll(_matchProfanePairs(normalized, tokens, signals));
+
+    // 4b4. Önceki yolların hiçbirine takılmayan token'larda birleşik yazım
+    // ("siktirgit", "senisikerim") ve yıldızla sansür ("s*kerim").
+    findings.addAll(_matchCompounds(normalized, tokens, signals, findings));
 
     // 4c. Edimbilimsel örüntüler — yasaklı kelime içermeyen saldırı.
     var needsSupport = false;
@@ -524,7 +684,13 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   ) {
     final results = <ToxicityFinding>[];
 
-    for (final candidate in _phraseEntries) {
+    // Tek tarama: hangi öbekler bu metinde geçebilir? "Geçemez" kesindir,
+    // "geçebilir" yalnızca aramaya değer demektir (docs/28).
+    final hits = _phraseGate.scan(normalized.value);
+
+    for (int p = 0; p < _phraseEntries.length; p++) {
+      if (!hits.mayMatch(p)) continue;
+      final candidate = _phraseEntries[p];
       int searchFrom = 0;
 
       while (true) {
@@ -550,8 +716,8 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
             matchEndIndex: tokenEndIndex,
             originalRange: originalRange,
             signals: signals,
-            selfDirectionApplies:
-                candidate.entry.category != ToxicityCategory.tehdit,
+            selfDirectionApplies: _selfDirectionApplies(candidate.entry),
+            negationApplies: !_isObscene(candidate.entry),
           );
 
           final finding = _buildFinding(
@@ -606,8 +772,77 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       // Agresif varyant da meşru bir kelimeye denk geliyorsa elenir.
       if (aggressiveText != token.text && _isMasked(aggressiveText)) continue;
 
-      final matched = _lookup(token.text) ??
+      var matched = _lookup(token.text) ??
           (aggressiveText == token.text ? null : _lookup(aggressiveText));
+
+      // ── ÇİFT HARF UZATMASI (docs/25) ─────────────────────────────────────
+      // Normalizasyon 3+ tekrarı daraltır ama ikiliyi KORUR ("elli",
+      // "dikkat"). Uzatma çoğu zaman tam iki harfle yapılır ve kaçıyordu:
+      //
+      //   "amkk" · "aqq" · "salakk" · "aptaal" · "eşşek herif" → Temiz ✗
+      //
+      // İkililer yalnızca başka hiçbir eşleşme yoksa tek harfe indirilir.
+      // Kısa kökler bu yoldan eşleşemez (kısaltmalar hariç): "itti" → "iti"
+      // = it + i, "amma" → "ama" gibi çakışmalar kısa köklerde toplanır.
+      var dedoubled = false;
+      if (matched == null) {
+        final single = _dedouble(token.text);
+        if (single != null && !_isMasked(single)) {
+          final candidate = _lookup(single);
+          if (candidate != null &&
+              (!_shortRoots.contains(candidate) ||
+                  candidate.matchMode == MatchMode.verbatim) &&
+              !ToxicityLexicon.shortRootCollisions.contains(single)) {
+            matched = candidate;
+            dedoubled = true;
+          }
+        }
+      }
+
+      // ── UZATMA KUYRUĞU ───────────────────────────────────────────────────
+      // Tuş basılı tutulurken uzatmanın ARDINDAN bir iki karakter daha
+      // düşer. Normalizasyon uzatmayı daraltır ama bu artığı bırakır; ortaya
+      // çıkan biçim geçerli bir Türkçe çekim olmadığı için sözlükte bulunmaz:
+      //
+      //   "sikerimmmmmmmmo" → "sikerimo" → Temiz ✗
+      //   "siktirrrrrrrra"  → "siktira"  → Temiz ✗
+      //   "salakkkkkkko"    → "salako"   → Temiz ✗
+      //   "aptalllllllx"    → "aptalks"  → Temiz ✗
+      //
+      // Kuyruksuz uzatma ("sikerimmmmm") zaten yakalanıyordu; kaçan yalnızca
+      // kuyruklu biçimdi. Uzatmanın SONUNDA olduğu hâller de etkilenmez.
+      //
+      // ── NEDEN YANLIŞ POZİTİF ÜRETMEZ ───────────────────────────────────
+      // Üç koşul birden aranır: özgün metinde gerçekten 3+ tekrar olacak,
+      // kuyruk en fazla iki karakter olacak, ve kalan kök ≥ 3 harf olacak.
+      // Gündelik uzatmalar bu kapıdan zararsız geçer:
+      //
+      //   "tamammmmmma" → "tamam"  (sözlükte yok)
+      //   "seeeeeeni"   → "se"     (3 harften kısa, reddedilir)
+      //   "çoookkkkta"  → "cok"    (sözlükte yok)
+      //   "okeyyyyyy"   → kuyruk yok, hiç denenmez
+      //
+      // Kısa kökler (D1) bu yoldan eşleşemez: "ammmma" → "am" tek harflik
+      // kuyrukla meşru "ama" bağlacına çok yakındır.
+      //
+      // Kuyruk yalnızca SONDAN kesildiği için kökün harf konumları özgün
+      // metinde yerinde kalır; `_dedouble`'ın aksine yüzey kanıtı denetimi
+      // (`_surfaceContradictsRoot`) bu yolda da geçerlidir ve atlanmaz.
+      if (matched == null) {
+        final stripped = _stripElongationTail(normalized, token);
+        if (stripped != null) {
+          for (final form in {stripped.value, stripped.aggressive}) {
+            if (form.length < 3 || _isMasked(form)) continue;
+            final candidate = _lookup(form);
+            if (candidate != null &&
+                !_shortRoots.contains(candidate) &&
+                !ToxicityLexicon.shortRootCollisions.contains(form)) {
+              matched = candidate;
+              break;
+            }
+          }
+        }
+      }
 
       // ── KALDIRILAN: ters yazım denemesi (13 Eylül 2026) ─────────────────────
       // Burada 4+ harfli her token TERSTEN de sözlükte aranıyordu ("latpa" →
@@ -631,10 +866,30 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       // ≤ 3 harfli köklere tanınan çekim listesi, bu köklerle başlayan en sık
       // Türkçe kelimeleri de kapsıyordu: "ama" = am + a → Yüksek risk,
       // "sıkı" = sik + i → Yüksek risk, "kaza" = kaz + a → Riskli.
+      // Çakışma listesi ASCII yazımı içindir: "amin" (dua) ile "amın" normalize
+      // metinde aynıdır ama kullanıcı "ı" yazdıysa dua kastedilmemiştir.
       if (_shortRoots.contains(matched) &&
           (ToxicityLexicon.shortRootCollisions.contains(token.text) ||
-              ToxicityLexicon.shortRootCollisions.contains(aggressiveText) ||
-              _surfaceContradictsRoot(normalized, token, matched))) {
+              ToxicityLexicon.shortRootCollisions.contains(aggressiveText)) &&
+          !_surfaceConfirms(normalized, token, matched)) {
+        continue;
+      }
+      // Yüzey kanıtı: kısa kökler (D1) ve "ı" ikizi olan uzun girdiler
+      // ("sıktım", "sıkım" · docs/25). Çift harfi indirilmiş token'da harf
+      // konumları kaydığı için karşılaştırma yapılamaz.
+      if (!dedoubled && _surfaceContradictsRoot(normalized, token, matched)) {
+        continue;
+      }
+
+      // ── D10 · KENDİNE YÖNELİK TEHDİT FİİLİ (docs/23) ─────────────────────
+      // "Kendimi öldüreceğim" bir tehdit DEĞİLDİR; nesnesi konuşanın
+      // kendisidir. Önceki sürüm bu cümleyi Yüksek risk yapıyor ve gönderimde
+      // "Tehdit, TCK kapsamında suç oluşturabilir" onayı açıyordu — D4'ün
+      // korumak istediği kişiyi, D4'ün kapattığı yoldan ikinci kez
+      // cezalandırıyordu. Bulgu üretilmez; destek işaretini
+      // `kendineZarar.*` örüntüleri koyar.
+      if (matched.category == ToxicityCategory.tehdit &&
+          _hasReflexiveObject(tokens, i)) {
         continue;
       }
 
@@ -647,7 +902,9 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
         signals: signals,
         // Tehdit birinci şahıs çekimlidir ("öldürürüm") ama öz-ifade
         // değildir. Bu ayrım olmadan her tehdit yumuşatılıp eleniyordu.
-        selfDirectionApplies: matched.category != ToxicityCategory.tehdit,
+        // Ağır küfürde de aynı ilke geçerli: bkz. `_selfDirectionApplies`.
+        selfDirectionApplies: _selfDirectionApplies(matched),
+        negationApplies: !_isObscene(matched),
       );
 
       // ── D7 · SOMUT ADLARDA YAPISAL YÖNELİM (docs/21) ─────────────────────
@@ -666,7 +923,8 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
         term: matched.term,
         category: matched.category,
         severity: matched.severity,
-        requiresDirection: matched.requiresDirection,
+        requiresDirection: matched.requiresDirection &&
+            !_surfaceConfirms(normalized, token, matched),
         neutralAlternative: matched.neutralAlternative,
         originalText: normalized.original,
         originalRange: originalRange,
@@ -774,24 +1032,66 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     // aynı bulgunun iki kez üretilmesinden başka bir şey yapmaz.
     for (int width = 1; width <= 3; width++) {
       for (int i = 0; i + width <= tokens.length; i++) {
-        final buffer = StringBuffer();
+        // Birleşimin UZUNLUĞU parçalardan hesaplanır; String kurmak için
+        // önce aşağıdaki kapıların geçilmesi beklenir (docs/28).
+        var joinedLength = 0;
         var allSingleLetters = true;
         for (int k = 0; k < width; k++) {
-          buffer.write(tokens[i + k].text);
-          if (tokens[i + k].length != 1) allSingleLetters = false;
+          final t = tokens[i + k];
+          joinedLength += t.text.length;
+          if (t.length != 1) allSingleLetters = false;
         }
-        final joined = buffer.toString();
 
         // Kısa birleşimler gürültüdür — TEK İSTİSNA, parçaların hepsinin
         // tek harf olmasıdır. "a q" kasıtlı bir gizlemedir ve iki harflik
         // bir sonuç üretir; mevcut tek-harf birleştirmesi ise ancak ÜÇ
         // harften itibaren devreye girdiği için tam bu aralığı kaçırıyordu.
         final minLength = allSingleLetters ? 2 : 4;
-        if (joined.length < minLength) continue;
+        if (joinedLength < minLength) continue;
 
-        final entry = width == 1
-            ? _despacedPhrases[joined]
-            : (_surfaceForms[joined] ?? _despacedPhrases[joined]);
+        // İşlev kelimeleri bir hecenin yarısı değildir (docs/25):
+        // "kuş bu dala kondu" → "bu" + "dala" → "budala" · Riskli ✗
+        if (width > 1 && !allSingleLetters) {
+          var stop = false;
+          for (int k = 0; k < width; k++) {
+            if (ToxicityLexicon.joinStopWords.contains(tokens[i + k].text)) {
+              stop = true;
+              break;
+            }
+          }
+          if (stop) continue;
+        }
+
+        LexiconEntry? entry;
+        if (width == 1) {
+          // Tek token: birleşim zaten token'ın kendisidir.
+          final joined = tokens[i].text;
+          entry = _despacedPhrases[joined] ?? _despacedPrefix(joined);
+        } else if (joinedLength <= _joinMaxLength &&
+            _joinFirstCodes.contains(tokens[i].text.codeUnitAt(0))) {
+          // Çok token: yalnızca BİREBİR tablolarda aranır, yani birleşim
+          // tablodaki bir anahtardan uzun olamaz ve onunla aynı harfle
+          // başlamak zorundadır. Kapıyı geçmeyen birleşim hiç kurulmaz.
+          final joined = width == 2
+              ? tokens[i].text + tokens[i + 1].text
+              : tokens[i].text + tokens[i + 1].text + tokens[i + 2].text;
+          entry = _surfaceForms[joined] ?? _despacedPhrases[joined];
+        }
+
+        // ── ÜNLEM İŞARETİYLE "i" GİZLEMESİ (docs/25) ───────────────────────
+        // '!' cümle sınırı sayıldığı için ("Ne dedin?Aptal") "s!kerim"
+        // normalizasyonda "s kerim" diye ikiye bölünüyordu. İki parça
+        // arasında özgün metinde YALNIZCA tek bir '!' varsa, işaret "i"
+        // harfi yerine konmuş olarak da denenir.
+        if (entry == null &&
+            width == 2 &&
+            _isBangGap(normalized, tokens[i], tokens[i + 1])) {
+          final withI = '${tokens[i].text}i${tokens[i + 1].text}';
+          final candidate = _lookup(withI);
+          if (candidate != null && !_shortRoots.contains(candidate)) {
+            entry = candidate;
+          }
+        }
         if (entry == null) continue;
 
         final start = tokens[i].start;
@@ -820,6 +1120,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
           // açıkça yapılır; aksi hâlde kaçış yolu kapanmış görünürken
           // bağlam katmanı üzerinden yeniden açılıyordu.
           selfDirectionApplies: false,
+          negationApplies: !_isObscene(entry),
         );
 
         final finding = _buildFinding(
@@ -837,6 +1138,586 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     }
 
     return results;
+  }
+
+  /// Nesne + fiil küfürlerini ve tek başına kullanılan küfür nesnesini arar
+  /// (docs/25). Gerekçe: `ToxicityLexicon.profanePairs`.
+  ///
+  ///   "ananı siktim"   → iki token, nesne + fiil
+  ///   "ananısiktim"    → tek token, bitişik yazım
+  ///   "ulan bacını"    → mesajın tamamı küfür nesnesi (+ ünlem)
+  ///   "ananı özledin mi" → hiçbiri
+  List<ToxicityFinding> _matchProfanePairs(
+    NormalizedText normalized,
+    List<Token> tokens,
+    ContextSignals signals,
+  ) {
+    final n = _baseTokenCount(tokens);
+    if (n == 0) return const [];
+    final results = <ToxicityFinding>[];
+
+    ToxicityFinding? build(String term, int from, int to, double severity) {
+      final range = normalized.toOriginalRange(tokens[from].start, tokens[to].end);
+      return _buildFinding(
+        term: term,
+        category: ToxicityCategory.kufur,
+        severity: severity,
+        requiresDirection: false,
+        originalText: normalized.original,
+        originalRange: range,
+        context: _contextAnalyzer.evaluateMatch(
+          tokens: tokens,
+          matchIndex: from,
+          matchEndIndex: to,
+          originalRange: range,
+          signals: signals,
+          selfDirectionApplies: false,
+          negationApplies: false,
+        ),
+      );
+    }
+
+    for (int i = 0; i < n; i++) {
+      final text = tokens[i].text;
+
+      // Ayrı yazım: nesne ve hemen ardından fiil.
+      if (_profanePairs.containsKey(text) && i + 1 < n) {
+        final next = tokens[i + 1];
+        final verb = _pairVerb(text, next.text);
+        if (verb != null &&
+            !_writtenContradicts(normalized, next, 0, _pairSpelling[verb]!)) {
+          final f = build('${_pairSpelling[text]} ${_pairSpelling[verb]}',
+              i, i + 1, 0.95);
+          if (f != null) results.add(f);
+          continue;
+        }
+      }
+
+      // Bitişik yazım: nesneyle başlayan ve kalanı listedeki fiil olan token.
+      // Kelime sonu uzatması da denenir: "amkoyayımm".
+      final objects =
+          text.isEmpty ? null : _pairObjectsByFirst[text.codeUnitAt(0)];
+      if (objects == null) continue;
+      var found = false;
+      for (var pass = 0; pass < 2 && !found; pass++) {
+        // İkinci tur yalnızca uzatma varsa kopya üretir (`_dedouble`).
+        final candidate = pass == 0 ? text : _dedouble(text);
+        if (candidate == null) break;
+        for (final object in objects) {
+          if (candidate.length <= object.length || !candidate.startsWith(object)) {
+            continue;
+          }
+          final verb = _pairVerb(object, candidate.substring(object.length));
+          if (verb == null) continue;
+          // Harf konumları yalnızca indirilmemiş token'da özgün metne denk düşer.
+          if (pass == 0 &&
+              _writtenContradicts(
+                  normalized, tokens[i], object.length, _pairSpelling[verb]!)) {
+            continue;
+          }
+          final f = build('${_pairSpelling[object]} ${_pairSpelling[verb]}', i, i, 0.95);
+          if (f != null) results.add(f);
+          found = true;
+          break;
+        }
+      }
+    }
+
+    // Mesajın tamamı küfür nesnesi ve ünlemlerden oluşuyor mu?
+    var objectIndex = -1;
+    for (int i = 0; i < n; i++) {
+      final text = tokens[i].text;
+      if (_ellipticalObjects.contains(text)) {
+        objectIndex = i;
+      } else if (!_ellipticalFillers.contains(text)) {
+        objectIndex = -1;
+        break;
+      }
+    }
+    if (objectIndex >= 0) {
+      final f = build(_pairSpelling[tokens[objectIndex].text] ??
+          tokens[objectIndex].text, objectIndex, objectIndex, 0.90);
+      if (f != null) results.add(f);
+    }
+
+    return results;
+  }
+
+  /// [verbText] bu nesnenin kabul ettiği bir fiil mi? Tam biçim listesinde
+  /// varsa kendisini, bir fiil köküyle başlıyorsa o kökü (normalize) döndürür.
+  String? _pairVerb(String object, String verbText) {
+    if (_profanePairs[object]?.contains(verbText) ?? false) return verbText;
+    final stems = _profanePairStems[object];
+    if (stems != null) {
+      for (final stem in stems) {
+        if (verbText.startsWith(stem)) return stem;
+      }
+    }
+    return null;
+  }
+
+  /// [token] içinde [offset] konumundan başlayarak özgün metne yazılmış
+  /// Türkçeye özgü harfler, [spelling] yazılışıyla çelişiyor mu?
+  ///
+  /// "anneni sıktım" → normalize "anneni siktim"; ama "ı" yazılmıştır ve
+  /// "siktim" yazılışıyla çelişir. Kural `_surfaceContradictsRoot` ile
+  /// aynıdır: ASCII harf ve belirsiz büyük "I" hiçbir şeyle çelişmez.
+  bool _writtenContradicts(
+      NormalizedText normalized, Token token, int offset, String spelling) {
+    if (token.end - token.start != token.text.length) return false;
+    final expected = TurkishMorphology.toLowerTr(spelling);
+    for (var k = 0; k < expected.length; k++) {
+      final j = token.start + offset + k;
+      if (j >= token.end || j >= normalized.sourceIndices.length) return false;
+      final raw = normalized.original[normalized.sourceIndices[j]];
+      if (raw == 'I') continue;
+      final written = raw == 'İ' ? 'i' : raw.toLowerCase();
+      if (written == expected[k] || !_turkishOnlyLetters.contains(written)) {
+        continue;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /// Önceki yolların hiçbirine takılmamış token'larda iki kaçışı arar
+  /// (docs/25):
+  ///
+  /// 1. YILDIZLA SANSÜR — "s*kerim", "g*t", "p*ç". Normalizasyon harf
+  ///    arasındaki '*' işaretini gizleme sayıp siler ve "skerim" kalır. Silinen
+  ///    yıldızın yerine sırayla her ünlü konup sözlükte aranır. Yıldız
+  ///    kullanıcının KENDİ sansürüdür; hangi kelimenin kastedildiğini açıkça
+  ///    bildirir. Ünsüz denenmez: "a*k" hem "amk" hem "aşk" olabilir.
+  ///
+  /// 2. BİRLEŞİK YAZIM — "siktirgit", "senisikerim", "piçkurusu". Token iki
+  ///    tam parçaya bölünür; kurallar `ToxicityLexicon.compoundGlue`
+  ///    açıklamasında.
+  List<ToxicityFinding> _matchCompounds(
+    NormalizedText normalized,
+    List<Token> tokens,
+    ContextSignals signals,
+    List<ToxicityFinding> existing,
+  ) {
+    final n = _baseTokenCount(tokens);
+    final results = <ToxicityFinding>[];
+
+    for (int i = 0; i < n; i++) {
+      final token = tokens[i];
+      final text = token.text;
+      if (text.length < 2 || text.length > 24 || !_isPlainWord(text)) continue;
+      if (_isMasked(text)) continue;
+
+      ({int from, int to, LexiconEntry entry})? hit;
+
+      final slots = _wildcardSlots(normalized, token);
+      if (slots.isNotEmpty && slots.length <= 2) {
+        final entry = _fillWildcards(text, slots);
+        if (entry != null) hit = (from: 0, to: text.length, entry: entry);
+      }
+
+      if (hit == null && text.length >= 5) hit = _splitCompound(text);
+      if (hit == null) continue;
+
+      // Yalnızca önceki yolların hiçbirine takılmamış token'lar.
+      final tokenRange = normalized.toOriginalRange(token.start, token.end);
+      if (existing.any((f) => f.start < tokenRange.end && f.end > tokenRange.start)) {
+        continue;
+      }
+
+      final entry = hit.entry;
+      final range = normalized.toOriginalRange(
+          token.start + hit.from, token.start + hit.to);
+      final context = _contextAnalyzer.evaluateMatch(
+        tokens: tokens,
+        matchIndex: i,
+        originalRange: range,
+        signals: signals,
+        selfDirectionApplies: false,
+        negationApplies: !_isObscene(entry),
+      );
+      if (entry.requiresDirection &&
+          ToxicityLexicon.predicativeDirectionTerms.contains(entry.term) &&
+          !_contextAnalyzer.isPredicativelyDirected(
+              tokens: tokens, matchIndex: i, signals: signals)) {
+        continue;
+      }
+      final finding = _buildFinding(
+        term: entry.term,
+        category: entry.category,
+        severity: entry.severity,
+        requiresDirection: entry.requiresDirection,
+        neutralAlternative: entry.neutralAlternative,
+        originalText: normalized.original,
+        originalRange: range,
+        context: context,
+      );
+      if (finding != null) results.add(finding);
+    }
+
+    return results;
+  }
+
+  /// Token'ın içinde, özgün metinde yıldızla ('*') doldurulmuş boşlukların
+  /// normalize konumları. "s*kerim" → normalize "skerim" → [1].
+  List<int> _wildcardSlots(NormalizedText normalized, Token token) {
+    final indices = normalized.sourceIndices;
+    // Ucuz ön eleme: özgün metinde harfleri bitişik duran token'da silinmiş
+    // karakter yoktur.
+    if (token.end > indices.length ||
+        indices[token.end - 1] - indices[token.start] + 1 <= token.text.length) {
+      return const [];
+    }
+    List<int>? slots;
+    for (var k = 1; k < token.text.length; k++) {
+      final b = token.start + k;
+      if (b >= indices.length) break;
+      final from = indices[b - 1] + 1;
+      final to = indices[b];
+      if (to <= from) continue;
+      var allStars = true;
+      for (var c = from; c < to; c++) {
+        if (normalized.original.codeUnitAt(c) != 0x2A) {
+          allStars = false;
+          break;
+        }
+      }
+      if (allStars) (slots ??= []).add(k);
+    }
+    return slots ?? const [];
+  }
+
+  static const String _wildcardVowels = 'aeiou';
+
+  /// Yıldız yuvalarını ünlülerle doldurup sözlükte arar; ilk eşleşme kazanır.
+  LexiconEntry? _fillWildcards(String text, List<int> slots) {
+    LexiconEntry? tryText(String candidate) {
+      if (_isMasked(candidate) ||
+          ToxicityLexicon.shortRootCollisions.contains(candidate)) {
+        return null;
+      }
+      return _lookup(candidate);
+    }
+
+    for (final v1 in _wildcardVowels.split('')) {
+      final once = '${text.substring(0, slots[0])}$v1${text.substring(slots[0])}';
+      if (slots.length == 1) {
+        final e = tryText(once);
+        if (e != null) return e;
+        continue;
+      }
+      final at = slots[1] + 1; // ilk ekleme ikinci yuvayı bir kaydırır
+      for (final v2 in _wildcardVowels.split('')) {
+        final e = tryText('${once.substring(0, at)}$v2${once.substring(at)}');
+        if (e != null) return e;
+      }
+    }
+    return null;
+  }
+
+  /// Birleşik yazılmış token'ı iki tam parçaya böler. Parçalardan biri
+  /// sözlük girdisi, öteki yapıştırıcı kelime ya da ikinci bir girdi olmalı.
+  /// İkisi de girdiyse daha şiddetli olanın aralığı döner.
+  ///
+  /// ── MALİYET ──────────────────────────────────────────────────────────────
+  /// Bu yol, metindeki eşleşmeyen HER token'da çalışır. İlk sürüm her bölme
+  /// noktasında iki alt dizgi üretip sözlükte arıyordu; 4.800 karakterlik
+  /// metinde çözümleme süresini ~2 katına çıkardı (AOT 5,9 → 10,5 ms).
+  /// Bölme noktaları artık KOPYA ÜRETMEYEN ön koşullarla seçilir:
+  ///   • yapıştırıcı parça  → `startsWith` / `endsWith`
+  ///   • sözlük parçası     → ilk harf kovasındaki bir kökle başlamalı
+  /// Gündelik bir token ("normal", "cümledir") bu koşulların hiçbirini
+  /// sağlamaz ve tek bir alt dizgi üretilmeden geçilir.
+  ({int from, int to, LexiconEntry entry})? _splitCompound(String text) {
+    // 1. Yapıştırıcı + girdi: "senisikerim". Soldaki yapıştırıcı en az üç
+    // harf olmalı: "ya" + "malak" → "yamalak" (yarım yamalak). Türkçede
+    // "ya", "be" ile BAŞLAYAN kelime çoktur; bu ikisiyle BİTEN kelime azdır.
+    final leftGlues = _leftGlueByFirst[text.codeUnitAt(0)];
+    if (leftGlues != null) {
+      for (final glue in leftGlues) {
+        if (text.length - glue.length < 3 ||
+            !text.startsWith(glue) ||
+            !_mayStartEntry(text, glue.length)) {
+          continue;
+        }
+        final entry = _compoundEntry(text.substring(glue.length));
+        if (entry != null && _glueFits(entry, glue)) {
+          return (from: glue.length, to: text.length, entry: entry);
+        }
+      }
+    }
+
+    // Soldaki parça bir girdi olacaksa token bir kökle başlamalı.
+    if (!_mayStartEntry(text, 0)) return null;
+
+    // 2. Girdi + yapıştırıcı: "siktirgit", "piçkurusu".
+    final rightGlues = _rightGlueByLast[text.codeUnitAt(text.length - 1)];
+    if (rightGlues != null) {
+      for (final glue in rightGlues) {
+        final split = text.length - glue.length;
+        if (split < 3 || !text.endsWith(glue)) continue;
+        final entry = _compoundEntry(text.substring(0, split));
+        if (entry != null && _glueFits(entry, glue)) {
+          return (from: 0, to: split, entry: entry);
+        }
+      }
+    }
+
+    // 3. Girdi + girdi: "siktiriboktan". Kısa kökler bu kuruluşa giremez.
+    for (var split = 4; split <= text.length - 4; split++) {
+      if (!_mayStartEntry(text, split)) continue;
+      final leftEntry = _compoundEntry(text.substring(0, split));
+      if (leftEntry == null || _shortRoots.contains(leftEntry)) continue;
+      final rightEntry = _compoundEntry(text.substring(split));
+      if (rightEntry == null || _shortRoots.contains(rightEntry)) continue;
+      return rightEntry.severity > leftEntry.severity
+          ? (from: split, to: text.length, entry: rightEntry)
+          : (from: 0, to: split, entry: leftEntry);
+    }
+    return null;
+  }
+
+  /// [text] içinde [at] konumundan başlayan parça bir sözlük girdisine
+  /// bağlanabilir mi? Kopya üretmeyen ucuz ön eleme: parça, ilk harf
+  /// kovasındaki bir kökle (ya da yumuşamış hâliyle) başlamalıdır —
+  /// `TurkishMorphology.isValidInflectedForm` bunu zaten şart koşar.
+  /// Bitişik öbekler ("amınakoyim") `_despacedPhrases` üzerinden ayrıca aranır.
+  bool _mayStartEntry(String text, int at) {
+    if (at >= text.length) return false;
+    final first = text.codeUnitAt(at);
+    if (_bucketStartsAt(_prefixByFirst[first], text, at) ||
+        _bucketStartsAt(_inflectableExactByFirst[first], text, at)) {
+      return true;
+    }
+    final literals = _literalsByFirst[first];
+    if (literals != null) {
+      for (final literal in literals) {
+        if (text.startsWith(literal, at)) return true;
+      }
+    }
+    return false;
+  }
+
+  static bool _bucketStartsAt(List<_StemCandidate>? bucket, String text, int at) {
+    if (bucket == null) return false;
+    for (final c in bucket) {
+      if (text.startsWith(c.normalized, at) ||
+          (c.softened != null && text.startsWith(c.softened!, at))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Birleşik yazımın bir parçası olabilecek girdi.
+  ///
+  /// Yönelim şartlı girdiler ("mal", "köpek") ve harf kanıtı isteyen
+  /// kısaltmalar ("aq") parça olamaz; kısa köklerden yalnızca küfür
+  /// girdileri ("piç", "göt", "amk") kabul edilir.
+  LexiconEntry? _compoundEntry(String part) {
+    if (part.length < 3 || _isMasked(part)) return null;
+    final entry = _lookup(part) ?? _despacedPhrases[part];
+    if (entry == null || entry.requiresDirection) return null;
+    if (_surfaceLetterEvidence.containsKey(entry.term)) return null;
+    if (_shortRoots.contains(entry) &&
+        (entry.category != ToxicityCategory.kufur ||
+            ToxicityLexicon.shortRootCollisions.contains(part))) {
+      return null;
+    }
+    return entry;
+  }
+
+  /// Kısa kök ancak en az üç harfli bir yapıştırıcıyla birleşebilir:
+  /// "piç" + "o" → "pico" (özel ad) · "piç" + "kurusu" → küfür.
+  bool _glueFits(LexiconEntry entry, String glue) =>
+      !_shortRoots.contains(entry) || glue.length >= 3;
+
+  /// Yalnızca a–z harflerinden oluşan token. Rakam, '@', emoji artığı ya da
+  /// URL parçası taşıyan token'lar bölünmez.
+  static bool _isPlainWord(String text) {
+    for (var k = 0; k < text.length; k++) {
+      final c = text.codeUnitAt(k);
+      if (c < 0x61 || c > 0x7A) return false;
+    }
+    return true;
+  }
+
+  /// Token listesinin başındaki gerçek token sayısı; sonrası kaçınma
+  /// birleştirmesinin eklediği sanal token'lardır (`_withEvasionTokens`).
+  static int _baseTokenCount(List<Token> tokens) {
+    var n = 0;
+    while (n < tokens.length && tokens[n].position == n) {
+      n++;
+    }
+    return n;
+  }
+
+  /// İki komşu token arasında özgün metinde YALNIZCA tek bir '!' mi duruyor?
+  /// Her token çiftinde çalıştığı için alt dizgi üretmeden bakar.
+  static bool _isBangGap(NormalizedText normalized, Token left, Token right) {
+    final indices = normalized.sourceIndices;
+    if (left.end < 1 ||
+        left.end - 1 >= indices.length ||
+        right.start >= indices.length) {
+      return false;
+    }
+    final from = indices[left.end - 1] + 1;
+    return indices[right.start] - from == 1 &&
+        normalized.original.codeUnitAt(from) == 0x21; // '!'
+  }
+
+  /// Bitişik yazılmış çekimli öbek: token uzun bir öbeğin boşluksuz hâliyle
+  /// başlıyorsa o öbek. Gerekçe: `_despacedPrefixes`.
+  LexiconEntry? _despacedPrefix(String text) {
+    if (text.isEmpty) return null;
+    final bucket = _despacedPrefixByFirst[text.codeUnitAt(0)];
+    if (bucket == null) return null;
+    for (final p in bucket) {
+      if (text.length > p.despaced.length && text.startsWith(p.despaced)) {
+        return p.entry;
+      }
+    }
+    return null;
+  }
+
+  /// Uzatma ikililerini teke indirir; değişiklik yoksa null.
+  ///
+  /// Ünlü ikilisi her konumda indirilir ("aptaal", "gerizekaali"): Türkçe
+  /// kelimelerde ünlü ikilisi yalnızca birkaç alıntıda geçer ("saat",
+  /// "kanaat") ve onların teklisi sözlükte değildir. ÜNSÜZ ikilisi yalnızca
+  /// kelime SONUNDA indirilir ("amkk", "salakk"): kelime içi ünsüz ikilisi
+  /// Türkçenin olağan yapısıdır ve teke indirmek başka bir kelime üretir —
+  /// kelime listesi taramasında "yıllanma" → "yılanma", "şallak" → "salak".
+  static String? _dedouble(String text) {
+    if (text.length < 3) return null;
+    var any = false;
+    for (var k = 1; k < text.length && !any; k++) {
+      any = _collapsesAt(text, k);
+    }
+    if (!any) return null; // gündelik token'da kopya üretme
+
+    final buffer = StringBuffer();
+    for (var k = 0; k < text.length; k++) {
+      if (k > 0 && _collapsesAt(text, k)) continue;
+      buffer.writeCharCode(text.codeUnitAt(k));
+    }
+    return buffer.toString();
+  }
+
+  static bool _collapsesAt(String text, int k) {
+    final c = text.codeUnitAt(k);
+    return c == text.codeUnitAt(k - 1) &&
+        (_vowelCodes.contains(c) || k == text.length - 1);
+  }
+
+  static const Set<int> _vowelCodes = {0x61, 0x65, 0x69, 0x6F, 0x75}; // a e i o u
+
+  /// Uzatma kuyruğu atılmış token'ın normalize biçimleri. Kuyruk yoksa `null`.
+  ///
+  /// Kuyruk, ÖZGÜN metinde 3+ tekrarlı bir dizinin hemen ardından gelen en
+  /// fazla iki karakterdir ("sikerim**mmmm**·o"). Ölçüm normalize metinde
+  /// değil özgün metinde yapılır, çünkü normalizasyon uzatmayı zaten
+  /// daraltmış olur ve kanıt kaybolur.
+  ({String value, String aggressive})? _stripElongationTail(
+      NormalizedText normalized, Token token) {
+    // Birleştirilmiş sanal token'ın ("a m k") harfleri özgün metinde bitişik
+    // değildir; aralık tek bir kelimeye denk düşmez.
+    if (token.end - token.start != token.text.length) return null;
+
+    final range = normalized.toOriginalRange(token.start, token.end);
+    if (range.end - range.start < 4) return null;
+    final raw = normalized.original.substring(range.start, range.end);
+
+    final trimmed = _elongationStem(raw);
+    if (trimmed == null) return null;
+
+    final n = _normalizer.normalize(trimmed);
+    // Kuyruk atıldıktan sonra geriye tek bir kelime kalmalı.
+    if (n.value.isEmpty || n.value.contains(' ')) return null;
+    return (value: n.value, aggressive: n.aggressive);
+  }
+
+  /// [raw] bir uzatma + kuyruk ile bitiyorsa kuyruksuz hâlini döndürür.
+  ///
+  /// Kuyruk 1 veya 2 karakterdir ve kendisi boşluk içeremez. Hemen öncesinde
+  /// büyük/küçük harf farkı gözetmeden 3 özdeş karakter bulunmalıdır —
+  /// yani kullanıcı tuşu gerçekten basılı tutmuş olmalıdır.
+  static String? _elongationStem(String raw) {
+    final n = raw.length;
+    for (var tail = 1; tail <= 2; tail++) {
+      final cut = n - tail; // kuyruğun başladığı (dizinin bittiği) konum
+      if (cut < 3) break;
+
+      final c = raw.codeUnitAt(cut - 1);
+      if (!TurkishNormalizer.sameIgnoringCaseCode(c, raw.codeUnitAt(cut - 2)) ||
+          !TurkishNormalizer.sameIgnoringCaseCode(c, raw.codeUnitAt(cut - 3))) {
+        continue;
+      }
+
+      var tailHasSpace = false;
+      for (var k = cut; k < n; k++) {
+        if (raw.codeUnitAt(k) == 0x20) {
+          tailHasSpace = true;
+          break;
+        }
+      }
+      if (tailHasSpace) continue;
+
+      return raw.substring(0, cut);
+    }
+    return null;
+  }
+
+  /// Öz-yönelim yumuşatması bu girdiye uygulanır mı?
+  ///
+  /// ── AĞIR KÜFÜR ÖZ-İFADE DEĞİLDİR (docs/25) ─────────────────────────────
+  /// Öz-yönelim, birinci şahıs ekini "konuşan kendinden bahsediyor" diye
+  /// okur: "kendimi aptal hissettim", "aptalım galiba". Oysa en ağır
+  /// küfürlerin SÖZLÜK BİÇİMİ zaten birinci şahıs çekimlidir. Ölçülen sonuç:
+  ///
+  ///   "sikerim" · "sikeyim" · "SİKERİM" · "s i k e r i m" → Temiz (0.00) ✗
+  ///   "amk ben yoruldum" ("ben" yakında)                  → Temiz ✗
+  ///   "bacını sikerim" · "yarrağım"                        → Temiz ✗
+  ///
+  /// Tehdit için aynı ilke zaten vardı ("öldürürüm"). Eşik 0.85: sözlükte
+  /// yalnızca müstehcen küfürler bu şiddettedir. "götüm donuyor" (0.70),
+  /// "boktan bir gündü" (0.65) gibi hafif argo öz-ifade olarak yumuşamaya
+  /// devam eder. Alıntı ve olumsuzlama yumuşatmaları etkilenmez: tacize
+  /// uğrayanın anlatısı ("bana 'sikerim' dedi") hâlâ korunur.
+  static bool _selfDirectionApplies(LexiconEntry entry) =>
+      entry.category != ToxicityCategory.tehdit && !_isObscene(entry);
+
+  /// Müstehcen küfür: öz-yönelim ve olumsuzlama onu yumuşatmaz (docs/25).
+  /// "sikimde değil", "amk değil mi" — olumsuzlanan küfür değil, deyimdir.
+  static bool _isObscene(LexiconEntry entry) =>
+      entry.category == ToxicityCategory.kufur &&
+      entry.severity >= _obsceneSeverity;
+
+  static const double _obsceneSeverity = 0.85;
+
+  /// Token'ın özgün yazılışı, girdinin yönelim şartını kaldıran bir biçimle
+  /// mi başlıyor? Gerekçe: `ToxicityLexicon.surfaceConfirmedForms`.
+  bool _surfaceConfirms(NormalizedText normalized, Token token, LexiconEntry entry) {
+    final forms = ToxicityLexicon.surfaceConfirmedForms[entry.term];
+    if (forms == null || token.end - token.start != token.text.length) {
+      return false;
+    }
+    for (final form in forms) {
+      if (token.text.length < form.length) continue;
+      var ok = true;
+      for (var k = 0; k < form.length; k++) {
+        final j = token.start + k;
+        if (j >= normalized.sourceIndices.length) return false;
+        final raw = normalized.original[normalized.sourceIndices[j]];
+        // 'I' → 'i': büyük I belirsizdir ve 'ı' ile eşleşmez.
+        final written = raw == 'İ' ? 'i' : raw.toLowerCase();
+        if (written != form[k]) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) return true;
+    }
+    return false;
   }
 
   /// Bulgu nesnesini kurar; bağlam kuralları elerse null döner.
@@ -944,7 +1825,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
           candidate.entry.term.endsWith('mek') ||
           candidate.entry.term.endsWith('mak');
       if (TurkishMorphology.isValidInflectedForm(text, candidate.normalized,
-          isVerbal: isVerbal)) {
+          isVerbal: isVerbal, stemSpelling: candidate.entry.term)) {
         return candidate.entry;
       }
     }
@@ -955,7 +1836,8 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     // Birebir kipteki kısaltmalar çekime girmez (bkz. `MatchMode.verbatim`).
     for (final exact in _exactEntries.entries) {
       if (exact.value.matchMode == MatchMode.verbatim) continue;
-      if (TurkishMorphology.isValidInflectedForm(text, exact.key)) {
+      if (TurkishMorphology.isValidInflectedForm(text, exact.key,
+          stemSpelling: exact.value.term)) {
         return exact.value;
       }
     }
@@ -974,7 +1856,7 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       for (final c in prefixes) {
         if (c.canStart(text) &&
             TurkishMorphology.isValidInflectedForm(text, c.normalized,
-                isVerbal: c.isVerbal)) {
+                isVerbal: c.isVerbal, stemSpelling: c.entry.term)) {
           return c.entry;
         }
       }
@@ -984,7 +1866,8 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
     if (exacts != null) {
       for (final c in exacts) {
         if (c.canStart(text) &&
-            TurkishMorphology.isValidInflectedForm(text, c.normalized)) {
+            TurkishMorphology.isValidInflectedForm(text, c.normalized,
+                stemSpelling: c.entry.term)) {
           return c.entry;
         }
       }
@@ -1028,6 +1911,29 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   }
 
   static const String _turkishOnlyLetters = 'ığşçöü';
+
+  /// Dönüşlü nesne: fiilin hedefi konuşanın kendisidir (D10).
+  static const Set<String> _reflexiveObjects = {'kendimi', 'kendimizi'};
+
+  /// Başkasına yönelik nesneler. Dönüşlü nesneyle birlikte geçerlerse
+  /// ("seni ve kendimi öldüreceğim") cümle tehdit olmayı sürdürür.
+  static const Set<String> _otherObjects = {
+    'seni', 'sizi', 'onu', 'onlari', 'hepinizi', 'herkesi', 'aileni',
+  };
+
+  /// [index] konumundaki fiilin nesnesi yalnızca konuşanın kendisi mi?
+  ///
+  /// Nesne fiilden hemen önce ya da araya tek bir zarf girmiş hâlde durur:
+  /// "kendimi öldüreceğim", "kendimi gerçekten öldüreceğim".
+  bool _hasReflexiveObject(List<Token> tokens, int index) {
+    var reflexive = false;
+    for (var k = index - 1; k >= 0 && k >= index - 3; k--) {
+      final text = tokens[k].text;
+      if (_otherObjects.contains(text)) return false;
+      if (k >= index - 2 && _reflexiveObjects.contains(text)) reflexive = true;
+    }
+    return reflexive;
+  }
 
   /// Token meşru bir kelimenin başlangıcı mı?
   bool _isMasked(String token) {

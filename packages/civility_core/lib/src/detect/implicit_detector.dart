@@ -72,6 +72,23 @@ class ImplicitDetector {
     return build();
   }
 
+  /// Bütün düzenli ifadeleri ve değişmez parça dizinini önceden derler.
+  ///
+  /// Dart düzenli ifadeleri ilk kullanımda derler; dizin de ilk taramada
+  /// kurulur. Ölçüm (AOT, docs/24 · madde 38): ilk çözümleme 55,9 ms,
+  /// sonrakiler ~250 µs. Isıtılmamış motorda kullanıcının İLK tuş vuruşu
+  /// üç kare kaybeder. Sonucu değiştirmez; yalnızca maliyetin ne zaman
+  /// ödendiğini değiştirir.
+  void warmUp() {
+    _literalIndex.scan('isitma');
+    for (final p in patterns) {
+      p.pattern.hasMatch('isitma');
+    }
+    IdentityTerms.mention.hasMatch('isitma');
+    HatePatterns.hostileGate.hasMatch('isitma');
+    IdiomPatterns.scanAnchors('isitma');
+  }
+
   /// Metindeki kimlik terimlerinin başlangıç konumları (artan sırada).
   List<int> _identityMentions(String normalized) {
     final positions = <int>[];
@@ -178,9 +195,24 @@ class ImplicitDetector {
         if (!idiomAnchors.contains(gate)) continue;
       }
 
+      bool? suppressed;
       for (final match in pattern.pattern.allMatches(normalized)) {
         // Boş eşleşme üreten hatalı bir örüntü sonsuz bulgu üretmesin.
         if (match.end <= match.start) continue;
+
+        // Kimlik adı bir isim tamlamasını niteliyorsa ("Kadınlar tuvaleti
+        // kirli") ya da bir ilgecin tümleciyse ("Engelliler için rampa")
+        // yüklemin öznesi grup değildir. Gerekçe:
+        // `HatePatterns.groupIsNotSubject` (D9 · docs/23, İP-33 · docs/26).
+        if (HatePatterns.groupIsNotSubject(match)) continue;
+
+        // Koşul/gerekçe tümleci örüntünün edimini değiştiriyor mu?
+        // ("Kar yağışı nedeniyle engelliler evden çıkmamalı" — kamu uyarısı.)
+        final suppressor = pattern.suppressedBy;
+        if (suppressor != null &&
+            (suppressed ??= suppressor.hasMatch(normalized))) {
+          break;
+        }
 
         final candidate = ImplicitMatch(
           pattern: pattern,

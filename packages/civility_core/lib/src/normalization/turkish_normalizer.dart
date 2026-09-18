@@ -20,6 +20,22 @@
 //
 // PERFORMANS: Her tuş vuruşunda çalışır. Tek geçiş (single-pass), O(n),
 // düzenli ifade (regex) kullanmaz — regex backtracking riski taşımaz.
+//
+// ── KARAKTER PLANI (docs/28) ──────────────────────────────────────────────
+// İlk sürüm her karakter için `substring`, `toLowerCase`, `trim` ve
+// `runes.first` çağırıyordu: karakter başına 4-6 String ayırma. Kısa mesajda
+// görünmez, uzun gönderide motorun en pahalı adımıydı — 2.760 karakterlik
+// bir metinde 4,1 ms'nin 1,27 ms'si (%31) buradaydı.
+//
+// Dönüşüm zinciri (küçük harf → eşyazımlı → leet → aksan → q/w/x) bir
+// karakterin YALNIZCA kendisine bağlıdır; tek koşullu adım olan leet ise iki
+// olası sonuç verir. Yani her kaynak karakteri için sonuç ÖNCEDEN
+// hesaplanabilir: `_CharPlan`. Sıcak döngü artık plan tablosundan okur ve
+// hiçbir ara String üretmez.
+//
+// Bu bir hızlandırmadır; çıktıyı değiştirmesi bir hatadır. `value`,
+// `aggressive` ve `sourceIndices` eski sürümle birebir aynı kalır —
+// `test/normalizer_plan_test.dart` iki uygulamayı karşılaştırır.
 // =============================================================================
 
 /// Normalizasyon sonucu: kanonik metin + orijinal metne geri haritalama.
@@ -75,6 +91,56 @@ class NormalizedText {
   }
 
   bool get isEmpty => value.isEmpty;
+}
+
+/// Tek bir kaynak karakterinin önceden hesaplanmış dönüşüm sonucu.
+///
+/// Zincirin tek koşullu adımı leet ikamesidir (komşusu harf mi?), bu yüzden
+/// iki sonuç saklanır: [base] (leet uygulanmadan) ve [leet] (uygulanarak).
+/// Leet eşlemesi olmayan karakterlerde ikisi aynı String nesnesidir.
+///
+/// Agresif varyant leet'i KOŞULSUZ uyguladığı için her zaman [leet]'e eşittir
+/// — ayrı bir alan tutmak gerekmez.
+class _CharPlan {
+  const _CharPlan({
+    required this.base,
+    required this.leet,
+    required this.hasLeet,
+    required this.baseIsSeparator,
+    required this.leetIsSeparator,
+    required this.baseIsBoundary,
+    required this.leetIsBoundary,
+    required this.baseIsSpace,
+    required this.leetIsSpace,
+    required this.isEmoji,
+  });
+
+  /// Leet ikamesi UYGULANMADAN elde edilen karakter.
+  final String base;
+
+  /// Leet ikamesi uygulanarak elde edilen karakter (= agresif varyant).
+  final String leet;
+
+  /// Bu karakterin bir leet karşılığı var mı? Yoksa [base] ile [leet] aynıdır
+  /// ve sıcak döngü komşu harf kontrolünü hiç yapmaz.
+  final bool hasLeet;
+
+  /// Sonuç kelime içi ayırıcı mı? Ayırıcılık dönüşüm SONRASI karaktere
+  /// bakılarak belirlenir ('|' leet uygulanınca 'l' olur ve ayırıcı olmaktan
+  /// çıkar), bu yüzden iki varyant için ayrı tutulur.
+  final bool baseIsSeparator;
+  final bool leetIsSeparator;
+
+  /// Sonuç cümle sınırı işareti mi? (Ayırıcı olsa bile silinmez, boşluğa iner.)
+  final bool baseIsBoundary;
+  final bool leetIsBoundary;
+
+  /// Sonuç boşluk mu? (`ch.trim().isEmpty` karşılığı.)
+  final bool baseIsSpace;
+  final bool leetIsSpace;
+
+  /// Kaynak karakter emoji mi? Dönüşümden ÖNCEKİ hâline bakılır.
+  final bool isEmoji;
 }
 
 /// Türkçe farkındalıklı metin normalizasyonu.
@@ -222,32 +288,191 @@ class TurkishNormalizer {
     '!', '?', ';', '"', '(', ')', '[', ']', '{', '}', '<', '>', '=',
   };
 
-  /// Bir karakterin Türkçe dâhil harf olup olmadığı.
-  static bool _isLetter(String ch) {
-    if (ch.isEmpty) return false;
-    final c = ch.codeUnitAt(0);
-    // a-z
-    if (c >= 0x61 && c <= 0x7A) return true;
-    // A-Z
-    if (c >= 0x41 && c <= 0x5A) return true;
-    // Türkçe'ye özgü harfler (küçük ve büyük)
-    const turkish = 'çğıöşüâîûÇĞİÖŞÜÂÎÛ';
-    return turkish.contains(ch);
+  /// Cümle sınırı işaretleri — iki harf arasında olsalar bile SİLİNMEZ,
+  /// boşluğa dönüşür (docs/24 · madde 10).
+  ///
+  /// Önceki kural harf arasındaki HER ayırıcıyı gizleme sayıp siliyordu.
+  /// Mobilde virgül ya da soru işaretinden sonra boşluk bırakmamak çok
+  /// yaygındır ve kelimeler birleşiyordu:
+  ///
+  ///   "Harika,salaksın"          → "harikasalaksin"     → Temiz ✗
+  ///   "Ne dedin?Aptal mısın"     → "ne dedinaptal misin" → Temiz ✗
+  ///   "Bence yanlış,şerefsizsin" → "…yanlisserefsizsin"  → Temiz ✗
+  ///
+  /// Harf harf gizleme ("a,p,t,a,l", "s/i/k/t/i/r") bundan etkilenmez: tek
+  /// harfli parçalar zaten kaçınma birleştirmesiyle yeniden kurulur. Kelime
+  /// içi gizlemede gerçekten kullanılan işaretler (`. - * _ '` …) silinmeye
+  /// devam eder: "ap-tal", "şeref.siz", "Ali'nin".
+  static const Set<String> _boundaryMarks = {
+    ',', '|', '/', '\\', '!', '?', ';', '"', '(', ')', '[', ']', '{', '}',
+    '<', '>', '=',
+  };
+
+  /// Görünmez (sıfır genişlikli) karakter mi? Filtre atlatmada kelimenin
+  /// ortasına serpiştirilir; normalizasyondan önce atılır.
+  static bool _isZeroWidth(int code) =>
+      code == 0x200B ||
+      code == 0x200C ||
+      code == 0x200D ||
+      code == 0xFEFF ||
+      code == 0x00AD;
+
+  /// Bir kod biriminin Türkçe dâhil harf olup olmadığı — String ayırmaz.
+  ///
+  /// Komşu harf kontrolü karakter başına iki kez çağrılır; eski sürüm her
+  /// çağrıda `source[i]` ile tek harflik bir String ayırıp 18 harflik bir
+  /// dizgide `contains` araması yapıyordu.
+  ///
+  /// Vekil (surrogate) yarıları hiçbir aralığa girmez ve `false` döner —
+  /// eski sürümün davranışı da buydu.
+  static bool _isLetterCode(int c) {
+    if (c >= 0x61 && c <= 0x7A) return true; // a-z
+    if (c >= 0x41 && c <= 0x5A) return true; // A-Z
+    switch (c) {
+      // Türkçe'ye özgü küçük harfler: ç ğ ı ö ş ü â î û
+      case 0x00E7:
+      case 0x011F:
+      case 0x0131:
+      case 0x00F6:
+      case 0x015F:
+      case 0x00FC:
+      case 0x00E2:
+      case 0x00EE:
+      case 0x00FB:
+      // Büyükleri: Ç Ğ İ Ö Ş Ü Â Î Û
+      case 0x00C7:
+      case 0x011E:
+      case 0x0130:
+      case 0x00D6:
+      case 0x015E:
+      case 0x00DC:
+      case 0x00C2:
+      case 0x00CE:
+      case 0x00DB:
+        return true;
+    }
+    return false;
+  }
+
+  /// Latin blokları için önceden kurulmuş küçük harf tablosu.
+  ///
+  /// Değer, küçük harf karşılığının kod birimidir; karşılık tek karakterde
+  /// ifade edilemiyorsa (Dart'ın 'İ' → "i̇" gibi ürettiği hâller) -1.
+  static final List<int> _lowerTable = List<int>.generate(0x300, _computeLower);
+
+  static int _computeLower(int c) {
+    final raw = String.fromCharCode(c);
+    final low = _turkishLower[raw] ?? raw.toLowerCase();
+    return low.length == 1 ? low.codeUnitAt(0) : -1;
+  }
+
+  static int _lowerCode(int c) => c < 0x300 ? _lowerTable[c] : _computeLower(c);
+
+  /// İki kod birimi büyük/küçük harf farkı dışında aynı mı? (Türkçe I/İ dâhil)
+  ///
+  /// Motor, uzatma kuyruğunu ÖZGÜN metin üzerinde arar ("sikerimMMMMo") ve
+  /// tekrar ölçümünü bu katmanla birebir aynı kuralla yapmak zorundadır;
+  /// aksi hâlde iki taraf farklı yerde "tekrar" görür. Tek kullanıcı
+  /// `LexicalTurkishClassifier._stripElongationTail`.
+  static bool sameIgnoringCaseCode(int a, int b) => _sameIgnoringCaseCode(a, b);
+
+  /// İki kod birimi büyük/küçük harf farkı dışında aynı mı?
+  static bool _sameIgnoringCaseCode(int a, int b) {
+    if (a == b) return true;
+    final la = _lowerCode(a);
+    final lb = _lowerCode(b);
+    // Tek karaktere inmeyen ender hâller: eski String yoluna düş.
+    if (la < 0 || lb < 0) {
+      return _sameIgnoringCase(String.fromCharCode(a), String.fromCharCode(b));
+    }
+    return la == lb;
   }
 
   /// Emojileri tespit eder.
-  static bool _isEmoji(String ch) {
-    if (ch.isEmpty) return false;
-    final int cp = ch.runes.first;
+  ///
+  /// docs/24 · madde 11: yeni emoji bloğu (🫠 🥹 🫶 — 1FA70–1FAFF), bayrak
+  /// harfleri (🇹🇷), yıldız/ok sembolleri (⭐ ⬛ — 2B00–2BFF) ve saat/araç
+  /// sembolleri (⌛ ⏰ — 2300–23FF) listede yoktu. Harf arasına konduklarında
+  /// ayırıcı sayılmıyor ve kelimeyi bölüyorlardı:
+  ///   "a🫠p🫠t🫠a🫠l" · "şerefsiz⭐sin" · "salak🇹🇷sın" → Temiz ✗
+  static bool _isEmojiCp(int cp) {
     if (cp >= 0x1F600 && cp <= 0x1F64F) return true; // Yüzler
     if (cp >= 0x1F300 && cp <= 0x1F5FF) return true; // Semboller ve Piktogramlar
     if (cp >= 0x1F680 && cp <= 0x1F6FF) return true; // Ulaşım ve Harita
     if (cp >= 0x1F900 && cp <= 0x1F9FF) return true; // Ek Emojiler
+    if (cp >= 0x1FA70 && cp <= 0x1FAFF) return true; // Genişletilmiş-A
+    if (cp >= 0x1F1E6 && cp <= 0x1F1FF) return true; // Bayrak harfleri
+    if (cp >= 0x1F000 && cp <= 0x1F2FF) return true; // Oyun kartları, çevrili harfler
     if (cp >= 0x2600 && cp <= 0x26FF) return true;   // Çeşitli Semboller
     if (cp >= 0x2700 && cp <= 0x27BF) return true;   // Dingbats
+    if (cp >= 0x2300 && cp <= 0x23FF) return true;   // Teknik semboller (⌛ ⏰)
+    if (cp >= 0x2B00 && cp <= 0x2BFF) return true;   // Oklar ve yıldızlar (⭐)
     if (cp >= 0xFE00 && cp <= 0xFE0F) return true;   // Varyasyon Seçiciler (VS1-VS16)
-    if (cp == 0x200D) return true;                   // ZWJ (Sıfır genişlikli birleştirici)
+    if (cp == 0x200D || cp == 0x20E3) return true;   // ZWJ, tuş başlığı birleştiricisi
     return false;
+  }
+
+  /// İki karakter büyük/küçük harf farkı dışında aynı mı? (Türkçe I/İ dâhil)
+  static bool _sameIgnoringCase(String a, String b) {
+    if (a == b) return true;
+    final la = _turkishLower[a] ?? a.toLowerCase();
+    final lb = _turkishLower[b] ?? b.toLowerCase();
+    return la == lb;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // KARAKTER PLANI TABLOSU
+  //
+  // Latin blokları (0x000–0x2FF) açılışta doldurulur: 768 giriş, Türkçe
+  // metnin karakterlerinin tamamına yakını buraya düşer. Üstü — emoji,
+  // Kiril, Yunanca — ilk görüldüğünde hesaplanıp belleğe alınır.
+  //
+  // Tablo saf bir fonksiyonun belleğidir: aynı karakter her zaman aynı planı
+  // verir, paylaşılması güvenlidir.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  static final List<_CharPlan> _latinPlans =
+      List<_CharPlan>.generate(0x300, (cp) => _computePlan(cp));
+
+  static final Map<int, _CharPlan> _otherPlans = <int, _CharPlan>{};
+
+  static _CharPlan _planFor(int cp) {
+    if (cp < 0x300) return _latinPlans[cp];
+    return _otherPlans[cp] ??= _computePlan(cp);
+  }
+
+  /// Dönüşüm zincirinin leet dışındaki bütün adımları.
+  static String _chain(String ch) {
+    var out = _foldDiacritics[ch] ?? ch;
+    return _foreignLetters[out] ?? out;
+  }
+
+  static _CharPlan _computePlan(int cp) {
+    final raw = String.fromCharCode(cp);
+
+    // Aşama 1-2: Türkçe küçük harf, ardından eşyazımlı dönüşümü.
+    final lowered = _turkishLower[raw] ?? raw.toLowerCase();
+    final homo = _homoglyphMap[lowered] ?? lowered;
+
+    // Aşama 3: leet ikamesi — koşullu olduğu için iki dal.
+    final leetReplacement = _leetMap[homo];
+
+    // Aşama 4-4b: aksan katlama ve q/w/x, iki dala da uygulanır.
+    final base = _chain(homo);
+    final leet = leetReplacement == null ? base : _chain(leetReplacement);
+
+    return _CharPlan(
+      base: base,
+      leet: leet,
+      hasLeet: leetReplacement != null,
+      baseIsSeparator: _innerSeparators.contains(base),
+      leetIsSeparator: _innerSeparators.contains(leet),
+      baseIsBoundary: _boundaryMarks.contains(base),
+      leetIsBoundary: _boundaryMarks.contains(leet),
+      baseIsSpace: base.trim().isEmpty,
+      leetIsSpace: leet.trim().isEmpty,
+      isEmoji: _isEmojiCp(cp),
+    );
   }
 
   /// Ham metni kanonik forma indirger.
@@ -273,17 +498,34 @@ class TurkishNormalizer {
 
     // ── Ön geçiş 0: Sıfır genişlikli karakter (zero-width) temizliği ──────────
     // Görünmez karakterlerle yapılan filtre atlatmalarını engeller.
-    final cleanInput = StringBuffer();
-    final cleanIndices = <int>[];
+    //
+    // Sıradan metinde böyle bir karakter yoktur. Önce varlığı sorulur; yoksa
+    // metin olduğu gibi kullanılır ve N elemanlı kimlik dizisi hiç kurulmaz
+    // (`null` = "her karakter yerinde duruyor").
+    var hasZeroWidth = false;
     for (int i = 0; i < input.length; i++) {
-      final code = input.codeUnitAt(i);
-      if (code == 0x200B || code == 0x200C || code == 0x200D || code == 0xFEFF || code == 0x00AD) {
-        continue;
+      if (_isZeroWidth(input.codeUnitAt(i))) {
+        hasZeroWidth = true;
+        break;
       }
-      cleanInput.writeCharCode(code);
-      cleanIndices.add(i);
     }
-    final cleaned = cleanInput.toString();
+
+    String cleaned;
+    List<int>? cleanIndices;
+    if (hasZeroWidth) {
+      final cleanInput = StringBuffer();
+      final kept = <int>[];
+      for (int i = 0; i < input.length; i++) {
+        final code = input.codeUnitAt(i);
+        if (_isZeroWidth(code)) continue;
+        cleanInput.writeCharCode(code);
+        kept.add(i);
+      }
+      cleaned = cleanInput.toString();
+      cleanIndices = kept;
+    } else {
+      cleaned = input;
+    }
 
     // ── Ön geçiş 1: Tekrar eden harf daraltma ───────────────────────
     // "çoookkk" → "cok", "aptaaaalsın" → "aptalsın"
@@ -295,89 +537,112 @@ class TurkishNormalizer {
     // Neden ayrı bir ön geçiş: Bir dizinin uzunluğu ancak dizi bittiğinde
     // bilinir. Tek geçişli akış mantığıyla "2 mi 3 mü" ayrımı yapılamaz —
     // ileriye bakış (lookahead) gerekir.
-    final collapsed = StringBuffer();
-    final collapsedIndices = <int>[];
-
-    int scan = 0;
-    while (scan < cleaned.length) {
-      final ch = cleaned[scan];
-
-      int runEnd = scan;
-      while (runEnd + 1 < cleaned.length && cleaned[runEnd + 1] == ch) {
-        runEnd++;
+    // Daraltılacak bir dizi var mı? Sıradan metinde yoktur; yoksa metin ve
+    // indeksler olduğu gibi devralınır, iki ara yapı birden kurulmaz.
+    var hasRun = false;
+    for (int i = 2; i < cleaned.length; i++) {
+      final c = cleaned.codeUnitAt(i);
+      if (_sameIgnoringCaseCode(c, cleaned.codeUnitAt(i - 1)) &&
+          _sameIgnoringCaseCode(c, cleaned.codeUnitAt(i - 2))) {
+        hasRun = true;
+        break;
       }
-
-      final runLength = runEnd - scan + 1;
-      final keepCount = runLength >= 3 ? 1 : runLength;
-
-      for (int k = 0; k < keepCount; k++) {
-        collapsed.write(ch);
-        collapsedIndices.add(cleanIndices[scan + k]);
-      }
-
-      scan = runEnd + 1;
     }
 
-    final source = collapsed.toString();
+    String source;
+    List<int>? collapsedIndices;
+    if (hasRun) {
+      final collapsed = StringBuffer();
+      final kept = <int>[];
+
+      int scan = 0;
+      while (scan < cleaned.length) {
+        final chCode = cleaned.codeUnitAt(scan);
+
+        // Büyük/küçük harf karışık tekrar da tekrardır (docs/24 · madde 12):
+        // "aptAaAl" daralmıyor ve "sen aptAaAlsın" temiz dönüyordu.
+        int runEnd = scan;
+        while (runEnd + 1 < cleaned.length &&
+            _sameIgnoringCaseCode(cleaned.codeUnitAt(runEnd + 1), chCode)) {
+          runEnd++;
+        }
+
+        final runLength = runEnd - scan + 1;
+        final keepCount = runLength >= 3 ? 1 : runLength;
+
+        for (int k = 0; k < keepCount; k++) {
+          // Dizinin İLK karakteri yazılır; ikili tekrarda ikincinin büyük/
+          // küçük hâli birinciye uyar. Ana geçiş zaten küçük harfe indirdiği
+          // için `value` bundan etkilenmez.
+          collapsed.writeCharCode(chCode);
+          kept.add(cleanIndices == null
+              ? scan + k
+              : cleanIndices[scan + k]);
+        }
+
+        scan = runEnd + 1;
+      }
+
+      source = collapsed.toString();
+      collapsedIndices = kept;
+    } else {
+      source = cleaned;
+      collapsedIndices = cleanIndices;
+    }
 
     // ── Ana geçiş ───────────────────────────────────────────────────────────
     final buffer = StringBuffer();
     final aggressiveBuffer = StringBuffer();
     final indices = <int>[];
 
-    String lastEmitted = '';
+    bool lastWasSpace = false;
+    final int sourceLength = source.length;
 
     int i = 0;
-    while (i < source.length) {
-      final int cp = source.codeUnitAt(i);
+    while (i < sourceLength) {
+      final int unit = source.codeUnitAt(i);
       int charLen = 1;
-      if (cp >= 0xD800 && cp <= 0xDBFF && i + 1 < source.length) {
-        final int cp2 = source.codeUnitAt(i + 1);
-        if (cp2 >= 0xDC00 && cp2 <= 0xDFFF) {
+      int cp = unit;
+      if (unit >= 0xD800 && unit <= 0xDBFF && i + 1 < sourceLength) {
+        final int unit2 = source.codeUnitAt(i + 1);
+        if (unit2 >= 0xDC00 && unit2 <= 0xDFFF) {
           charLen = 2;
+          cp = 0x10000 + ((unit - 0xD800) << 10) + (unit2 - 0xDC00);
         }
       }
-      final raw = source.substring(i, i + charLen);
 
-      // ── Aşama 1: Türkçe küçük harf ──
-      String ch = _turkishLower[raw] ?? raw.toLowerCase();
-      String aggressiveCh = ch;
+      // ── Aşama 1-4b: küçük harf · eşyazımlı · leet · aksan · q/w/x ──
+      // Hepsi karakterin kendisine bağlı; sonuç tablodan okunur.
+      final plan = _planFor(cp);
 
-      // ── Aşama 2: Homoglyph (Eşyazımlı) Direnci ──
-      ch = _homoglyphMap[ch] ?? ch;
-      aggressiveCh = _homoglyphMap[aggressiveCh] ?? aggressiveCh;
-
-      // ── Aşama 3: Leet ikamesi (iki varyant) ──
+      // Leet ikamesi tek koşullu adım (iki varyant):
       // Temkinli: yalnızca komşularından biri harfse çevir → "4pt4l" düzelir,
       //           "2026" bozulmaz.
       // Agresif : koşulsuz çevir → "$3r3fsiz" yakalanır.
-      final leetReplacement = _leetMap[ch];
-      if (leetReplacement != null) {
-        aggressiveCh = leetReplacement;
-
-        final prevIsLetter = i > 0 && _isLetter(source[i - 1]);
-        final nextIsLetter = i + charLen < source.length && _isLetter(source[i + charLen]);
-        if (prevIsLetter || nextIsLetter) {
-          ch = leetReplacement;
-        }
+      var useLeet = false;
+      if (plan.hasLeet) {
+        useLeet = (i > 0 && _isLetterCode(source.codeUnitAt(i - 1))) ||
+            (i + charLen < sourceLength &&
+                _isLetterCode(source.codeUnitAt(i + charLen)));
       }
 
-      // ── Aşama 4: Aksan katlama ──
-      ch = _foldDiacritics[ch] ?? ch;
-      aggressiveCh = _foldDiacritics[aggressiveCh] ?? aggressiveCh;
-
-      // ── Aşama 4b: Türk alfabesinde bulunmayan harfler (q · w · x) ──
-      // İki varyanta da AYNI dönüşüm uygulanır; uzunluk eşitliği böyle korunur.
-      ch = _foreignLetters[ch] ?? ch;
-      aggressiveCh = _foreignLetters[aggressiveCh] ?? aggressiveCh;
+      String ch = useLeet ? plan.leet : plan.base;
+      // Agresif varyant leet'i koşulsuz uygular — yani her zaman `plan.leet`.
+      String aggressiveCh = plan.leet;
+      var chIsSpace = useLeet ? plan.leetIsSpace : plan.baseIsSpace;
 
       // ── Aşama 5: Kelime içi ayırıcı ve Emoji temizliği ──
-      if (_innerSeparators.contains(ch) || _isEmoji(raw)) {
-        final prevIsLetter = i > 0 && _isLetter(source[i - 1]);
-        final nextIsLetter = i + charLen < source.length && _isLetter(source[i + charLen]);
+      final chIsSeparator = useLeet ? plan.leetIsSeparator : plan.baseIsSeparator;
+      if (chIsSeparator || plan.isEmoji) {
+        final prevIsLetter = i > 0 && _isLetterCode(source.codeUnitAt(i - 1));
+        final nextIsLetter = i + charLen < sourceLength &&
+            _isLetterCode(source.codeUnitAt(i + charLen));
 
-        // İki harf arasındaysa gizleme hilesidir → at.
-        if (prevIsLetter && nextIsLetter) {
+        // İki harf arasındaysa gizleme hilesidir → at. Cümle sınırı
+        // işaretleri hariç: onlar kelimeleri ayırır.
+        final chIsBoundary =
+            useLeet ? plan.leetIsBoundary : plan.baseIsBoundary;
+        if (prevIsLetter && nextIsLetter && !chIsBoundary) {
           i += charLen;
           continue;
         }
@@ -385,19 +650,20 @@ class TurkishNormalizer {
         // Değilse normal noktalama; boşluğa indirge (cümle sınırı korunur).
         ch = ' ';
         aggressiveCh = ' ';
+        chIsSpace = true;
       }
 
       // ── Aşama 6: Boşluk sadeleştirme ──
-      if (ch.trim().isEmpty) {
+      if (chIsSpace) {
         // Ardışık boşlukları tek boşluğa indir, baştaki boşluğu at.
-        if (buffer.isEmpty || lastEmitted == ' ') {
+        if (buffer.isEmpty || lastWasSpace) {
           i += charLen;
           continue;
         }
         buffer.write(' ');
         aggressiveBuffer.write(' ');
-        indices.add(collapsedIndices[i]);
-        lastEmitted = ' ';
+        indices.add(collapsedIndices == null ? i : collapsedIndices[i]);
+        lastWasSpace = true;
         i += charLen;
         continue;
       }
@@ -408,10 +674,12 @@ class TurkishNormalizer {
       // `ch` bir karakterden uzun olabilir (yalnızca x → "ks"). Her çıktı
       // karakteri, geldiği ORİJİNAL karaktere işaret etmelidir; aksi hâlde
       // vurgulama aralığı kayar ve kullanıcıya yanlış harflerin altı çizilir.
+      final sourceIndex = collapsedIndices == null ? i : collapsedIndices[i];
       for (int k = 0; k < ch.length; k++) {
-        indices.add(collapsedIndices[i]);
+        indices.add(sourceIndex);
       }
-      lastEmitted = ch.substring(ch.length - 1);
+      // Buraya yalnızca boşluk OLMAYAN karakterler gelir.
+      lastWasSpace = false;
 
       i += charLen;
     }

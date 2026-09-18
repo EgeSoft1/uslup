@@ -216,6 +216,81 @@ void main() {
       expect(cases.sublist(60, 90).every((c) => c.shouldFlag), isTrue);
     });
 
+    checkIntegrity('İP-33 kimlik eksenleri', IdentityAxesDataset.cases);
+
+    test('İP-33 hiçbir önceki kümeyle örtüşmez ve iki eşit parçadır', () {
+      final previous = {
+        for (final c in [
+          ...GoldDataset.cases,
+          ...HoldoutDataset.cases,
+          ...GeneralizationDataset.cases,
+          ...Generalization2Dataset.cases,
+          ...Generalization3Dataset.cases,
+          ...Generalization4Dataset.cases,
+          ...Generalization5Dataset.cases,
+          ...EverydayDataset.cases,
+          ...DirectionDataset.cases,
+          ...StanceDataset.cases,
+        ])
+          c.text.toLowerCase(),
+      };
+      final cases = IdentityAxesDataset.cases;
+      final overlap = cases
+          .where((c) => previous.contains(c.text.toLowerCase()))
+          .map((c) => c.text)
+          .toList();
+      expect(overlap, isEmpty, reason: 'Örtüşen örnekler: $overlap');
+      expect(cases, hasLength(64));
+      expect(cases.sublist(0, 32).every((c) => c.shouldFlag), isTrue);
+      expect(cases.sublist(32, 64).every((c) => !c.shouldFlag), isTrue);
+    });
+
+    checkIntegrity('İP-34 kimlik eksenleri ayrık', IdentityAxesBlindDataset.cases);
+
+    test('İP-34 İP-33 dâhil hiçbir önceki kümeyle örtüşmez (20 · 20)', () {
+      final previous = {
+        for (final c in [
+          ...GoldDataset.cases,
+          ...HoldoutDataset.cases,
+          ...GeneralizationDataset.cases,
+          ...Generalization2Dataset.cases,
+          ...Generalization3Dataset.cases,
+          ...Generalization4Dataset.cases,
+          ...Generalization5Dataset.cases,
+          ...EverydayDataset.cases,
+          ...DirectionDataset.cases,
+          ...StanceDataset.cases,
+          ...IdentityAxesDataset.cases,
+        ])
+          c.text.toLowerCase(),
+      };
+      for (final (ad, cases, onceki) in [
+        ('İP-34', IdentityAxesBlindDataset.cases, previous),
+        (
+          'İP-35',
+          IdentityAxesBlind2Dataset.cases,
+          {
+            ...previous,
+            for (final c in IdentityAxesBlindDataset.cases)
+              c.text.toLowerCase(),
+          }
+        ),
+      ]) {
+        expect(
+            cases
+                .where((c) => onceki.contains(c.text.toLowerCase()))
+                .map((c) => c.text),
+            isEmpty,
+            reason: '$ad önceki bir kümeyle örtüşüyor');
+        expect(cases, hasLength(40));
+        expect(cases.sublist(0, 20).every((c) => c.shouldFlag), isTrue);
+        expect(cases.sublist(20, 40).every((c) => !c.shouldFlag), isTrue);
+      }
+    });
+
+    checkIntegrity(
+        'İP-35 kimlik eksenleri ikinci ayrık', IdentityAxesBlind2Dataset.cases);
+
     test('iki küme birbiriyle örtüşmez', () {
       final devTexts = GoldDataset.cases.map((c) => c.text).toSet();
       final overlap =

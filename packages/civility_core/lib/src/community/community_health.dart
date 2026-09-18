@@ -90,12 +90,23 @@ class CommunitySignal {
   /// gönderim zamanı tek başına güçlü bir tanımlayıcıdır.
   final int dayIndex;
 
+  /// Kullanıcı bu uyarıya "Bu uyarı yanlış" dedi mi? (docs/27)
+  ///
+  /// ── NEDEN YALNIZCA BİR EVET/HAYIR ────────────────────────────────────
+  /// Yanlış alarmın hangi kelimede çıktığını bilmek geliştirici için çok
+  /// değerli olurdu — ama o kelime kullanıcının METNİNDEN bir parçadır.
+  /// Sözlük teriminin ya da eşleşen ifadenin buraya yazılması, "metin
+  /// cihazdan çıkmaz" iddiasını parça parça delerdi. Kategori zaten
+  /// [category] alanındadır; daha fazlası taşınmaz.
+  final bool yanlisAlarmBildirildi;
+
   const CommunitySignal({
     required this.risk,
     required this.outcome,
     required this.civilityBucket,
     required this.dayIndex,
     this.category,
+    this.yanlisAlarmBildirildi = false,
   });
 
   /// Bir çözümleme ve kullanıcı kararından sinyal üretir.
@@ -106,6 +117,7 @@ class CommunitySignal {
     CivilityAnalysis analysis,
     SignalOutcome outcome, {
     DateTime? at,
+    bool yanlisAlarm = false,
   }) {
     final when = at ?? DateTime.now();
     return CommunitySignal(
@@ -114,6 +126,9 @@ class CommunitySignal {
       outcome: outcome,
       civilityBucket: (analysis.civilityScore ~/ 10).clamp(0, 10),
       dayIndex: when.toUtc().millisecondsSinceEpoch ~/ Duration.millisecondsPerDay,
+      // Uyarı yoksa "yanlış alarm" da olamaz; çağıranın hatası sayıyı
+      // bozmasın.
+      yanlisAlarmBildirildi: yanlisAlarm && analysis.risk != RiskLevel.temiz,
     );
   }
 
@@ -141,10 +156,29 @@ class CommunityHealthReport {
   final int suppressedCategories;
 
   /// Gün kovası → o günün müdahale oranı [0,1]. En eskiden yeniye sıralı.
+  ///
+  /// **k-anonimlik uygulanmış** (docs/24 · madde 35): gözlem sayısı eşiğin
+  /// altında kalan günler listede YER ALMAZ. Önceden kategori sayıları
+  /// gizleniyor ama trend gizlenmiyordu; tek gönderimin yapıldığı bir gün
+  /// "%100 müdahale" satırıyla o kişinin kararını açığa çıkarıyordu.
   final List<({int dayIndex, double interventionRate})> trend;
+
+  /// Eşik altında kaldığı için trendden çıkarılan gün sayısı.
+  final int suppressedDays;
 
   /// Uygulanan k-anonimlik eşiği.
   final int kThreshold;
+
+  /// "Bu uyarı yanlış" bildirilen müdahale sayısı — **k-anonimlik
+  /// uygulanmış**: eşiğin altındaysa `null` (docs/27).
+  ///
+  /// Tek bir bildirimi göstermek, küçük bir toplulukta o kişinin hangi gün
+  /// uyarıya itiraz ettiğini söyler.
+  final int? falseAlarmReports;
+
+  /// Yanlış alarm bildirimlerinin kategori dağılımı — k-anonimlik
+  /// uygulanmış. Hangi katmanın sahada yanlış alarm ürettiğini gösterir.
+  final Map<ToxicityCategory, int> falseAlarmByCategory;
 
   const CommunityHealthReport({
     required this.totalSignals,
@@ -154,18 +188,39 @@ class CommunityHealthReport {
     required this.suppressedCategories,
     required this.trend,
     required this.kThreshold,
-  });
+    this.suppressedDays = 0,
+    this.falseAlarmReports,
+    this.falseAlarmByCategory = const {},
+    int reportedInterventions = 0,
+  }) : _reportedInterventions = reportedInterventions;
+
+  /// Yanlış alarm bildirilen müdahale sayısı — yalnızca eşiği geçtiyse,
+  /// aksi hâlde 0. Oranların paydasında kullanılır.
+  final int _reportedInterventions;
 
   /// Müdahale oranı [0,1]. Kaç gönderimde uyarı çıktı?
   double get interventionRate =>
       totalSignals == 0 ? 0.0 : interventions / totalSignals;
 
+  /// Kullanıcının yanlış bulmadığı müdahaleler.
+  int get validInterventions => interventions - _reportedInterventions;
+
   /// Düzeltme oranı [0,1] — **ürünün asıl başarı ölçüsü.**
   ///
   /// Payda müdahale sayısıdır, toplam değil: hiç uyarı almamış gönderimler
-  /// bu oranı şişirmemelidir.
+  /// bu oranı şişirmemelidir. Kullanıcının "yanlış" dediği uyarılar da
+  /// paydadan çıkarılır: yanlış bir uyarıyı dikkate almadan göndermek
+  /// "uyarıyı görmezden gelmek" değildir ve oranı haksız yere düşürürdü.
   double get revisionRate =>
-      interventions == 0 ? 0.0 : behaviourChanges / interventions;
+      validInterventions <= 0 ? 0.0 : behaviourChanges / validInterventions;
+
+  /// Yanlış alarm oranı [0,1] — kural katmanının SAHADAKİ kesinlik
+  /// göstergesi. Bildirim sayısı eşiğin altındaysa `null`.
+  double? get falseAlarmRate {
+    final n = falseAlarmReports;
+    if (n == null || interventions == 0) return null;
+    return n / interventions;
+  }
 
   /// Panel başlığındaki 0–100 topluluk sağlığı puanı.
   ///
@@ -199,6 +254,9 @@ class CommunityHealthReport {
         'gizlenen_kategori': suppressedCategories,
         for (final entry in categoryCounts.entries)
           'kategori_${entry.key.name}': entry.value,
+        if (falseAlarmReports != null) 'yanlis_alarm': falseAlarmReports!,
+        for (final entry in falseAlarmByCategory.entries)
+          'yanlis_alarm_${entry.key.name}': entry.value,
       };
 }
 
@@ -242,7 +300,9 @@ class CommunityHealthAggregator {
 
     var interventions = 0;
     var behaviourChanges = 0;
+    var reported = 0;
     final rawCategories = <ToxicityCategory, int>{};
+    final rawFalseAlarms = <ToxicityCategory, int>{};
     final perDay = <int, ({int total, int flagged})>{};
 
     for (final s in _signals) {
@@ -251,6 +311,10 @@ class CommunityHealthAggregator {
         if (s.outcome.davranisDegisti) behaviourChanges++;
         final c = s.category;
         if (c != null) rawCategories[c] = (rawCategories[c] ?? 0) + 1;
+        if (s.yanlisAlarmBildirildi) {
+          reported++;
+          if (c != null) rawFalseAlarms[c] = (rawFalseAlarms[c] ?? 0) + 1;
+        }
       }
 
       final day = perDay[s.dayIndex] ?? (total: 0, flagged: 0);
@@ -272,15 +336,17 @@ class CommunityHealthAggregator {
     }
 
     final days = perDay.keys.toList()..sort();
-    final trend = [
-      for (final d in days)
-        (
-          dayIndex: d,
-          interventionRate: perDay[d]!.total == 0
-              ? 0.0
-              : perDay[d]!.flagged / perDay[d]!.total,
-        ),
-    ];
+    var suppressedDays = 0;
+    final trend = <({int dayIndex, double interventionRate})>[];
+    for (final d in days) {
+      final day = perDay[d]!;
+      // Günlük oran da bir toplulaştırmadır ve aynı eşiğe tabidir.
+      if (day.total < k) {
+        suppressedDays++;
+        continue;
+      }
+      trend.add((dayIndex: d, interventionRate: day.flagged / day.total));
+    }
 
     return CommunityHealthReport(
       totalSignals: _signals.length,
@@ -290,6 +356,16 @@ class CommunityHealthAggregator {
       suppressedCategories: suppressed,
       trend: trend,
       kThreshold: k,
+      suppressedDays: suppressedDays,
+      falseAlarmReports: reported >= k ? reported : null,
+      falseAlarmByCategory: {
+        for (final e in rawFalseAlarms.entries)
+          if (e.value >= k) e.key: e.value,
+      },
+      // Eşiğin altındaki bildirim paydadan da ÇIKARILMAZ: çıkarılsaydı
+      // `interventions`, `behaviourChanges` ve `revisionRate` üzerinden
+      // gizlenen sayı geri hesaplanabilirdi.
+      reportedInterventions: reported >= k ? reported : 0,
     );
   }
 }

@@ -172,8 +172,14 @@ class ToxicityLexicon {
     'itib', 'itir', 'ithal', 'itin', 'itaat', 'itici',
     // "köpekbalığı, köpekgiller" → "köpek" hakaretiyle çakışır
     'kopekb', 'kopekg',
-    // "pislik" meşru kullanım (temizlik bağlamı) — düşük öncelikli
-    'pisli',
+    // ── KALDIRILAN: 'pisli' (İP-36, 15 Eylül 2026) ───────────────────────
+    // "pislik" temizlik bağlamında meşru olduğu için maskelenmişti. Ama
+    // maske sözlük aramasından ÖNCE çalışır: "sen bir pisliksin" de sessizce
+    // temiz dönüyordu. Maske yerine artık yönelim şartı var
+    // (`requiresDirection: true`), ki doğru araç odur:
+    //   "mutfakta pislik var"  → yönelim yok → temiz  ✓
+    //   "sen bir pisliksin"    → ikinci şahıs → hakaret ✓
+    // Maske bu ayrımı yapamaz; yönelim yapar.
     // ── İP-17 ölçümüyle eklenenler ────────────────────────────────────────
     // "psikopatoloji, psikopatolojik" → "psikopat" ile çakışır
     'psikopatol',
@@ -234,6 +240,166 @@ class ToxicityLexicon {
   };
 
   // ───────────────────────────────────────────────────────────────────────────
+  // I-HARFİ ÇAKIŞMASI OLAN UZUN GİRDİLER (docs/25 · 14 Eylül 2026)
+  //
+  // Kısa köklerde (D1) kullanılan yüzey kanıtı bu girdilere de uygulanır.
+  // Hepsinin noktasız "ı" ile yazılan meşru bir ikizi vardır ve normalize
+  // metinde ikisi aynı dizgidir:
+  //
+  //   "sıktım" (limonu sıktım) · "sıkım" (bir sıkım) · "sıkık" (sıkık yazı)
+  //
+  // Kullanıcı "ı" yazdıysa küfrü kastetmemiştir. Girdi yalnızca bu harf
+  // fiilen çelişiyorsa elenir; ASCII yazan kullanıcı hiçbir şeyle çelişmez.
+  // Çelişki kuralı bütün sözlüğe AÇILMADI: "sıkerim" gibi Türkçe'de karşılığı
+  // olmayan bir yazım, bir çelişki değil bir gizleme denemesidir.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Set<String> spellingSensitiveTerms = {
+    'sikik', 'sikim', 'siktim',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // NESNE + FİİL KÜFÜRLERİ (docs/25)
+  //
+  // "ananı", "götüne", "ağzına" tek başına küfür DEĞİLDİR: "ananı özledin mi",
+  // "ananın yemekleri çok güzel". Önceki sürüm "ananı" kökünü tek kelimelik
+  // bir küfür girdisi olarak tutuyor ve bu cümleleri 0.95 ile Yüksek risk
+  // yapıyordu. Aynı şekilde "siktim", "sokarım", "sıçtı" da tek başına
+  // meşrudur: "limonu sıktım", "anahtarı kapıya sokarım".
+  //
+  // Küfür İKİSİNİN BİRLEŞİMİNDEDİR. Motor, nesneyi hemen izleyen fiili
+  // (ayrı ya da bitişik yazılmış: "ananı siktim" · "ananısiktim") arar.
+  //
+  // Fiil listeleri KAPALIDIR, kök değildir: "ağzına sıcak çorba" → "sicak",
+  // "kafanı sıkma" → "sikma" ASCII yazımda fiil köküyle başlar. Yalnızca
+  // listedeki tam biçimler eşleşir.
+  //
+  // TEK İSTİSNA `stems` alanıdır: nesnesi tek başına zaten müstehcen olan
+  // grupta ("am") fiil KÖKÜ yeterlidir. "am koy-", "amkoy-", "amnakoy-" ile
+  // başlayan hiçbir Türkçe kelime yoktur (91.861 biçimlik liste denetlendi);
+  // çekimin tamamını ("koyayım · koyim · koyucam · koyduğumun…") saymak
+  // yerine kök aranır. Ölçülen kaçış (docs/25 · ek tarama):
+  //
+  //   "Senin ben amkoyayim" · "amkoydum" · "am koyayım" · "amnakoyim" → Temiz ✗
+  //
+  // Fiilin Türkçe yazılışı özgün metinle çelişirse eşleşme yok sayılır:
+  // "anneni sıktım" ("ı" yazılmış) ≠ "anneni siktim".
+  // ───────────────────────────────────────────────────────────────────────────
+  static const List<({Set<String> objects, Set<String> verbs, Set<String> stems})>
+      profanePairs = [
+    (
+      objects: {
+        'ananı', 'ananızı', 'anasını', 'bacını', 'bacınızı', 'avradını',
+        'avradınızı', 'sülaleni', 'sülalenizi', 'ecdadını', 'ölünü',
+        'ölülerini', 'ölmüşünü', 'götünü', 'götünüzü', 'ağzını',
+      },
+      verbs: {
+        'sikerim', 'sikeyim', 'siktim', 'siktik', 'sikti', 'siktiler',
+        'sikiyim', 'sikiyorum', 'sikicem', 'sikecem', 'sikeceğim',
+        'sikeriz', 'sikerler', 'sikmişim', 'sikmek', 'sikim',
+        'beceririm', 'becereyim',
+        // ünsüz iskeletleri bitişik yazımda: "ananıskm"
+        'skm', 'skrm', 'skym', 'sktm',
+      },
+      stems: {},
+    ),
+    (
+      // "anneni" gündelik dilde çok sık geçer (altyazı listesinde 8.140 kez).
+      // ASCII'de "sıktım" okuması taşıyan fiiller ("siktim", "sikti",
+      // "sikiyorum") bu nesneyle ALINMADI: "anneni siktim mi hiç" (sıktım mı).
+      objects: {'anneni', 'anneciğini'},
+      verbs: {
+        'sikerim', 'sikeyim', 'sikiyim', 'sikicem', 'sikecem', 'sikeceğim',
+        'sikeriz', 'sikerler', 'sikim', 'skm', 'skrm', 'skym',
+      },
+      stems: {},
+    ),
+    (
+      objects: {'götüne', 'götünüze'},
+      verbs: {
+        'sokarım', 'sokayım', 'sokacağım', 'sokcam', 'sokucam', 'soktum',
+        'soktuk', 'koyarım', 'koyayım', 'koydum', 'koyacağım',
+      },
+      stems: {},
+    ),
+    (
+      objects: {'ağzına', 'ağzınıza', 'mezarına', 'ölüne'},
+      verbs: {
+        'sıçarım', 'sıçayım', 'sıçtım', 'sıçtı', 'sıçacağım', 'sıçarız',
+      },
+      stems: {},
+    ),
+    (
+      // "amına koy-" öbeğinin kısaltmaları: ekin düşürülmesi ("am koyayım"),
+      // ünlünün düşürülmesi ("amna koyayım", "amn koyim") ve bitişik yazım.
+      objects: {'am', 'amn', 'amna'},
+      verbs: {},
+      stems: {'koy', 'kod', 'sok'},
+    ),
+  ];
+
+  /// Tek başına bütün mesajı oluşturduğunda küfür olan nesneler: "ananı!",
+  /// "ulan bacını". Başka bir kelimeyle cümle kuruyorsa ("ananı özledin mi")
+  /// hiçbir şey tetiklemez. Çevresinde yalnızca [ellipticalFillers] durabilir.
+  static const Set<String> ellipticalProfanity = {
+    'ananı', 'ananızı', 'anasını', 'bacını', 'sülaleni', 'ecdadını',
+  };
+
+  static const Set<String> ellipticalFillers = {
+    'lan', 'ulan', 'len', 'be', 'ya', 'senin', 'sizin', 'amk', 'aq',
+    // "senin ben ananı" — Türkçe küfrün yaygın çerçevesi
+    'ben',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // BİRLEŞİK YAZIM YAPIŞTIRICILARI (docs/25)
+  //
+  // Mobilde küfür çoğu zaman komşu kelimeyle BİTİŞİK yazılır:
+  //
+  //   "siktirgit" · "senisikerim" · "piçkurusu" · "yarrakkafa" · "salakherif"
+  //
+  // Token bir bütün olarak sözlükte yoktur ve kök eşleşmesi "git", "herif"
+  // gibi kalanları geçerli ek saymaz. Motor token'ı iki parçaya böler; bir
+  // parça küfür/hakaret girdisi, öteki bu listedeki bir kelime (ya da ikinci
+  // bir girdi) olmalıdır.
+  //
+  // Bölme SERBEST alt dizgi araması DEĞİLDİR. "adamına" içinde "amına",
+  // "şekerim" içinde "sikerim" benzeri geçer; iki parçanın da tam birer
+  // kelime olması şartı bu çakışmaları yapısal olarak dışarıda bırakır.
+  // Liste kasıtlı olarak kısadır ve her kelime en az iki harflidir: tek harf
+  // ("o") "piç" + "o" → "pico" gibi özel adlara kapı açıyordu.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Set<String> compoundGlue = {
+    'sen', 'seni', 'siz', 'sizi', 'onu', 'lan', 'ulan', 'len', 'be', 'ya',
+    'yav', 'git', 'gel', 'herif', 'herifi', 'adam', 'kafa', 'kafalı',
+    'kurusu', 'çocuğu', 'karı', 'gibi', 'oğlum', 'kızım', 'amk',
+    // ⛔ "oğlu" YOK: soyadı ekidir. "Gavuroğlu ailesi" → gavur + oğlu ✗
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // YÜZEY KANITIYLA DOĞRULANAN BİÇİMLER (docs/25)
+  //
+  // "am" kökü yönelim şartlıdır, çünkü ASCII yazımda masum ikizleri vardır:
+  // "amina" (özel ad), "amin" (dua). Oysa kullanıcı noktasız "ı" YAZDIYSA
+  // okuma tektir — TDK sözlüğünde "amı" ile başlayan tek bir madde yoktur.
+  // Token'ın özgün yazılışı bu biçimlerden biriyle başlıyorsa yönelim şartı
+  // aranmaz: "amına" · "amını" · "amın oğlu". Büyük "I" belirsiz sayılır.
+  // ───────────────────────────────────────────────────────────────────────────
+  static const Map<String, Set<String>> surfaceConfirmedForms = {
+    'am': {'amı'},
+  };
+
+  /// Komşu token birleştirmesinde parça olamayan sık işlev kelimeleri.
+  ///
+  /// "kuş bu dala kondu" → "bu" + "dala" → "budala" · Riskli ✗ (docs/25).
+  /// Bölme kaçışı bir kelimeyi hecesinden böler; "bu", "ve", "de" gibi tam
+  /// kelimeler bir hecenin yarısı değildir.
+  static const Set<String> joinStopWords = {
+    'bu', 'su', 'o', 'ne', 've', 'de', 'da', 'ki', 'mi', 'mu', 'bir',
+    'ben', 'sen', 'biz', 'siz', 'ile', 'ama', 'gibi', 'cok', 'az', 'hic',
+    'her', 'en', 'daha', 'ya', 'yani',
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
   // YAPISAL YÖNELİM İSTEYEN SOMUT ADLAR (D7 · docs/21 · 13 Eylül 2026)
   //
   // Bu girdiler zaten `requiresDirection` taşır. Fark: yönelim YAKINLIKLA
@@ -249,7 +415,7 @@ class ToxicityLexicon {
   // ───────────────────────────────────────────────────────────────────────────
   static const Set<String> predicativeDirectionTerms = {
     // hayvanlar
-    'eşek', 'öküz', 'domuz', 'maymun', 'köpek', 'hayvan', 'it', 'kaz', 'ayı',
+    'eşek', 'eşşek', 'öküz', 'domuz', 'maymun', 'köpek', 'hayvan', 'it', 'kaz', 'ayı',
     'keçi', 'katır', 'manda', 'fare', 'sıçan', 'solucan', 'böcek',
     'hamamböceği', 'kurbağa', 'karga', 'akbaba', 'çakal', 'yılan', 'sırtlan',
     'kene', 'sülük',
@@ -289,7 +455,9 @@ class ToxicityLexicon {
     LexiconEntry(term: 'yavşak', category: ToxicityCategory.kufur, severity: 0.90),
     LexiconEntry(term: 'göt', category: ToxicityCategory.kufur, severity: 0.70, matchMode: MatchMode.exact),
     LexiconEntry(term: 'götveren', category: ToxicityCategory.kufur, severity: 0.95),
-    LexiconEntry(term: 'ananı', category: ToxicityCategory.kufur, severity: 0.95),
+    // ⛔ ÇIKARILDI (docs/25): 'ananı'. Kök eşleşmesi "ananın yemekleri çok
+    // güzel" cümlesini 0.95 ile Yüksek risk yapıyordu. Yerine nesne + fiil
+    // birleşimi (`profanePairs`) ve tek başına kullanım (`ellipticalProfanity`).
     LexiconEntry(term: 'avradını', category: ToxicityCategory.kufur, severity: 0.95),
     // İP-17 — çekişmeli taramada kaçtığı ölçülenler
     LexiconEntry(term: 'kaltak', category: ToxicityCategory.kufur, severity: 0.92),
@@ -299,8 +467,17 @@ class ToxicityLexicon {
     // Meşru bağlamı vardır (gazetecilik, sosyoloji): yalnızca yöneltilince.
     LexiconEntry(term: 'fahişe', category: ToxicityCategory.kufur, severity: 0.80, requiresDirection: true),
     LexiconEntry(term: 'amcık', category: ToxicityCategory.kufur, severity: 0.95),
-    LexiconEntry(term: 'amına koyayım', category: ToxicityCategory.kufur, severity: 0.95),
-    LexiconEntry(term: 'amına koyim', category: ToxicityCategory.kufur, severity: 0.95),
+    // Öbek eşleşmesi sağ sınır denetlemez; bu yüzden fiil KÖKÜ yazılır ve
+    // bütün çekimleri kapsar: koyayım · koyarım · koydum · koyacağım · koyim.
+    // Önceki iki girdi ('amına koyayım', 'amına koyim') "amına koydum" ve
+    // "amına koyarım" biçimlerini kaçırıyordu (docs/25).
+    LexiconEntry(term: 'amına koy', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'amına kod', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'amına sok', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'amınıza koy', category: ToxicityCategory.kufur, severity: 0.95),
+    // "ananın amı" YAZILMADI: sağ sınır denetlenmediği için "ananın amiri"
+    // cümlesini de yakalardı. "amın oğlu" da yazılmadı: ASCII'de "amin oğlum".
+    LexiconEntry(term: 'ananın amına', category: ToxicityCategory.kufur, severity: 0.95),
     LexiconEntry(term: 'orospu çocuğu', category: ToxicityCategory.kufur, severity: 0.98),
     LexiconEntry(term: 'dalyarak', category: ToxicityCategory.kufur, severity: 0.92),
     LexiconEntry(term: 'hassiktir', category: ToxicityCategory.kufur, severity: 0.95),
@@ -337,6 +514,13 @@ class ToxicityLexicon {
     // kişiye söylenmiş hâlleri ("rezil ettin kendini", "rezil oldun")
     // ayrıca `alayci.rezil_ettin` kalıbında durur.
     LexiconEntry(term: 'rezil', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    // "pislik" ve "iğrenç" de aynı sınıftadır: tek başlarına bir nesneyi ya
+    // da durumu niteleyen sıradan kelimelerdir ("mutfakta pislik var",
+    // "bu yemek iğrenç"). Yalnızca bir İNSANA yöneltildiklerinde hakarettir.
+    // Yönelim şartı olmadan eklenirlerse temizlik ve yemek cümlelerini
+    // işaretlerlerdi — ürünün en pahalı hata türü.
+    LexiconEntry(term: 'pislik', category: ToxicityCategory.hakaret, severity: 0.62, requiresDirection: true),
+    LexiconEntry(term: 'iğrenç', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true),
     LexiconEntry(term: 'çirkef', category: ToxicityCategory.hakaret, severity: 0.70),
     LexiconEntry(term: 'dallama', category: ToxicityCategory.hakaret, severity: 0.72),
     LexiconEntry(term: 'keriz', category: ToxicityCategory.hakaret, severity: 0.55),
@@ -440,15 +624,17 @@ class ToxicityLexicon {
     // "yüz yüze bakar gibi" bir ortamı en çok bunlar bozuyor.
     LexiconEntry(term: 'cahil', category: ToxicityCategory.asagilama, severity: 0.40, requiresDirection: true),
     LexiconEntry(term: 'saçmalıyorsun', category: ToxicityCategory.asagilama, severity: 0.38, neutralAlternative: 'katılmıyorum'),
-    LexiconEntry(term: 'boş konuşuyorsun', category: ToxicityCategory.asagilama, severity: 0.40),
-    LexiconEntry(term: 'komiksin', category: ToxicityCategory.asagilama, severity: 0.35),
-    LexiconEntry(term: 'gülünç', category: ToxicityCategory.asagilama, severity: 0.32),
-    LexiconEntry(term: 'acınası', category: ToxicityCategory.asagilama, severity: 0.42),
+    LexiconEntry(term: 'boş konuşuyorsun', category: ToxicityCategory.asagilama, severity: 0.40, neutralAlternative: 'bu söylediğine katılmıyorum'),
+    LexiconEntry(term: 'komiksin', category: ToxicityCategory.asagilama, severity: 0.35, neutralAlternative: 'bunu ciddiye almakta zorlanıyorum'),
+    LexiconEntry(term: 'gülünç', category: ToxicityCategory.asagilama, severity: 0.32, neutralAlternative: 'tuhaf'),
+    LexiconEntry(term: 'acınası', category: ToxicityCategory.asagilama, severity: 0.42, neutralAlternative: 'zayıf'),
     // NOT: "sus" buradan ÇIKARILDI. Susturma emri konum bilgisi taşır
     // (tümce sonunda yüklem olarak kurulur) ve sözlük bu bilgiyi taşıyamaz:
     // "sus payı vermişler" yanlış pozitif üretiyordu. Kalıp olarak
     // `implicit_patterns.dart` → `susturma.sus` içine taşındı.
-    LexiconEntry(term: 'kapa çeneni', category: ToxicityCategory.asagilama, severity: 0.60),
+    // docs/24 · 1: karşılığı yokken yerinde mod kelimeyi siliyordu:
+    // "kapa çeneni artık" → "Yersiz artık" ✗
+    LexiconEntry(term: 'kapa çeneni', category: ToxicityCategory.asagilama, severity: 0.60, neutralAlternative: 'biraz dinler misin'),
     // ⛔ TAŞINDI (İP-22) — "haddini bil" ifadesi `susturma.haddini_bil`
     // örüntüsüne geçti. Sebep: ifade eşleşmesi SAĞ SINIR denetlemez (Türkçe
     // eklemeli olduğu için bilinçli bir tasarım: "işe yaramaz" girdisi
@@ -459,11 +645,11 @@ class ToxicityLexicon {
     //   "haddini bilen insanlar"   → ÖVGÜ, işaretlendi    ✗
     //
     // Düzenli ifade sağ sınırı ifade edebilir, sözlük edemez.
-    LexiconEntry(term: 'sen kimsin', category: ToxicityCategory.asagilama, severity: 0.35),
+    LexiconEntry(term: 'sen kimsin', category: ToxicityCategory.asagilama, severity: 0.35, neutralAlternative: 'bu konuda farklı düşünüyorum'),
     // İP-17 — kovma / değersizleştirme kalıpları
-    LexiconEntry(term: 'defol', category: ToxicityCategory.asagilama, severity: 0.60),
-    LexiconEntry(term: 'halta yaramaz', category: ToxicityCategory.asagilama, severity: 0.55),
-    LexiconEntry(term: 'yıkıl karşımdan', category: ToxicityCategory.asagilama, severity: 0.58),
+    LexiconEntry(term: 'defol', category: ToxicityCategory.asagilama, severity: 0.60, neutralAlternative: 'lütfen beni biraz yalnız bırak'),
+    LexiconEntry(term: 'halta yaramaz', category: ToxicityCategory.asagilama, severity: 0.55, neutralAlternative: 'verimsiz'),
+    LexiconEntry(term: 'yıkıl karşımdan', category: ToxicityCategory.asagilama, severity: 0.58, neutralAlternative: 'şu an konuşmak istemiyorum'),
 
     // ═══ NEFRET SÖYLEMİ ══════════════════════════════════════════════════════
     // ⚠ BURADA KİMLİK ADI YOKTUR — VE OLMAYACAKTIR.
@@ -526,8 +712,22 @@ class ToxicityLexicon {
 
     // ═══ TACİZ ═══════════════════════════════════════════════════════════════
     LexiconEntry(term: 'seni becer', category: ToxicityCategory.taciz, severity: 0.95),
-    LexiconEntry(term: 'yatağa', category: ToxicityCategory.taciz, severity: 0.45, requiresDirection: true),
-    LexiconEntry(term: 'vücudun', category: ToxicityCategory.taciz, severity: 0.40, requiresDirection: true),
+    // ⛔ DEĞİŞTİRİLDİ (D11 · docs/23) — tek kelimelik 'yatağa' ve 'vücudun'.
+    //
+    //   'vücudun' kendi iyelik eki ("-un") yüzünden HER ZAMAN ikinci şahsa
+    //   yöneltilmiş sayılıyordu; sağlık metni taciz oluyordu:
+    //     "Vücudun ihtiyacı olan vitaminleri almalısın" → Riskli · taciz ✗
+    //   'yatağa' yakınlıktaki "sana" ile yönelim alıyordu:
+    //     "Sana yatağa gitmeden önce yazarım"           → Riskli · taciz ✗
+    //
+    // Taciz, kelimede değil kuruluştadır; yerlerine kuruluşu taşıyan öbekler
+    // yazıldı.
+    LexiconEntry(term: 'benimle yatağa', category: ToxicityCategory.taciz, severity: 0.60),
+    LexiconEntry(term: 'seni yatağa atarım', category: ToxicityCategory.taciz, severity: 0.70),
+    LexiconEntry(term: 'seni yatağa atacağım', category: ToxicityCategory.taciz, severity: 0.70),
+    LexiconEntry(term: 'vücudun seksi', category: ToxicityCategory.taciz, severity: 0.50),
+    LexiconEntry(term: 'vücudun çok seksi', category: ToxicityCategory.taciz, severity: 0.50),
+    LexiconEntry(term: 'seksi vücudun', category: ToxicityCategory.taciz, severity: 0.50),
 
     // ═══ İP-26 · SÖZ VARLIĞI GENİŞLETMESİ (12 Eylül 2026) ════════════════════
     //
@@ -588,7 +788,7 @@ class ToxicityLexicon {
     // ── İçeriği değersizleştirme (aşağılama) ─────────────────────────────
     LexiconEntry(term: 'zırva', category: ToxicityCategory.asagilama, severity: 0.40, requiresDirection: true),
     LexiconEntry(term: 'palavra', category: ToxicityCategory.asagilama, severity: 0.38, requiresDirection: true),
-    LexiconEntry(term: 'saçma sapan', category: ToxicityCategory.asagilama, severity: 0.38),
+    LexiconEntry(term: 'saçma sapan', category: ToxicityCategory.asagilama, severity: 0.38, neutralAlternative: 'mantıksız'),
     LexiconEntry(term: 'gevezelik', category: ToxicityCategory.asagilama, severity: 0.35, requiresDirection: true),
 
     // ── Tehdit (deyimsel, öbek olarak) ───────────────────────────────────
@@ -728,6 +928,98 @@ class ToxicityLexicon {
     // bir betimleme; "sudan sebeplerle kavga ettiler" anlatısını işaretliyordu.
     LexiconEntry(term: 'komedi', category: ToxicityCategory.asagilama, severity: 0.28, requiresDirection: true),
     LexiconEntry(term: 'trajikomik', category: ToxicityCategory.asagilama, severity: 0.30, requiresDirection: true),
+
+    // ═══ docs/25 · KÜFÜR KAPSAMI (14 Eylül 2026) ══════════════════════════════
+    //
+    // 286 cümlelik çekişmeli taramada kaçtığı ölçülenler. Her girdi 91.861
+    // biçimlik Türkçe kelime listesinde (OpenSubtitles sıklık listesi + TDK
+    // madde başları) tek başına ve "sen X" kalıbında denetlendi; masum bir
+    // biçimi yakalayan girdi alınmadı.
+    //
+    // ⛔ DENETLENİP ALINMAYANLAR:
+    //   "siktin", "sikti"   → ASCII "canımı sıktın" · "canımı sıktı"
+    //   "sikiş"             → ASCII "trafik sıkıştı" · "sıkışık"
+    //   "sıçtım"            → tek başına öz-ifade; nesneyle birlikte aranır
+    //   "taşaklı"           → "cesur" anlamında övgü olarak da kullanılır
+    //   "kahrol"            → "kahrolsun zulüm" siyasi slogandır
+
+    // ── sik- ailesi · ön ses uyumlu çekimler ─────────────────────────────
+    // "sıkmak" kalın ünlülü çekilir (sıkarım, sıkacağım); aşağıdakilerin
+    // ASCII yazımı bu yüzden meşru bir kelimeyle çakışmaz.
+    LexiconEntry(term: 'sikiyim', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'sikicem', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'sikecem', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'sikeceğim', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'hasiktir', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'sikko', category: ToxicityCategory.kufur, severity: 0.85),
+    // "sikiş" kökü YAZILMADI (ASCII "sıkış"); ince ünlülü çekimler çakışmaz:
+    // "sıkışalım" → "sikisalim" ≠ "sikiselim".
+    LexiconEntry(term: 'sikişelim', category: ToxicityCategory.kufur, severity: 0.90),
+    LexiconEntry(term: 'sikişmek', category: ToxicityCategory.kufur, severity: 0.90),
+    LexiconEntry(term: 'sikindirik', category: ToxicityCategory.kufur, severity: 0.80),
+    // "sıkım" ile çakışır → `spellingSensitiveTerms`.
+    LexiconEntry(term: 'sikim', category: ToxicityCategory.kufur, severity: 0.90),
+    // "sıktım" ile çakışır → `spellingSensitiveTerms` + yalnızca yöneltilince.
+    // "limonu siktim" (ASCII) temiz kalır; "siktim seni" yakalanır.
+    LexiconEntry(term: 'siktim', category: ToxicityCategory.kufur, severity: 0.90, requiresDirection: true),
+
+    // ── Yazım varyantları ────────────────────────────────────────────────
+    LexiconEntry(term: 'kahbe', category: ToxicityCategory.kufur, severity: 0.92),
+    LexiconEntry(term: 'oruspu', category: ToxicityCategory.kufur, severity: 0.98),
+    LexiconEntry(term: 'orosbu', category: ToxicityCategory.kufur, severity: 0.95),
+    LexiconEntry(term: 'kavat', category: ToxicityCategory.kufur, severity: 0.88),
+    LexiconEntry(term: 'pezo', category: ToxicityCategory.kufur, severity: 0.80),
+
+    // ── Söz varlığı ──────────────────────────────────────────────────────
+    LexiconEntry(term: 'götlek', category: ToxicityCategory.kufur, severity: 0.85),
+    LexiconEntry(term: 'deyyus', category: ToxicityCategory.kufur, severity: 0.88),
+    LexiconEntry(term: 'dürzü', category: ToxicityCategory.kufur, severity: 0.80),
+    LexiconEntry(term: 'şırfıntı', category: ToxicityCategory.kufur, severity: 0.75),
+    LexiconEntry(term: 'kerhaneci', category: ToxicityCategory.kufur, severity: 0.85),
+    // "fahişe" tek başına yönelim şartlıdır (gazetecilik dili); soy kuruluşu
+    // hedefi kendi içinde taşır.
+    LexiconEntry(term: 'fahişenin çocuğu', category: ToxicityCategory.kufur, severity: 0.92),
+    LexiconEntry(term: 'eşşoğlu', category: ToxicityCategory.hakaret, severity: 0.75),
+    // Ağız yazımları: kelime içi ünsüz ikilisi genel olarak teke İNDİRİLMEZ
+    // (gerekçe: `LexicalTurkishClassifier._dedouble`), bu yüzden tek tek yazılır.
+    LexiconEntry(term: 'eşşek', category: ToxicityCategory.hakaret, severity: 0.50, requiresDirection: true),
+    LexiconEntry(term: 'dalyarrak', category: ToxicityCategory.kufur, severity: 0.92),
+
+    // ── sıç- ailesi ──────────────────────────────────────────────────────
+    // Kök YAZILMADI: "sıç" kısa kök çekim listesiyle "sicim" (ip) ve "sıcak"
+    // biçimlerine uzanırdı. Tam biçimler yazıldı.
+    LexiconEntry(term: 'sıçarım', category: ToxicityCategory.kufur, severity: 0.85),
+    LexiconEntry(term: 'sıçayım', category: ToxicityCategory.kufur, severity: 0.85),
+    LexiconEntry(term: 'sıçtın', category: ToxicityCategory.kufur, severity: 0.60),
+
+    // ── Ünsüz iskeletleri (BİREBİR) ──────────────────────────────────────
+    // Gerekçe İP-28 bloğundaki ile aynı: üretilmez, tek tek yazılır.
+    LexiconEntry(term: 'skm', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'skrm', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'skerim', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'sktm', category: ToxicityCategory.kufur, severity: 0.80, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 's2m', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'yrrk', category: ToxicityCategory.kufur, severity: 0.85, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'orsp', category: ToxicityCategory.kufur, severity: 0.88, matchMode: MatchMode.verbatim),
+    LexiconEntry(term: 'amnkym', category: ToxicityCategory.kufur, severity: 0.90, matchMode: MatchMode.verbatim),
+
+    // ── Soy küfürleri (öbek) ─────────────────────────────────────────────
+    // Tek başına "it", "eşek" yönelim şartlıdır; "X oğlu X" kuruluşu ise
+    // hedefi kendi içinde taşır.
+    LexiconEntry(term: 'it oğlu it', category: ToxicityCategory.hakaret, severity: 0.85),
+    LexiconEntry(term: 'eşek oğlu eşek', category: ToxicityCategory.hakaret, severity: 0.80),
+    LexiconEntry(term: 'köpek oğlu köpek', category: ToxicityCategory.hakaret, severity: 0.80),
+    LexiconEntry(term: 'hayvan oğlu hayvan', category: ToxicityCategory.hakaret, severity: 0.80),
+    LexiconEntry(term: 'domuz oğlu domuz', category: ToxicityCategory.hakaret, severity: 0.80),
+
+    // ── Kargış ───────────────────────────────────────────────────────────
+    // "geber" TAM eşleşme: "gebersin", "geber git" yakalanır; "geberdim
+    // sıcaktan" öz-ifade olarak yumuşar; "gebereceğim" ek listesinde yoktur.
+    LexiconEntry(term: 'geber', category: ToxicityCategory.hakaret, severity: 0.62, matchMode: MatchMode.exact),
+    LexiconEntry(term: 'geberesice', category: ToxicityCategory.hakaret, severity: 0.72),
+    LexiconEntry(term: 'kahrolasıca', category: ToxicityCategory.hakaret, severity: 0.62),
+    LexiconEntry(term: 'lanet olası', category: ToxicityCategory.hakaret, severity: 0.55),
+    LexiconEntry(term: 'belanı versin', category: ToxicityCategory.hakaret, severity: 0.65),
   ];
 }
 

@@ -1,4 +1,4 @@
-﻿// =============================================================================
+// =============================================================================
 // NSosyal Sosyal YZ — Bağlam Çözümleme Katmanı
 // Dosya: packages/civility_core/lib/src/context/context_analyzer.dart
 //
@@ -50,6 +50,12 @@ class ContextSignals {
   /// Tırnak içindeki ifade konuşanın kendi sözü değildir.
   final List<({int start, int end})> quotedRanges;
 
+  /// Her token'ın ait olduğu cümlenin sırası (token listesiyle aynı sırada).
+  ///
+  /// Boşsa cümle sınırı bilinmiyor demektir ve pencereler eskisi gibi
+  /// sınırsız çalışır. Gerekçe: [ContextAnalyzer.analyze].
+  final List<int> tokenSentences;
+
   const ContextSignals({
     required this.hasSecondPersonPronoun,
     required this.hasFirstPersonMarker,
@@ -58,6 +64,7 @@ class ContextSignals {
     required this.punctuationBurst,
     required this.hasReportedSpeech,
     required this.quotedRanges,
+    this.tokenSentences = const [],
   });
 }
 
@@ -266,13 +273,84 @@ class ContextAnalyzer {
     'miyim', 'miyiz', 'midir', 'mudur',
   };
 
-  /// Tırnak karakterleri (açan/kapayan ayrımı yapmadan).
-  static const Set<String> _quoteChars = {
-    '"', "'", '«', '»', '“', '”', '‘', '’',
+  /// Tırnak karakterleri (açan/kapayan ayrımı yapmadan), kod birimi olarak:
+  /// `" ' « » “ ” ‘ ’` — hepsi tek kod biriminde yazılır.
+  static const Set<int> _quoteCodes = {
+    0x22, 0x27, 0xAB, 0xBB, 0x201C, 0x201D, 0x2018, 0x2019,
   };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // HAM METİN TARAMALARI İÇİN HARF TABLOSU (docs/28)
+  //
+  // Büyük harf oranı, tırnak aralıkları ve cümle sınırları ham metnin
+  // tamamını dolaşır. Eski sürüm her karakterde `text[i]`, `toLowerCase()` ve
+  // `toUpperCase()` çağırıyordu: karakter başına üç String ayırma, metin
+  // başına üç geçiş. 2.760 karakterlik bir gönderide motorun 4,1 ms'sinin
+  // 0,61 ms'si buradaydı.
+  //
+  // Harflik ve büyüklük karakterin kendisine bağlıdır, yani önceden
+  // hesaplanabilir. Tablo Latin bloklarını (0x000–0x2FF) kapsar — Türkçe
+  // metnin karakterlerinin tamamına yakını buraya düşer; üstü eski yoldan
+  // hesaplanır.
+  //
+  // Tanım eski sürümle aynı tutulur: "büyük/küçük hâli farklı olan karakter
+  // harftir", "kendi büyük hâline eşit olan harf büyüktür". 'ß' gibi büyük
+  // hâli iki karaktere açılan harfler böylece harf sayılır ama büyük
+  // sayılmaz — eski davranış buydu.
+  // ───────────────────────────────────────────────────────────────────────────
+
+  static final List<bool> _latinIsLetter =
+      List<bool>.generate(0x300, (c) => _computeIsLetter(String.fromCharCode(c)));
+
+  static final List<bool> _latinIsUpper =
+      List<bool>.generate(0x300, (c) => _computeIsUpper(String.fromCharCode(c)));
+
+  static bool _computeIsLetter(String ch) => ch.toLowerCase() != ch.toUpperCase();
+
+  static bool _computeIsUpper(String ch) => ch == ch.toUpperCase();
+
+  static bool _isLetterCode(int c) => c < 0x300
+      ? _latinIsLetter[c]
+      : _computeIsLetter(String.fromCharCode(c));
+
+  static bool _isUpperCode(int c) => c < 0x300
+      ? _latinIsUpper[c]
+      : _computeIsUpper(String.fromCharCode(c));
+
+  /// `String.trim()`'in boşluk saydığı karakterler.
+  ///
+  /// Cümle sınırı kararı "noktadan sonra boşluk var mı" sorusuna dayanır ve
+  /// eski sürüm bunu `sonraki.trim().isEmpty` ile soruyordu — karakter başına
+  /// bir String ayırma. Küme birebir aynıdır.
+  static bool _isTrimWhitespace(int c) {
+    if (c == 0x20) return true;
+    if (c >= 0x09 && c <= 0x0D) return true;
+    if (c < 0x80) return false;
+    if (c == 0x85 || c == 0xA0 || c == 0x1680) return true;
+    if (c >= 0x2000 && c <= 0x200A) return true;
+    return c == 0x2028 ||
+        c == 0x2029 ||
+        c == 0x202F ||
+        c == 0x205F ||
+        c == 0x3000 ||
+        c == 0xFEFF;
+  }
 
   /// Eşleşmenin çevresinde kaç token geriye/ileriye bakılacağı.
   static const int _windowSize = 4;
+
+  /// Kullanıcı etiketi: metin başında ya da boşluktan sonra gelen `@ad`.
+  ///
+  /// ── NEDEN ÇIPLAK `@` DEĞİL (denetim D9 · docs/23) ──────────────────────
+  /// Önceki kural metinde herhangi bir yerde `@` geçmesini yeterli sayıyordu.
+  /// E-posta adresi yazan kişi, metnindeki her yönelim şartlı adı muhataba
+  /// söylemiş sayılıyordu:
+  ///
+  ///   "ali@ornek.com adresine köpek fotoğrafı attım" → Yüksek risk ✗
+  ///
+  /// Etiket bir KELİME BAŞIDIR; adresin ortasındaki `@` değildir.
+  static final RegExp _mention =
+      RegExp(r'(?:^|\s)@[A-Za-z0-9_çğıöşüÇĞİÖŞÜ]');
 
   // ───────────────────────────────────────────────────────────────────────────
 
@@ -280,7 +358,26 @@ class ContextAnalyzer {
   ///
   /// [original] ham metin (büyük harf ve tırnaklar burada korunur),
   /// [tokens] normalize edilmiş token listesi.
-  ContextSignals analyze(String original, List<Token> tokens) {
+  ///
+  /// [sourceIndices] normalize metnin her karakterinin orijinal metindeki
+  /// konumudur (`NormalizedText.sourceIndices`). Verilirse her token'ın
+  /// CÜMLESİ hesaplanır ve bağlam pencereleri cümle sınırını aşmaz.
+  ///
+  /// ── NEDEN (docs/24 · madde 13) ────────────────────────────────────────────
+  /// Normalizasyon noktalamayı boşluğa indirdiği için pencereler bir önceki
+  /// cümleye taşıyordu. Ölçülen kaçışlar:
+  ///
+  ///   "Yarın gelmiyorum. Aptal herif"  → önceki cümlenin olumsuz fiili
+  ///                                     hakareti "olumsuzluyordu" → Temiz ✗
+  ///   "Ne dedin? Aptal mısın"          → önceki cümlenin "dedin"i hakareti
+  ///                                     aktarım sayıyordu → Temiz ✗
+  ///
+  /// Olumsuzlama, aktarım ve yönelim bir cümlenin içinde kurulur.
+  ContextSignals analyze(
+    String original,
+    List<Token> tokens, {
+    List<int>? sourceIndices,
+  }) {
     bool secondPerson = false;
     bool firstPerson = false;
     bool reported = false;
@@ -294,13 +391,51 @@ class ContextAnalyzer {
     return ContextSignals(
       hasSecondPersonPronoun: secondPerson,
       hasFirstPersonMarker: firstPerson,
-      hasMention: original.contains('@'),
+      hasMention: _mention.hasMatch(original),
       capsRatio: _capsRatio(original),
       punctuationBurst: _punctuationBurst(original),
       hasReportedSpeech: reported,
       quotedRanges: _findQuotedRanges(original),
+      tokenSentences: sourceIndices == null
+          ? const []
+          : _tokenSentences(original, tokens, sourceIndices),
     );
   }
+
+  /// Cümle sonu: `. ! ? …` ardından boşluk ya da metin sonu, veya satır sonu.
+  /// "a.p.t.a.l" ve "3.5" gibi boşluksuz noktalar cümle bitirmez.
+  static List<int> _tokenSentences(
+      String original, List<Token> tokens, List<int> sourceIndices) {
+    // sinirOncesi[i] = original[0..i) aralığındaki cümle sonu sayısı
+    final sinirOncesi = List<int>.filled(original.length + 1, 0);
+    var sayac = 0;
+    for (var i = 0; i < original.length; i++) {
+      final c = original.codeUnitAt(i);
+      // '\n' · '.' · '!' · '?' · '…'
+      final bitis = c == 0x0A ||
+          ((c == 0x2E || c == 0x21 || c == 0x3F || c == 0x2026) &&
+              (i + 1 == original.length ||
+                  _isTrimWhitespace(original.codeUnitAt(i + 1))));
+      if (bitis) sayac++;
+      sinirOncesi[i + 1] = sayac;
+    }
+
+    return [
+      for (final t in tokens)
+        if (sourceIndices.isEmpty)
+          0
+        else
+          sinirOncesi[sourceIndices[t.start.clamp(0, sourceIndices.length - 1)]
+              .clamp(0, original.length)],
+    ];
+  }
+
+  /// İki token aynı cümlede mi? Cümle bilgisi yoksa her zaman evet.
+  static bool _ayniCumle(List<int> cumleler, int i, int j) =>
+      cumleler.isEmpty ||
+      i >= cumleler.length ||
+      j >= cumleler.length ||
+      cumleler[i] == cumleler[j];
 
   /// Belirli bir eşleşme için bağlam kararını üretir.
   ///
@@ -316,6 +451,10 @@ class ContextAnalyzer {
   /// kategorisi için zorunludur: "öldürürüm" birinci şahıs çekimlidir ama
   /// öz-ifade değil, tehdittir. Edimbilimsel örüntülerde de kapalıdır —
   /// hedefi zaten kalıbın kendisi belirler.
+  ///
+  /// [negationApplies] false ise olumsuzlama hiç hesaplanmaz. Müstehcen
+  /// küfür için kullanılır (docs/25): "aptal değilsin" bir iltifattır ama
+  /// "sikimde değil" küfrün kendisidir — olumsuzlanan küfür değil, deyimdir.
   MatchContext evaluateMatch({
     required List<Token> tokens,
     required int matchIndex,
@@ -323,9 +462,12 @@ class ContextAnalyzer {
     required ContextSignals signals,
     int? matchEndIndex,
     bool selfDirectionApplies = true,
+    bool negationApplies = true,
   }) {
     final token = tokens[matchIndex];
     final spanEnd = matchEndIndex ?? matchIndex;
+    // Bütün pencereler eşleşmenin kendi cümlesiyle sınırlıdır (docs/24 · 13).
+    final cumleler = signals.tokenSentences;
 
     // ── 1. YÖNELİM: ikinci şahsa mı söylenmiş? ──────────────────────────────
     // ÜÇ kaynaktan gelebilir:
@@ -340,11 +482,14 @@ class ContextAnalyzer {
     // eleniyordu — yani en yaygın hakaret kalıplarından biri kör noktaydı.
     final hasSecondPersonSuffix = _endsWithAny(token.text, _secondPersonSuffixes);
     final nearSecondPerson =
-        _windowContains(tokens, matchIndex, spanEnd, _secondPerson);
+        _windowContains(tokens, matchIndex, spanEnd, _secondPerson,
+            cumleler: cumleler);
     final nearSecondPersonSuffix =
-        _windowHasSuffix(tokens, matchIndex, spanEnd, _secondPersonSuffixes);
+        _windowHasSuffix(tokens, matchIndex, spanEnd, _secondPersonSuffixes,
+            cumleler: cumleler);
     final nearPejorativeHead =
-        _windowContains(tokens, matchIndex, spanEnd, _pejorativeHeads);
+        _windowContains(tokens, matchIndex, spanEnd, _pejorativeHeads,
+            cumleler: cumleler);
     final isDirected = hasSecondPersonSuffix ||
         nearSecondPerson ||
         nearSecondPersonSuffix ||
@@ -360,9 +505,11 @@ class ContextAnalyzer {
     // yumuşatılmasını engeller.
     final hasFirstPersonSuffix = _endsWithAny(token.text, _firstPersonSuffixes);
     final nearFirstPerson =
-        _windowContains(tokens, matchIndex, spanEnd, _firstPerson);
+        _windowContains(tokens, matchIndex, spanEnd, _firstPerson,
+            cumleler: cumleler);
     final nearFirstPersonVerb =
-        _windowHasSuffix(tokens, matchIndex, spanEnd, _firstPersonVerbSuffixes);
+        _windowHasSuffix(tokens, matchIndex, spanEnd, _firstPersonVerbSuffixes,
+            cumleler: cumleler);
     final isSelfDirected = selfDirectionApplies &&
         !hasSecondPersonSuffix &&
         !nearSecondPerson &&
@@ -378,13 +525,15 @@ class ContextAnalyzer {
     //   "aptal değilsin"   → iltifat    (olumsuzlama geçerli)
     //   "aptal değil misin" → hakaret   (olumsuzlama geçersiz)
     // Bu ayrım olmadan, olumsuzlama kuralı bir hakaret kaçış yolu olur.
-    final isNegated = (_windowContains(
+    final isNegated = negationApplies &&
+        (_windowContains(
               tokens,
               matchIndex,
               spanEnd,
               _negators,
               backward: 1,
               forward: 2,
+              cumleler: cumleler,
             ) ||
             // Varlık olumsuzlaması yalnızca BİTİŞİK konumda geçerlidir.
             _windowContains(
@@ -394,9 +543,10 @@ class ContextAnalyzer {
               _existentialNegators,
               backward: 0,
               forward: 1,
+              cumleler: cumleler,
             ) ||
-            _hasNegativeVerb(tokens, matchIndex, spanEnd)) &&
-        !_hasRhetoricalNegation(tokens, matchIndex);
+            _hasNegativeVerb(tokens, matchIndex, spanEnd, cumleler)) &&
+        !_hasRhetoricalNegation(tokens, matchIndex, cumleler);
 
     // ── 4. ALINTI / AKTARIM ─────────────────────────────────────────────────
     // Tırnak içindeyse ya da yakınında aktarma fiili varsa, bu ifade
@@ -404,7 +554,7 @@ class ContextAnalyzer {
     final inQuotes = _isInsideQuotes(originalRange, signals.quotedRanges);
     final nearReporting = _windowContains(
         tokens, matchIndex, spanEnd, _reportedSpeech,
-        forward: 3);
+        forward: 3, cumleler: cumleler);
     final isQuoted = inQuotes || nearReporting;
 
     // ── 5. KATSAYI HESABI ───────────────────────────────────────────────────
@@ -466,6 +616,23 @@ class ContextAnalyzer {
   /// Yalnızca ikinci şahıs BİLDİRME ekleri (görülen geçmiş hariç).
   static const List<String> _copulaSuffixes = ['siniz', 'sunuz', 'sin', 'sun'];
 
+  /// Adı bir KONU yapan ilgeçler: "maymunlar hakkında", "köpek için".
+  static const Set<String> _topicPostpositions = {
+    'hakkinda', 'hakkindaki', 'konusunda', 'konusundaki', 'uzerine',
+    'ile', 'icin', 'ilgili',
+  };
+
+  /// Belirtisiz tamlama başı: üçüncü tekil iyelik (+ hâl eki).
+  /// "sülük tedavisi(ne)", "hayvan hakları(nı)", "köpek maması".
+  static final RegExp _compoundHead = RegExp(
+      r'^[a-z]{2,}(?:[^aeiouy][iu]|s[iu])(?:n?[ae]|n?[iu]|nd[ae]|nd[ae]n|n[iu]n)?$');
+
+  /// İyelik biçiminde görünen ama tamlama başı olmayan sık kelimeler.
+  static const Set<String> _notCompoundHeads = {
+    'gibi', 'bile', 'degil', 'simdi', 'hani', 'yani', 'sanki', 'belki',
+    'resmi', 'hepsi', 'kendisi', 'birisi', 'biri',
+  };
+
   /// Somut bir ad muhataba YAKIŞTIRILMIŞ mı? (D7)
   ///
   /// `evaluateMatch` yönelimi yakınlıkla arar: dört kelime içinde "sana"
@@ -485,40 +652,72 @@ class ContextAnalyzer {
     required ContextSignals signals,
   }) {
     final token = tokens[matchIndex];
+    final cumleler = signals.tokenSentences;
 
     // 1
     if (_endsWithAny(token.text, _copulaSuffixes)) return true;
 
+    // Aynı cümledeki bir sonraki kelime (yoksa null).
+    final next = matchIndex + 1 < tokens.length &&
+            _ayniCumle(cumleler, matchIndex + 1, matchIndex)
+        ? tokens[matchIndex + 1].text
+        : null;
+
+    // ── KONU ve TAMLAMA KORUMASI (docs/24 · madde 15) ─────────────────────
+    // D7'nin kalan iki yanlış alarmı İP-31 A diliminde kayıtlıydı:
+    //
+    //   "Sen maymunlar hakkında ödev hazırlıyordun" → Yüksek risk ✗
+    //   "Sen sülük tedavisine inanıyor musun?"     → Riskli ✗
+    //
+    // İkisinde de ad muhataba yakıştırılmıyor: birincisinde bir KONU
+    // ("… hakkında"), ikincisinde bir tamlamanın NİTELEYİCİSİ ("sülük
+    // tedavisi"). Hitap kuralı (2) önündeki "sen"i görüp yönelim sayıyordu.
+    if (next != null) {
+      if (_topicPostpositions.contains(next)) return false;
+      if (_compoundHead.hasMatch(next) &&
+          !_endsWithAny(next, _copulaSuffixes) &&
+          !_pejorativeHeads.contains(next) &&
+          !_addressPronouns.contains(next) &&
+          !_notCompoundHeads.contains(next)) {
+        return false;
+      }
+    }
+
     // 2
+    final cogul = token.text.endsWith('lar') || token.text.endsWith('ler');
     for (var i = matchIndex - 1, skipped = 0; i >= 0 && skipped <= 3; i--) {
+      if (!_ayniCumle(cumleler, i, matchIndex)) break;
       final text = tokens[i].text;
-      if (_addressPronouns.contains(text)) return true;
+      if (_addressPronouns.contains(text)) {
+        // Tekil hitap çoğul adı yüklem yapamaz: "sen maymunlar" bir
+        // yakıştırma değildir ("siz hayvanlar!" ise çoğul hitaptır).
+        if (cogul && (text == 'sen' || text == 'seni')) break;
+        return true;
+      }
       if (!_addressFillers.contains(text)) break;
       skipped++;
     }
 
     // 3
-    if (matchIndex + 1 < tokens.length) {
-      final next = tokens[matchIndex + 1].text;
-      if (_addressPronouns.contains(next) ||
-          _secondPersonQuestion.contains(next)) {
-        return true;
-      }
+    if (next != null &&
+        (_addressPronouns.contains(next) ||
+            _secondPersonQuestion.contains(next))) {
+      return true;
     }
 
     // 4
     if (_windowContains(tokens, matchIndex, matchIndex, _pejorativeHeads,
-        backward: 2, forward: 2)) {
+        backward: 2, forward: 2, cumleler: signals.tokenSentences)) {
       return true;
     }
 
     // 5
-    if (matchIndex + 1 < tokens.length) {
-      final next = tokens[matchIndex + 1].text;
+    if (next != null) {
       if (next == 'gibisin' || next == 'gibisiniz') return true;
       if (next == 'gibi') {
         final to = (matchIndex + 4).clamp(0, tokens.length);
         for (var i = matchIndex + 2; i < to; i++) {
+          if (!_ayniCumle(cumleler, i, matchIndex)) break;
           if (_endsWithAny(tokens[i].text, _secondPersonSuffixes)) return true;
         }
       }
@@ -538,6 +737,7 @@ class ContextAnalyzer {
     Set<String> vocabulary, {
     int backward = _windowSize,
     int forward = _windowSize,
+    List<int> cumleler = const [],
   }) {
     final from = (spanStart - backward).clamp(0, tokens.length);
     final to = (spanEnd + forward + 1).clamp(0, tokens.length);
@@ -545,6 +745,7 @@ class ContextAnalyzer {
     for (int i = from; i < to; i++) {
       // Eşleşmenin kendi kelimeleri bağlam sayılmaz.
       if (i >= spanStart && i <= spanEnd) continue;
+      if (!_ayniCumle(cumleler, i, spanStart)) continue;
       if (vocabulary.contains(tokens[i].text)) return true;
     }
     return false;
@@ -562,12 +763,14 @@ class ContextAnalyzer {
     List<String> suffixes, {
     int backward = _windowSize,
     int forward = _windowSize,
+    List<int> cumleler = const [],
   }) {
     final from = (spanStart - backward).clamp(0, tokens.length);
     final to = (spanEnd + forward + 1).clamp(0, tokens.length);
 
     for (int i = from; i < to; i++) {
       if (i >= spanStart && i <= spanEnd) continue;
+      if (!_ayniCumle(cumleler, i, spanStart)) continue;
       if (_endsWithAny(tokens[i].text, suffixes)) return true;
     }
     return false;
@@ -577,12 +780,14 @@ class ContextAnalyzer {
   ///
   /// Yeterlilik olumsuzu ("-amam/-emem") önce elenir; biçimsel olarak
   /// olumsuz görünse de anlamca olumsuzlama değildir.
-  bool _hasNegativeVerb(List<Token> tokens, int spanStart, int spanEnd) {
+  bool _hasNegativeVerb(
+      List<Token> tokens, int spanStart, int spanEnd, List<int> cumleler) {
     final from = (spanStart - 1).clamp(0, tokens.length);
     final to = (spanEnd + 3).clamp(0, tokens.length);
 
     for (int i = from; i < to; i++) {
       if (i >= spanStart && i <= spanEnd) continue;
+      if (!_ayniCumle(cumleler, i, spanStart)) continue;
       final text = tokens[i].text;
       if (_endsWithAny(text, _abilityNegativeSuffixes)) continue;
       if (_endsWithAny(text, _negativeVerbSuffixes)) return true;
@@ -593,12 +798,14 @@ class ContextAnalyzer {
   /// Penceredeki olumsuzlayıcıyı bir soru edatı izliyor mu?
   ///
   /// "değil misin", "değil mi" → retorik; cümle aslında olumlu iddiadır.
-  bool _hasRhetoricalNegation(List<Token> tokens, int index) {
+  bool _hasRhetoricalNegation(
+      List<Token> tokens, int index, List<int> cumleler) {
     final from = (index - 1).clamp(0, tokens.length);
     final to = (index + 3).clamp(0, tokens.length);
 
     for (int i = from; i < to; i++) {
       if (i == index) continue;
+      if (!_ayniCumle(cumleler, i, index)) continue;
       if (!_negators.contains(tokens[i].text)) continue;
 
       // Olumsuzlayıcıdan hemen sonraki kelime soru edatı mı?
@@ -629,14 +836,12 @@ class ContextAnalyzer {
     int upper = 0;
 
     for (int i = 0; i < text.length; i++) {
-      final ch = text[i];
-      final lower = ch.toLowerCase();
-      final upperCase = ch.toUpperCase();
+      final c = text.codeUnitAt(i);
 
       // Büyük/küçük hâli farklıysa harftir
-      if (lower == upperCase) continue;
+      if (!_isLetterCode(c)) continue;
       letters++;
-      if (ch == upperCase) upper++;
+      if (_isUpperCode(c)) upper++;
     }
 
     // Çok kısa metinlerde oran anlamsız — "OK" %100 büyük harf ama bağırma değil.
@@ -650,8 +855,8 @@ class ContextAnalyzer {
     int run = 0;
 
     for (int i = 0; i < text.length; i++) {
-      final ch = text[i];
-      if (ch == '!' || ch == '?') {
+      final c = text.codeUnitAt(i);
+      if (c == 0x21 || c == 0x3F) {
         run++;
         if (run > maxRun) maxRun = run;
       } else {
@@ -664,14 +869,24 @@ class ContextAnalyzer {
   /// Ham metindeki tırnak içi aralıkları bulur.
   ///
   /// Basit eşleştirme: tırnak karakterleri sırayla açar/kapatır.
-  /// Kesme işareti ("Ali'nin") yanlış açılış üretebilir; bu yüzden
-  /// kapanmayan tırnak yok sayılır.
+  /// Kapanmayan tırnak yok sayılır.
+  ///
+  /// ── KESME İŞARETİ TIRNAK DEĞİLDİR (denetim D9 · docs/23) ───────────────
+  /// Türkçede özel adın ekini ayıran kesme işareti (`'` ya da `’`) iki harfin
+  /// ARASINDA durur: "Ali'ye", "Ankara'da". Önceki sürüm bunları da tırnak
+  /// sayıyordu; iki özel ad arasına yazılan her şey "alıntı" oluyor ve
+  /// yumuşatma tavanıyla eleniyordu. Ölçülen kaçış:
+  ///
+  ///   "Ali'ye söyle sen şerefsizsin Veli'ye de"  → Temiz ✗
+  ///
+  /// Harf–işaret–harf dizisi bu yüzden tırnak olarak sayılmaz.
   List<({int start, int end})> _findQuotedRanges(String text) {
     final ranges = <({int start, int end})>[];
     int? openIndex;
 
     for (int i = 0; i < text.length; i++) {
-      if (!_quoteChars.contains(text[i])) continue;
+      if (!_quoteCodes.contains(text.codeUnitAt(i))) continue;
+      if (_isApostrophe(text, i)) continue;
 
       if (openIndex == null) {
         openIndex = i;
@@ -683,6 +898,15 @@ class ContextAnalyzer {
 
     // Kapanmamış tırnak → geçersiz, yok sayılır.
     return ranges;
+  }
+
+  /// [i] konumundaki tek tırnak, iki harf arasında duran bir kesme işareti mi?
+  static bool _isApostrophe(String text, int i) {
+    final c = text.codeUnitAt(i);
+    if (c != 0x27 && c != 0x2019) return false;
+    if (i == 0 || i + 1 >= text.length) return false;
+    return _isLetterCode(text.codeUnitAt(i - 1)) &&
+        _isLetterCode(text.codeUnitAt(i + 1));
   }
 
   /// Eşleşme aralığı, tırnak aralıklarından birinin içinde mi?

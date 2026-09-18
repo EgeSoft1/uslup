@@ -411,6 +411,57 @@ void main() {
     test('harf tekrarı hilesi yakalanır', () {
       expect(engine.analyze('sen aptaaaalsın').hasFindings, isTrue);
     });
+
+    // ── UZATMA KUYRUĞU ───────────────────────────────────────────────────
+    // Tuş basılı tutulurken uzatmanın ARDINDAN bir iki karakter daha düşer.
+    // Normalizasyon uzatmayı daraltıyor ama artığı bırakıyordu; kalan biçim
+    // geçerli bir Türkçe çekim olmadığı için sözlükte bulunamıyordu:
+    //   "sikerimmmmmmmmo" → "sikerimo" → Temiz ✗
+    // Kuyruksuz hâli ("sikerimmmmm") zaten yakalanıyordu.
+    test('uzatmadan sonra gelen artık harf kaçış sağlamaz', () {
+      expect(engine.analyze('sikerimmmmmmmmmmmmmmmmo').hasFindings, isTrue);
+      expect(engine.analyze('sikerimmmmmmmo').hasFindings, isTrue);
+      expect(engine.analyze('siktirrrrrrrrra').hasFindings, isTrue);
+      expect(engine.analyze('salakkkkkkkko').hasFindings, isTrue);
+      expect(engine.analyze('sen aptalllllllllx').hasFindings, isTrue);
+      // İki karakterlik kuyruk da kapalı.
+      expect(engine.analyze('siktirrrrrrrrrab').hasFindings, isTrue);
+    });
+
+    test('uzatmanın kendisi ve kuyruksuz hâli bozulmadan yakalanır', () {
+      expect(engine.analyze('sikerrriiiiiiiiiiim').hasFindings, isTrue);
+      expect(engine.analyze('sikerimmmmmmmmmmmm').hasFindings, isTrue);
+    });
+
+    // Kuyruk denemesinin bedeli: gündelik uzatmalar bundan etkilenmemeli.
+    // Üç kapı birden korur — özgün metinde 3+ tekrar, kuyruk ≤ 2 karakter,
+    // kalan kök ≥ 3 harf.
+    test('gündelik uzatmalar uzatma kuyruğu yolundan da temiz kalır', () {
+      for (final temiz in [
+        'tamammmmmmmma',
+        'çoookkkkta güzel',
+        'hahahahaaaaaay',
+        'seeeeeeni özledim',
+        'yaaaaaaa be',
+        'okeyyyyyyyy',
+        'ammmmma olmadı',
+        'kaaaazandık',
+        'aaaaamin',
+        'maaaaalum bir durum',
+        'geliyoruuuuum',
+        'süpeeeeerdi',
+      ]) {
+        expect(engine.analyze(temiz).hasFindings, isFalse,
+            reason: 'masum uzatma yakalandı: "$temiz"');
+      }
+    });
+
+    // Kuyruk ancak GERÇEK bir uzatmanın ardından atılır. Uzatma yoksa
+    // "sikerimo" kendi başına bir kelimedir ve tahmin yürütülmez.
+    test('uzatma yoksa kuyruk atılmaz', () {
+      expect(engine.analyze('sikerimo').hasFindings, isFalse);
+      expect(engine.analyze('siktira').hasFindings, isFalse);
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

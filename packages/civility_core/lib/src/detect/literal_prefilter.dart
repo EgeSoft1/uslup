@@ -76,17 +76,44 @@ abstract final class LiteralPrefilter {
 /// Diğer her ASCII dışı karakter hiçbir parçada geçmediği için otomatı başa
 /// döndürür.
 class LiteralIndex {
-  LiteralIndex(List<RegExp> patterns) {
+  LiteralIndex(List<RegExp> patterns)
+      : this._([
+          for (final p in patterns) LiteralPrefilter.requiredAnyOf(p),
+        ]);
+
+  /// Düz metin parçaları için dizin — her parça kendi kısıtıdır.
+  ///
+  /// Sözlüğün çok kelimeli öbekleri (`kapa çeneni`) normalize metinde tek tek
+  /// `indexOf` ile aranıyordu: öbek sayısı × metin uzunluğu. Sıradan bir
+  /// metinde bunların hiçbiri geçmez, yani iş tamamen boşa gider. Tek
+  /// taramayla hangilerinin GEÇEBİLECEĞİ bulunur, `indexOf` yalnızca onlar
+  /// için çalışır.
+  ///
+  /// ASCII dışı karakter taşıyan parça taranamaz (bkz. [_fold]); kısıtsız
+  /// bırakılır, yani her metinde denenir. Güvenli taraf budur.
+  LiteralIndex.literals(List<String> literals)
+      : this._([
+          for (final s in literals)
+            (s.isEmpty || !_isAscii(s)) ? null : <String>{s},
+        ]);
+
+  LiteralIndex._(List<Set<String>?> required) {
     final partIds = <String, int>{};
-    for (final p in patterns) {
-      final required = LiteralPrefilter.requiredAnyOf(p);
-      _patternParts.add(required == null
+    for (final parts in required) {
+      _patternParts.add(parts == null
           ? null
-          : [for (final s in required) partIds.putIfAbsent(s, () => partIds.length)]);
+          : [for (final s in parts) partIds.putIfAbsent(s, () => partIds.length)]);
     }
     _partCount = partIds.length;
     partIds.forEach(_insert);
     _buildFailureLinks();
+  }
+
+  static bool _isAscii(String s) {
+    for (var i = 0; i < s.length; i++) {
+      if (s.codeUnitAt(i) >= 0x80) return false;
+    }
+    return true;
   }
 
   /// Örüntü sırasıyla, her örüntünün parça kimlikleri; kısıt yoksa null.

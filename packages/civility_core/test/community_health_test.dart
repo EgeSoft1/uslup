@@ -209,7 +209,9 @@ void main() {
   // ═══════════════════════════════════════════════════════════════════════════
   group('4. Eğilim (trend)', () {
     test('günler artan sırada gelir ve günlük oran doğru hesaplanır', () {
-      final agg = CommunityHealthAggregator()
+      // Günlük gözlem sayısı 4; trend de k-anonimliğe tabi olduğu için
+      // (docs/24 · madde 35) eşik bu testin veri boyutuna indirildi.
+      final agg = CommunityHealthAggregator(k: 4)
         // 102. gün önce eklendi — sıralama giriş sırasına göre olmamalı.
         ..addAll(List.generate(2, (_) => signal(day: 102)))
         ..addAll(List.generate(2, (_) => temiz(day: 102)))
@@ -221,6 +223,78 @@ void main() {
       expect(trend.map((t) => t.dayIndex).toList(), [101, 102]);
       expect(trend[0].interventionRate, closeTo(0.25, 1e-9));
       expect(trend[1].interventionRate, closeTo(0.50, 1e-9));
+    });
+
+    test('eşik altındaki gün trendde görünmez (k-anonimlik)', () {
+      // Tek gönderimli bir gün: oranı %0 ya da %100'dür ve o kişinin
+      // uyarı alıp almadığını doğrudan söyler.
+      final agg = CommunityHealthAggregator()
+        ..addAll(List.generate(6, (_) => temiz(day: 200)))
+        ..add(signal(day: 201));
+
+      final r = agg.report();
+      expect(r.trend.map((t) => t.dayIndex), [200]);
+      expect(r.suppressedDays, 1);
+      expect(r.totalSignals, 7,
+          reason: 'Gizleme yalnızca günlük dökümü etkiler, toplamı değil.');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  group('4b. "Bu uyarı yanlış" bildirimi (docs/27)', () {
+    CommunitySignal itiraz({ToxicityCategory c = ToxicityCategory.hakaret}) =>
+        CommunitySignal(
+          risk: RiskLevel.riskli,
+          category: c,
+          outcome: SignalOutcome.uyariyaRagmenGonderdi,
+          civilityBucket: 5,
+          dayIndex: 100,
+          yanlisAlarmBildirildi: true,
+        );
+
+    test('eşik altındaki bildirim sayısı açılmaz ve geri hesaplanamaz', () {
+      final agg = CommunityHealthAggregator(k: 5)
+        ..addAll(List.generate(3, (_) => itiraz()))
+        ..addAll(List.generate(10, (_) => signal()));
+      final r = agg.report();
+      expect(r.falseAlarmReports, isNull);
+      expect(r.falseAlarmRate, isNull);
+      expect(r.falseAlarmByCategory, isEmpty);
+      // Payda da değişmez: 3 bildirim düzeltme oranından türetilemez.
+      expect(r.revisionRate, closeTo(10 / 13, 1e-9));
+      expect(r.toExportMap().keys.where((k) => k.startsWith('yanlis_alarm')),
+          isEmpty);
+    });
+
+    test('eşiği geçen bildirim sayılır ve düzeltme oranının paydasından çıkar',
+        () {
+      final agg = CommunityHealthAggregator(k: 5)
+        ..addAll(List.generate(6, (_) => itiraz()))
+        ..addAll(List.generate(4, (_) => itiraz(c: ToxicityCategory.kufur)))
+        ..addAll(List.generate(10, (_) => signal()));
+      final r = agg.report();
+      expect(r.falseAlarmReports, 10);
+      expect(r.falseAlarmRate, closeTo(10 / 20, 1e-9));
+      expect(r.falseAlarmByCategory, {ToxicityCategory.hakaret: 6},
+          reason: '4 küfür bildirimi eşiğin altında.');
+      expect(r.revisionRate, closeTo(10 / 10, 1e-9),
+          reason: 'Yanlış bulunan uyarıyı dikkate almamak "görmezden '
+              'gelmek" sayılmaz.');
+      final export = r.toExportMap();
+      expect(export['yanlis_alarm'], 10);
+      expect(export['yanlis_alarm_hakaret'], 6);
+      expect(export.containsKey('yanlis_alarm_kufur'), isFalse);
+      for (final v in export.values) {
+        expect(v, isA<num>());
+      }
+    });
+
+    test('uyarı olmayan çözümlemede yanlış alarm işareti konamaz', () {
+      final temizAnaliz = LexicalTurkishClassifier().analyze('merhaba');
+      final s = CommunitySignal.fromAnalysis(
+          temizAnaliz, SignalOutcome.temizGonderim,
+          yanlisAlarm: true);
+      expect(s.yanlisAlarmBildirildi, isFalse);
     });
   });
 

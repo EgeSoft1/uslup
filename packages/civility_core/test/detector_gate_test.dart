@@ -58,6 +58,12 @@ void main() {
     'ip22': Generalization3Dataset.cases,
     'ip27': Generalization4Dataset.cases,
     'ip29': Generalization5Dataset.cases,
+    'ip30': EverydayDataset.cases,
+    'ip31': DirectionDataset.cases,
+    'ip32': StanceDataset.cases,
+    'ip33': IdentityAxesDataset.cases,
+    'ip34': IdentityAxesBlindDataset.cases,
+    'ip35': IdentityAxesBlind2Dataset.cases,
   };
 
   group('1. Ön kapılar sonucu değiştirmiyor — etiketli kümelerin tamamı', () {
@@ -116,6 +122,22 @@ void main() {
     }
   });
 
+  group('2b. Isıtma sonucu değiştirmiyor (docs/24 · madde 38)', () {
+    test('ısıtılmış ve soğuk motor bütün etiketli kümelerde aynı', () {
+      final soguk = LexicalTurkishClassifier();
+      final isik = LexicalTurkishClassifier()..warmUp();
+      final farklar = <String>[];
+      for (final cases in corpora.values) {
+        for (final c in cases) {
+          final a = _fingerprint(soguk.analyze(c.text));
+          final b = _fingerprint(isik.analyze(c.text));
+          if (a != b) farklar.add('"${c.text}": $a ≠ $b');
+        }
+      }
+      expect(farklar, isEmpty);
+    });
+  });
+
   group('3. Yapısal değişmez — kapının dayandığı adlandırma kuralı', () {
     test('her nefret örüntüsünün kimliği "nefret." ile başlar', () {
       // Kapı bu önek üzerinden çalışır. Başka bir önekle eklenen bir nefret
@@ -143,6 +165,20 @@ void main() {
         'ne beklenir': 'Ermeniden başka ne beklenir',
         'yük söylemi': 'engelliler topluma yük',
         'dolaylı dışlama': 'bu Araplarla aynı binada oturulmaz',
+        // İP-33 · docs/26
+        'yetersizlik atfı': 'Kadınlar siyasetten anlamaz',
+        'işe yaramazlık': 'Engelliler hiçbir işe yaramaz',
+        'tekil genelleme': 'Kadından mühendis olmaz',
+        'hak reddi': 'Engelliler evden çıkmamalı',
+        'yer biçme': 'Kadınların yeri evidir',
+        'yer biçme (istek)': 'Sakatlar ortalıkta dolaşmasın',
+        'ne işi var': 'Yaşlıların sosyal medyada ne işi var',
+        'oy hakkı reddi': 'Yaşlıların oy hakkı alınmalı',
+        'suç atfı': 'Göçmenler işimizi çalıyor',
+        'maliyet söylemi': 'Sağırlarla uğraşmak zaman kaybı',
+        'insan değil': 'Otistikler normal insan değildir',
+        'nedensel suçlama': 'Göçmenler geldi geleli mahallede huzur kalmadı',
+        'varlık reddi (dilek)': 'Bu yaşlılar ölse de kurtulsak',
       };
 
       // Kapı NORMALİZE metin üzerinde çalışır ("aşağılıktır" → "asagiliktir").

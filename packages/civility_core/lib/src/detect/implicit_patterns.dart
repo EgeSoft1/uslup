@@ -93,6 +93,14 @@ enum ImplicitFamily {
 
   /// Bir grubun var olma hakkının reddi, şiddete çağrı.
   varlikReddi,
+
+  /// Bir grubun bütün üyelerine yetersizlik ya da işe yaramazlık yüklenmesi
+  /// (İP-33 · docs/26): "kadınlar siyasetten anlamaz".
+  kalipYargi,
+
+  /// Bir grubun kamusal hayata katılma hakkının kısıtlanması ya da ona
+  /// "yer biçilmesi" (İP-33 · docs/26): "yaşlılar oy kullanmamalı".
+  hakReddi,
 }
 
 extension ImplicitFamilyInfo on ImplicitFamily {
@@ -112,6 +120,8 @@ extension ImplicitFamilyInfo on ImplicitFamily {
         ImplicitFamily.topluSuclama => 'Toplu suçlama',
         ImplicitFamily.kimlikAsagilama => 'Kimlik aşağılama',
         ImplicitFamily.varlikReddi => 'Varlık reddi',
+        ImplicitFamily.kalipYargi => 'Kalıp yargı',
+        ImplicitFamily.hakReddi => 'Hak reddi',
       };
 
   /// Kullanıcıya gösterilen gerekçe. Suçlayıcı değil, açıklayıcı bir dil
@@ -153,6 +163,12 @@ extension ImplicitFamilyInfo on ImplicitFamily {
         ImplicitFamily.varlikReddi =>
           'Bir grubun var olma hakkını reddediyor. Bu ifade Türk Ceza '
               'Kanunu 216. madde kapsamına girebilir.',
+        ImplicitFamily.kalipYargi =>
+          'Bir grubun bütün üyelerine yetersizlik yüklüyor. Kişinin neyi '
+              'yapabileceğine, kim olduğuna bakarak peşinen karar veriyor.',
+        ImplicitFamily.hakReddi =>
+          'Bir grubun çalışma, okuma, oy kullanma ya da kamusal hayata '
+              'katılma hakkını kim olduklarına göre kısıtlıyor.',
         ImplicitFamily.tehdit =>
           'Fiziksel veya psikolojik şiddet içeren, karşı tarafa zarar verme kastı taşıyan bir ifade.',
         ImplicitFamily.kendineZararVerme =>
@@ -214,6 +230,21 @@ class ImplicitPattern {
   /// bunu kapılı/kapısız iki çalıştırmayı karşılaştırarak denetler.
   final String? gateWord;
 
+  /// Metnin HERHANGİ bir yerinde eşleşirse bu örüntü bulgu üretmez.
+  ///
+  /// ── NEDEN VAR (İP-33 · docs/26) ──────────────────────────────────────────
+  /// Bir gruba yöneltilmiş kısıtlama cümlesi iki ayrı edimi taşıyabilir:
+  ///
+  ///   "Engelliler evden çıkmamalı"                         → hak reddi
+  ///   "Kar yağışı nedeniyle engelliler evden çıkmamalı"    → kamu uyarısı
+  ///
+  /// Fark kısıtlamanın kendisinde değil, ona eşlik eden KOŞUL/GEREKÇE
+  /// tümlecindedir ("nedeniyle", "doğum sonrası", "zorunlu olmadıkça"). Bu
+  /// tümleç cümlenin herhangi bir yerinde durabilir; düzenli ifadenin içine
+  /// yazılamaz. Denetim yalnızca örüntü EŞLEŞTİKTEN sonra çalışır, sıcak
+  /// yolda maliyeti yoktur.
+  final RegExp? suppressedBy;
+
   const ImplicitPattern({
     required this.id,
     required this.pattern,
@@ -223,6 +254,7 @@ class ImplicitPattern {
     this.neutralAlternative,
     this.requiresIdentityAntecedent = false,
     this.gateWord,
+    this.suppressedBy,
   });
 }
 
@@ -279,6 +311,33 @@ abstract final class ImplicitPatterns {
       category: ToxicityCategory.asagilama,
       severity: 0.0,
     ),
+    // ── D10 (docs/23): açık kendine zarar ifadeleri ─────────────────────────
+    // Önceki iki örüntü yalnızca "yaşamaya dayanamıyorum" ve "ölmek
+    // istiyorum" kuruluşlarını görüyordu. "Kendimi öldüreceğim" ise sözlükteki
+    // tehdit fiiline düşüp Yüksek risk alıyordu; motor artık dönüşlü nesneli
+    // tehdit fiilini bulguya çevirmez ve destek işareti buradan gelir.
+    // Hepsi birinci şahıstır: başkasının intiharını anlatan haber cümlesi
+    // ("intihar etti") destek kartı açmaz.
+    ImplicitPattern(
+      id: 'kendineZarar.kendimi_oldurmek',
+      pattern: _re(r'\bkendimi\s+(?:\w+\s+)?'
+          r'(oldur(ecegim|ecem|urum|mek istiyorum|meyi dusunuyorum)'
+          r'|as(acagim|acam|arim|mak istiyorum))\b'),
+      family: ImplicitFamily.kendineZararVerme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.0,
+    ),
+    ImplicitPattern(
+      id: 'kendineZarar.intihar',
+      pattern: _re(r'\bintihar\s+(edecegim|edicem|etmek istiyorum'
+          r'|etmeyi dusunuyorum|edesim var)\b'
+          r'|\bcanima\s+kiy(acagim|icam|mak istiyorum)\b'
+          r'|\bhayatima\s+son\s+ver(ecegim|icem|mek istiyorum)\b'
+          r'|\byasamak\s+istemiyorum\b'),
+      family: ImplicitFamily.kendineZararVerme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.0,
+    ),
 
     // ── KALDIRILAN: KİNAYE AİLESİ (D3 · docs/20 · 13 Eylül 2026) ────────────
     // Altı örüntü vardı (zeka_seviyesi, zavalli, zeka_fiskiriyor,
@@ -325,6 +384,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.sana_gore_degil',
+      neutralAlternative: 'bu konu biraz karmaşık',
       pattern: _re(r'\b(sana|size) gore degil\b'),
       family: ImplicitFamily.kucumseme,
       category: ToxicityCategory.asagilama,
@@ -342,6 +402,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.zaman_kaybi',
+      neutralAlternative: 'bu tartışmayı burada bırakmak istiyorum',
       // İP-19: eylem ve yönelim biçimleri çeşitlendi. Eski hâli YALNIZCA
       // "seninle tartışmak zaman kaybı" yazımını görüyordu; ölçümde
       // "sana anlatmak zaman kaybı" kaçtı.
@@ -354,9 +415,15 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.seviye',
+      neutralAlternative: 'bu tartışmayı burada bırakmak istiyorum',
       // İP-19: fiil çekimi açıldı ("inmeyeceğim", "inmem") ve seviye
       // üstünlüğünün ikinci kuruluşu eklendi ("bu seviyede biriyle").
-      pattern: _re(r'\bseviye(ne|nize|sine) in\w+'
+      // D11 (docs/23): "seviyesine in\w+" üçüncü şahsın geçmiş zamanını da
+      // alıyordu: "Barajlardaki su normal seviyesine indi" → Riskli ✗.
+      // Üçüncü şahıs iyelikte yalnızca REDDETME çekimi saldırıdır
+      // ("onun seviyesine inmem").
+      pattern: _re(r'\bseviye(ne|nize) in\w+'
+          r'|\bseviyesine in(mem|meyecegim|meyecegiz|emem|mek istemiyorum)\b'
           r'|\bbu seviyede (biri|birisi|insan|kisi|tip)\w*'),
       family: ImplicitFamily.kucumseme,
       category: ToxicityCategory.asagilama,
@@ -364,6 +431,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.sorun_sende',
+      neutralAlternative: 'bence burada bir yanlış anlaşılma var',
       pattern: _re(r'\bsorun (sende|sizde)\b'),
       family: ImplicitFamily.kucumseme,
       category: ToxicityCategory.asagilama,
@@ -371,6 +439,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'kucumseme.anlatmak_nafile',
+      neutralAlternative: 'bu tartışmayı burada bırakmak istiyorum',
       // İP-19: "sana BİR ŞEY anlatmak nafile" — araya nesne girebiliyor.
       pattern: _re(r'\b(sana|size)\b' +
           _bosluk(2) +
@@ -390,7 +459,25 @@ abstract final class ImplicitPatterns {
       family: ImplicitFamily.otekilestirme,
       category: ToxicityCategory.asagilama,
       severity: 0.50,
-      neutralAlternative: 'sen',
+      // docs/24 · 1: karşılık 'sen' idi. Eşleşme her zaman çok kelimeli olduğu
+      // için öbek moduna düşüyor ve tek kelimelik karşılık hiç kullanılmıyordu;
+      // öneri "Bu yaklaşımı doğru bulmuyorum" oluyordu. Bu kuruluşu kullanan
+      // kişi çoğunlukla muhataplıktan ÇEKİLMEK istiyor ("senin gibilerle aynı
+      // ortamda bulunmak istemiyorum"); karşılık o niyeti kategoriye
+      // indirgemeden söyler.
+      neutralAlternative: 'bu tartışmayı burada bırakmak istiyorum',
+    ),
+    ImplicitPattern(
+      // "senin gibilerden zaten bu beklenirdi" — hayal kırıklığının
+      // ötekileştiren biçimi. `otekilestirme.gibiler` ile çakışır; daha yüksek
+      // şiddet ve daha uzun eşleşme bunu seçtirir, böylece öneri niyeti
+      // (beklentinin boşa çıkması) korur.
+      id: 'otekilestirme.gibilerden_beklenir',
+      pattern: _re(r'\b(senin|sizin) gibilerden\b(?:\s+\w+){0,2}\s+beklen\w*'),
+      family: ImplicitFamily.otekilestirme,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
+      neutralAlternative: 'bu davranışı senden beklemezdim',
     ),
     ImplicitPattern(
       // "senin gibi insanlar/tipler/kişiler" — kapalı isim listesi.
@@ -452,6 +539,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'yoksayma.bos_yapma',
+      neutralAlternative: 'bu söylediğine katılmıyorum',
       pattern: _re(r'\bbos (yapma|yapiyorsun|konusma)\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -469,6 +557,7 @@ abstract final class ImplicitPatterns {
       // "sana ne" YALNIZCA cümle sonunda veya bir edatla biterse.
       // "sana ne getireyim marketten" bu kurala takılmaz.
       id: 'yoksayma.sana_ne',
+      neutralAlternative: 'bunu konuşmak istemiyorum',
       pattern: _re(r'\b(sana|size) ne\s*(ki|be|ya|canim)?\s*$'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -477,6 +566,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "sen karışma" — "sen karışmasan da olur" takılmaz (kelime sınırı).
       id: 'yoksayma.sen_karisma',
+      neutralAlternative: 'bunu kendim halletmek istiyorum',
       pattern: _re(r'\b(sen|siz) (karisma|karismayin)\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -484,6 +574,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'yoksayma.ilgilendirmez',
+      neutralAlternative: 'bunu paylaşmak istemiyorum',
       pattern: _re(r'\b(seni|sizi) ilgilendirmez\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -491,6 +582,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'yoksayma.kimse_sormadi',
+      neutralAlternative: 'bu konuda fikrini sormamıştım',
       pattern: _re(r'\bkimse (sormadi|sormuyor)\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -498,6 +590,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'yoksayma.biktim_senden',
+      neutralAlternative: 'şu an biraz ara vermeye ihtiyacım var',
       pattern: _re(r'\bbiktim (senden|sizden|artik senden)\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -516,6 +609,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // Sözlükteki "kapa çeneni" öbeğinin devrik hâli.
       id: 'susturma.ceneni_kapat',
+      neutralAlternative: 'biraz dinler misin',
       pattern: _re(r'\b(ceneni|cenenizi) (kapat|kapa)' + _emir + r'\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -524,6 +618,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // Sözlükteki "haddini bil" varyantı.
       id: 'susturma.haddini_asma',
+      neutralAlternative: 'lütfen daha saygılı konuşalım',
       pattern: _re(r'\bhaddin(i|izi) (asma|asmayin|asiyorsun|asiyorsunuz|bilmiyorsun)' + _ek + r'\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -532,6 +627,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // Sözlükteki "sen kimsin" varyantı.
       id: 'susturma.kim_oluyorsun',
+      neutralAlternative: 'bu konuda farklı düşünüyorum',
       pattern: _re(r'\b(sen|siz) kim oluyorsun(uz)?\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -548,6 +644,7 @@ abstract final class ImplicitPatterns {
     // ═══ AŞAĞILAYICI EMİR ════════════════════════════════════════════════════
     ImplicitPattern(
       id: 'yoksayma.git_is_bul',
+      neutralAlternative: 'bu konuda farklı düşünüyorum',
       pattern: _re(r'\bgit\b' + _bosluk(3) + r'is bul' + _emir + r'\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -562,6 +659,7 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'yoksayma.isine_bak',
+      neutralAlternative: 'bunu kendim halletmek istiyorum',
       pattern: _re(r'\bis(ine|inize) bak' + _emir + r'\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -610,6 +708,7 @@ abstract final class ImplicitPatterns {
       // taşır: yüklem olarak, tümce sonunda kurulur. Sözlük bu bilgiyi
       // taşıyamaz, örüntü taşır.
       id: 'susturma.sus',
+      neutralAlternative: 'biraz dinler misin',
       pattern: _re(r'\b(sus|susun|sussana|sussaniza|sussanize)\b'
           r'\s*(artik|ya|be|lan|biraz)?\s*!?$'),
       family: ImplicitFamily.susturma,
@@ -665,7 +764,11 @@ abstract final class ImplicitPatterns {
     // "dikkat" değil doğrudan "riskli/yüksek" bandına düşmeli.
     ImplicitPattern(
       id: 'tehdit.gununu_goreceksin',
-      pattern: _re(r'\bgununu gor' + _ek + r'\b|\bgor' + _ek + r' gununu\b'),
+      // D11 (docs/23): fiil kuyruğu serbestti (`gor\w*`) ve geçmiş zamanı da
+      // alıyordu: "Annem torununun düğün gününü gördü" → Riskli · tehdit ✗.
+      // Tehdit, ikinci/üçüncü şahsın GELECEK ya da GENİŞ zaman çekimidir.
+      pattern: _re(r'\bgununu gor(eceksin|eceksiniz|ecek|ecekler|ursun|ursunuz)\b'
+          r'|\bgor(eceksin|eceksiniz|sun|sunler)? gununu\b'),
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.65,
@@ -679,7 +782,11 @@ abstract final class ImplicitPatterns {
     ),
     ImplicitPattern(
       id: 'tehdit.hesabini_sorarim',
-      pattern: _re(r'\bhesabin(i|izi) sor\w*\b'),
+      // D11 (docs/23): `sor\w*` geçmiş zamanı da alıyordu:
+      // "Banka müdürüne kredi kartı hesabını sordum" → Riskli · tehdit ✗.
+      // Hesap sorma tehdidi birinci şahsın gelecek/geniş zaman çekimidir.
+      pattern: _re(r'\bhesabin(i|izi) sor(arim|ariz|acagim|acagiz|acam|acaz'
+          r'|ucam|ucaz|acaklar)\b'),
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.62,
@@ -715,6 +822,67 @@ abstract final class ImplicitPatterns {
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.58,
+    ),
+
+    // ── İP-36 · JÜRİ SONDASINDA KAÇANLAR ────────────────────────────────────
+    // Canlı demoda bir insanın ilk deneyeceği tehdit biçimleri ölçüldü ve
+    // dördü kaçıyordu. Hepsi ikinci şahsı NESNE olarak ister; nesnesiz
+    // hâlleri sıradan cümlelerdir ve alınmaz.
+    ImplicitPattern(
+      // "seni döverim" · "döverim seni" · "sizi döveceğiz"
+      // Nesne şartı olmadan "çocuğu dövmek yanlıştır" gibi bir TARTIŞMA
+      // cümlesi işaretlenirdi; fiil orada eylemi anlatır, tehdit etmez.
+      id: 'tehdit.doverim',
+      pattern: _re(r'\b(?:seni|sizi) dov(?:erim|eriz|ecegim|ecegiz|ecem|ecez)\b'
+          r'|\bdov(?:erim|eriz|ecegim|ecegiz|ecem|ecez) (?:seni|sizi)\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.70,
+    ),
+    ImplicitPattern(
+      // "bana bir daha denk gelme" · "karşıma çıkma"
+      // Buyruk kipi ve birinci şahıs yönelimi birlikte arandığı için
+      // "yolda ona denk geldim" gibi anlatı cümleleri dışarıda kalır.
+      id: 'tehdit.denk_gelme',
+      pattern: _re(r'\b(?:bana|bize)(?:\s+bir\s+daha)? denk gelme\b'
+          r'|\b(?:karsima|karsimiza)(?:\s+bir\s+daha)? cikma\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.60,
+    ),
+    ImplicitPattern(
+      // "buna pişman olacaksın" · "pişman edeceğim seni"
+      //
+      // ── NEDEN ÇIPLAK "pişman olacaksın" ALINMIYOR ───────────────────────
+      // Türkçede bu kalıp çoğu zaman bir ÖĞÜTTÜR: "bu fırsatı kaçırırsan
+      // pişman olacaksın" bir uyarıdır, tehdit değil. Ayrım, pişmanlığın
+      // sebebinin KONUŞAN olmasıdır: "buna", "bunu yaptığına" işaret zamiri
+      // ya da "pişman edeceğim" birinci şahıs çekimi bunu kurar.
+      id: 'tehdit.pisman_edecegim',
+      pattern: _re(r'\bpisman ed(?:erim|eriz|ecegim|ecegiz|ecem|ecez)\b'
+          r'|\b(?:buna|bunu yaptigina|bunun icin) pisman ol(?:acaksin|acaksiniz)\b'),
+      family: ImplicitFamily.ortukTehdit,
+      category: ToxicityCategory.tehdit,
+      severity: 0.62,
+    ),
+    ImplicitPattern(
+      // "sen bir hiçsin" — kişiliğin bütünüyle reddi.
+      // Kalıp tek anlamlıdır: "bir hiçsin" başka hiçbir okumaya açık değil.
+      id: 'karakter.bir_hicsin',
+      pattern: _re(r'\bbir hic(?:sin|siniz)\b|\b(?:sen|siz) bir hic\b'),
+      family: ImplicitFamily.karakterSaldirisi,
+      category: ToxicityCategory.asagilama,
+      severity: 0.60,
+    ),
+    ImplicitPattern(
+      // "seninle muhatap olmak bile fazla" — muhataplığın reddi.
+      id: 'yoksayma.muhatap_fazla',
+      pattern: _re(r'\bmuhatap (?:olmak|olmaya)(?:\s+bile)?\s+'
+          r'(?:fazla|gereksiz|degmez|degmezsin)\b'
+          r'|\b(?:seninle|sizinle) muhatap olunmaz\b'),
+      family: ImplicitFamily.yoksayma,
+      category: ToxicityCategory.asagilama,
+      severity: 0.52,
     ),
 
     // ═══ İP-19 · GENELLEME ONARIMI ═══════════════════════════════════════════
@@ -787,6 +955,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "seninle konuşmaya değmez" · "sana laf anlatılmaz".
       id: 'yoksayma.degmez',
+      neutralAlternative: 'bu tartışmayı burada bırakmak istiyorum',
       pattern: _re(r'\b(seninle|sizinle) (konusmaya|tartismaya) degmez\b'
           r'|\b(sana|size) laf anlatilmaz\b'),
       family: ImplicitFamily.yoksayma,
@@ -842,6 +1011,7 @@ abstract final class ImplicitPatterns {
       // Yakın-kaçış: samimi acıma da bu kalıba düşer. Şiddet bu yüzden
       // KASITLI olarak dikkat düzeyinde tutuldu; öneri değil, sessiz ipucu.
       id: 'alayci.acidim_sana',
+      neutralAlternative: 'buna gerçekten üzüldüm',
       pattern: _re(r'\b(acidim|aciyorum) (sana|size)\b'
           r'|\b(sana|size) (acidim|aciyorum)\b'),
       family: ImplicitFamily.alayci,
@@ -935,6 +1105,7 @@ abstract final class ImplicitPatterns {
       //   "haddini bil"            → susturma emri        ✓
       //   "haddini bilen insanlar" → ÖVGÜ, işaretleniyordu ✗
       id: 'susturma.haddini_bil',
+      neutralAlternative: 'lütfen daha saygılı konuşalım',
       pattern: _re(r'\bhadd(ini|inizi) bil\b|\bhaddinizi bilin\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -1123,7 +1294,9 @@ abstract final class ImplicitPatterns {
       // "iki paralık adam" / "beş kuruşluk adam" — değersizleştirme deyimi.
       // Yakın-kaçış: "iki paralık eşya" kalıba DÜŞMEZ — kapalı isim listesi.
       id: 'kucumseme.paralik_adam',
-      pattern: _re(r'\b(iki|uc|bes|on) (paralik|kurusluk|liralık)\b' +
+      // D11 (docs/23): almaşık "liralık" idi. Örüntüler normalize metinde
+      // çalışır ve orada "ı" yoktur — dal hiçbir zaman eşleşemiyordu.
+      pattern: _re(r'\b(iki|uc|bes|on) (paralik|kurusluk|liralik)\b' +
           _bosluk(1) +
           r'(adam|herif|insan|tip|kisi)' + _ek + r'\b'),
       family: ImplicitFamily.kucumseme,
@@ -1174,6 +1347,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "terbiyeni takın" / "terbiyeni takınız" — emir kipi susturma.
       id: 'susturma.terbiyeni_takin',
+      neutralAlternative: 'lütfen daha saygılı konuşalım',
       pattern: _re(r'\bterbiye(ni|nizi) tak' + _emir + r'\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -1182,6 +1356,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "ağzını topla" / "ağzınızı toplayın" — susturma.
       id: 'susturma.agzini_topla',
+      neutralAlternative: 'lütfen daha saygılı konuşalım',
       pattern: _re(r'\bagz(ini|inizla|inizl|inizi) topla' + _emir + r'\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -1315,7 +1490,12 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "boş yapma" · "boş konuşma" · "boş boş konuşma"
       // Yakın-kaçış: "boş bir sayfa" — fiil listesi kapalı.
-      id: 'yoksayma.bos_yapma',
+      //
+      // D12 (docs/23): kimlik yukarıdaki örüntüyle AYNIYDI ("bos_yapma").
+      // Kimlikler kararlı ve benzersiz olmak zorundadır: şeffaflık paneli,
+      // testler ve hata ayıklama örüntüyü kimliğiyle anar.
+      id: 'yoksayma.bos_bos_konusma',
+      neutralAlternative: 'bu söylediğine katılmıyorum',
       pattern: _re(r'\bbos (bos )?(yapma|konusma|sallama)' + _emir + r'\b'),
       family: ImplicitFamily.yoksayma,
       category: ToxicityCategory.asagilama,
@@ -1401,6 +1581,7 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "çeneni tut" · "çenenizi tutun" — "kapa çeneni"den farklı fiil.
       id: 'susturma.ceneni_tut',
+      neutralAlternative: 'biraz dinler misin',
       pattern: _re(r'\bcene(ni|nizi) tut' + _emir + r'\b'),
       family: ImplicitFamily.susturma,
       category: ToxicityCategory.asagilama,
@@ -1529,7 +1710,8 @@ abstract final class ImplicitPatterns {
     ImplicitPattern(
       // "adam olmazsın" · "senden adam olmaz"
       // Kimlik eksenli hâli `nefret.kimlikten_adam_olmaz` içindedir.
-      id: 'karakter.adam_olmaz',
+      // D12 (docs/23): kimlik yukarıdaki örüntüyle aynıydı; benzersizleştirildi.
+      id: 'karakter.adam_olmazsin',
       pattern: _re(r'\b(senden|sizden) adam olmaz\b|\badam olmazs(in|iniz)\b'),
       family: ImplicitFamily.karakterSaldirisi,
       category: ToxicityCategory.hakaret,

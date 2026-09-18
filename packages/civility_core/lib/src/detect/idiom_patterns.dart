@@ -89,7 +89,10 @@ abstract final class IdiomPatterns {
   /// deyimi dener. Kök olarak eşleşir (sonda `\b` YOKTUR) çünkü Türkçe'de
   /// kök çekim aldığında sonu değişir: "çöplük" → "çöplüğünde".
   static final RegExp anchorGate = () {
-    final anchors = <String>{for (final p in all) p.gateWord!};
+    final anchors = <String>{
+      for (final p in all)
+        if (p.gateWord != null) p.gateWord!,
+    };
     // Uzun kökler önce: "kurbaga" ile "kur" aynı metinde geçtiğinde
     // almaşığın uzun olanı seçmesi gerekir.
     final sorted = anchors.toList()..sort((a, b) => b.length.compareTo(a.length));
@@ -113,7 +116,10 @@ abstract final class IdiomPatterns {
   /// İÇİNE eklenir.
   static ImplicitPattern _d({
     required String id,
-    required String gate,
+    // `null`: kapı yok, örüntü her metinde denenir (değişmez parça ön
+    // filtresi yine uygulanır). Yalnızca tek bir kapı kelimesi bütün
+    // almaşıkları kapsayamadığında kullanılır.
+    required String? gate,
     required String pattern,
     required ImplicitFamily family,
     required double severity,
@@ -140,7 +146,9 @@ abstract final class IdiomPatterns {
       // Yakın-kaçış: "kuzu eti aldım" — "ana" iyeliği şart.
       id: 'anasinin_kuzusu',
       gate: 'kuzu',
-      pattern: r'\ban(a|asi|anin|asinin)\w* kuzu' + _ek + r'\b',
+      // D11 (docs/23): kökten sonraki serbest `\w*` "Anadolu kuzu tandır" cümlesini
+      // "ana" + "dolu" diye yakalıyordu. İyelikli "kuzusu" şart.
+      pattern: r'\ban(a|asi|anin|asinin) kuzus' + _ek + r'\b',
       family: ImplicitFamily.kucumseme,
       severity: 0.42,
       neutral: 'bu konuda deneyimin sınırlı görünüyor',
@@ -161,7 +169,9 @@ abstract final class IdiomPatterns {
       // Yakın-kaçış: "tırnağım kırıldı" — "bile ol(a)ma" kuyruğu şart.
       id: 'tirnagi_olamazsin',
       gate: 'tirnag',
-      pattern: r'\btirnag\w*( bile)? ol(a)?ma' + _ek + r'\b',
+      // D11 (docs/23): `ol(a)?ma\w*` ortacı da alıyordu: "Tırnağı olmayan kediler"
+      // → Riskli ✗. Yalnızca yetersizlik yüklemi ("olamaz/olamazsın").
+      pattern: r'\btirnag\w*( bile)? ola?ma(z|zsin|zsiniz)\b',
       family: ImplicitFamily.kucumseme,
       severity: 0.55,
       neutral: 'bu karşılaştırmayı yapmak istemiyorum',
@@ -180,7 +190,11 @@ abstract final class IdiomPatterns {
       // Alaycı abartma: övgü kalıbının tersine çevrilmiş hâli.
       id: 'kalem_yetmez',
       gate: 'yetmez',
-      pattern: r'\b(kalem|kelime|kagit|defter|sayfa) yetmez\b',
+      // D11 (docs/23): çıplak kalıp içten övgüyü işaretliyordu: "Bu güzelliği
+      // anlatmaya kelime yetmez" → Riskli ✗ (D5 ilkesi). İkinci şahıs nesnesi
+      // şart. Kalan sınır: "seni anlatmaya kelimeler yetmez" iltifatı hâlâ
+      // işaretlenir; yazılı metin alayı samimiyetten ayırmaz.
+      pattern: r'\b(seni|sizi)\b(?:\s+\w+){0,2}\s+(kalem|kelime|kagit|defter|sayfa)\w* yetmez\b',
       family: ImplicitFamily.alayci,
       severity: 0.40,
     ),
@@ -192,10 +206,18 @@ abstract final class IdiomPatterns {
       // listesi bu yüzdendir.
       // Yakın-kaçış: "bu kafayla yatarsam ağrır" — ikinci şahıs yüklem şart.
       id: 'bu_kafayla_varamazsin',
-      gate: 'kafayla',
-      pattern: r'\bbu (kafa|akil|zihniyet|mantik|tavir)\w*la\b' +
-          _gap(3) +
-          r'\w*(mazsin|mezsin|mazsiniz|mezsiniz|maz|mez)\b',
+      // D12 (docs/23): kapı "kafayla" idi; "bu akılla", "bu zihniyetle",
+      // "bu kafanla" dalları hiç denenmiyordu (sessiz kaçak). Kapı kaldırıldı —
+      // değişmez parça ön filtresi (`LiteralPrefilter`) hızı yine korur.
+      // Yeni açılan dallar yalnızca İKİNCİ ŞAHIS yetersizlik yüklemini alır:
+      // "bu mantıkla bu iş yürümez" bir eleştiridir, saldırı değildir.
+      gate: null,
+      pattern: '\\bbu kafayla\\b${_gap(3)}'
+          '\\w*(mazsin|mezsin|mazsiniz|mezsiniz|maz|mez)\\b'
+          // "-la/-le": ince ünlülü "zihniyetLE" yalnızca "-la" kabul edildiği
+          // için almaşıkta durduğu hâlde hiç eşleşemiyordu.
+          '|\\bbu (kafa|akil|zihniyet|mantik|tavir)\\w*l[ae]\\b${_gap(3)}'
+          '\\w*(mazsin|mezsin|mazsiniz|mezsiniz)\\b',
       family: ImplicitFamily.kucumseme,
       severity: 0.46,
       neutral: 'bu yaklaşımın sonuç vereceğine inanmıyorum',
@@ -260,7 +282,10 @@ abstract final class IdiomPatterns {
       // "kırk yılda bir doğru söyledin" — övgü kılığında genel yetersizlik.
       id: 'kirk_yilda_bir',
       gate: 'kirk yil',
-      pattern: r'\bkirk yil\w*( bir)?\b' + _gap(2) + r'(soyle|yap|et|bul)' + _ek + r'\b',
+      // D11 (docs/23): birinci şahıs anlatıyı da alıyordu: "Kırk yılda bir yemek
+      // yaptık" → Riskli ✗. Alay ikinci şahsa yöneliktir ("doğru söyledin").
+      pattern: r'\bkirk yil\w*( bir)?\b' + _gap(2) +
+          r'(soyle|yap|et|bul)\w*(din|dun|tin|tun|diniz|dunuz|tiniz|tunuz)\b',
       family: ImplicitFamily.alayci,
       severity: 0.44,
       neutral: 'bu noktada sana katılıyorum',
@@ -272,7 +297,9 @@ abstract final class IdiomPatterns {
       // "attığın taş ürküttüğün kurbağaya değmez"
       id: 'attigin_tas_kurbaga',
       gate: 'kurbaga',
-      pattern: r'\bkurbaga\w* degmez\b|\battigin tas\b',
+      // D12 (docs/23): ikinci almaşık ("attığın taş") kapı kelimesi "kurbaga"yı
+      // içermediği için hiç denenmiyordu; ölü dal kaldırıldı.
+      pattern: r'\bkurbaga\w* degmez\b',
       family: ImplicitFamily.kucumseme,
       severity: 0.44,
       neutral: 'bu çabanın karşılığını vereceğini düşünmüyorum',
@@ -388,6 +415,7 @@ abstract final class IdiomPatterns {
     _d(
       // "takke düştü kel göründü" — ifşa/utandırma.
       id: 'takke_dustu',
+      neutral: 'bence bu durum bazı şeyleri netleştirdi',
       gate: 'takke',
       pattern: r'\btakke dus' + _ek + r'\b',
       family: ImplicitFamily.alayci,
@@ -437,7 +465,9 @@ abstract final class IdiomPatterns {
       // Yakın-kaçış: "sırtım kaşınıyor" — ikinci şahıs çekimi şart.
       id: 'kasiniyorsun',
       gate: 'kasin',
-      pattern: r'\bkasin(iyorsun|iyorsunuz|ma|mayin)\b',
+      // D11 (docs/23): çıplak "kaşınma" adı da eşleşiyordu: "Ciltte kaşınma ve
+      // kızarıklık var" → Riskli · tehdit ✗. Emir kipi yalnızca hitapla.
+      pattern: r'\bkasin(iyorsun|iyorsunuz|mayin)\b|\bkasinma (lan|be|bana|benimle)\b',
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.48,
@@ -520,14 +550,18 @@ abstract final class IdiomPatterns {
       // "sana mı soracağız" · "sana mı danışacağız"
       id: 'sana_mi_soracagiz',
       gate: 'soracag',
-      pattern: r'\b(sana|size) mi (sor|danis)' + _ek + r'\b',
+      // D12 (docs/23): kapı "soracag" olduğu için "danış" dalı hiç denenmiyordu.
+      // Ölçülen davranış korunarak kalıp kapıyla hizalandı.
+      pattern: r'\b(sana|size) mi soracag' + _ek + r'\b',
       family: ImplicitFamily.yoksayma,
       severity: 0.46,
     ),
     _d(
       // "haddini bildiririm" — tehdit kuyruğu.
       id: 'haddini_bildiririm',
-      gate: 'bildirir',
+      // D12 (docs/23): kapı "bildirir" idi; "haddini bildireceğim" bu kalıbı
+      // hiç denemiyordu.
+      gate: 'bildir',
       pattern: r'\bhaddin\w* bildir' + _ek + r'\b',
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
@@ -602,7 +636,10 @@ abstract final class IdiomPatterns {
       // "maskara oldun" · "maskaraya döndün"
       id: 'maskara_oldun',
       gate: 'maskara',
-      pattern: r'\bmaskara' + _ek + r'\b',
+      // D11 (docs/23): `maskara\w*` makyaj malzemesini işaretliyordu: "Yeni
+      // maskaramı denedim" → Riskli ✗. Deyimin yüklemi şart.
+      pattern: r'\bmaskara (ol|oldun|olmus|ettin|etti|etme)\w*\b'
+          r'|\bmaskaraya don\w*|\bmaskaralik\w*',
       family: ImplicitFamily.alayci,
       severity: 0.42,
     ),
@@ -639,7 +676,9 @@ abstract final class IdiomPatterns {
       // alınan yalnızca "ne büyük başarı" ironisidir.
       id: 'ne_buyuk_basari',
       gate: 'buyuk basari',
-      pattern: r'\bne (buyuk|muhtesem) (basari|is|marifet)\b',
+      // D12 (docs/23): kapı "buyuk basari" olduğu için diğer dallar hiç
+      // denenmiyordu. Açılsaydı "ne büyük iş başardın" övgüsünü işaretlerdi (D5).
+      pattern: r'\bne buyuk basari\b',
       family: ImplicitFamily.alayci,
       severity: 0.38,
     ),
@@ -667,8 +706,12 @@ abstract final class IdiomPatterns {
     _d(
       // "dişini sökerim" · "dişlerini dökerim"
       id: 'disini_sokmek',
-      gate: 'disini',
-      pattern: r'\bdis(ini|lerini) (sok|dok)' + _ek + r'\b',
+      gate: 'dis',
+      // D11 (docs/23): `(sok|dok)\w*` geçmiş zamanı da alıyordu: "Diş hekimi
+      // çürük dişini söktü" → Yüksek risk · tehdit ✗. Birinci şahıs gelecek/
+      // geniş zaman şart. D12: kapı "disini" iken "dişlerini" dalı hiç
+      // denenmiyordu.
+      pattern: r'\bdis(ini|lerini) (sok|dok)(erim|eriz|ecegim|ecegiz|ecem)\b',
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.85,
@@ -707,7 +750,8 @@ abstract final class IdiomPatterns {
       // "hesabını sorarım" · "hesap sorarım"
       id: 'hesabini_sormak',
       gate: 'hesab',
-      pattern: r'\bhesab(ini|inizi) sor' + _ek + r'\b',
+      // D11 (docs/23): geçmiş zamanı da alıyordu ("hesabını sordum").
+      pattern: r'\bhesab(ini|inizi) sor(arim|ariz|acagim|acagiz|acam|acaz|ucam|ucaz)\b',
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.55,
@@ -716,7 +760,9 @@ abstract final class IdiomPatterns {
       // "kanına ekmek doğramak"
       id: 'kanina_ekmek',
       gate: 'ekmek dogra',
-      pattern: r'\bekmek dogra' + _ek + r'\b',
+      // D11 (docs/23): "Çorbaya ekmek doğradım" → Riskli · tehdit ✗. Deyim
+      // "kanına ekmek doğramak"tır; "kan" şart.
+      pattern: r'\bkan(ina|iniza|larina) ekmek dogra' + _ek + r'\b',
       family: ImplicitFamily.ortukTehdit,
       category: ToxicityCategory.tehdit,
       severity: 0.65,

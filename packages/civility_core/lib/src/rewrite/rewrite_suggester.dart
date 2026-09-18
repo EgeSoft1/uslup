@@ -63,10 +63,14 @@ class RewriteSuggestion {
   /// Önerinin uygulanmasıyla beklenen nezaket puanı.
   final int projectedCivilityScore;
 
+  /// Önerinin tonu ("Net", "Nazik", "Diyalog"); tek öneride `null`.
+  final String? tone;
+
   const RewriteSuggestion({
     required this.text,
     required this.source,
     required this.projectedCivilityScore,
+    this.tone,
   });
 }
 
@@ -75,6 +79,10 @@ abstract class RewriteSuggester {
   /// Çözümleme sonucuna göre daha nazik bir alternatif üretir.
   /// Öneri üretilemiyorsa `null` döner.
   Future<RewriteSuggestion?> suggest(CivilityAnalysis analysis);
+
+  /// Aynı itirazın farklı tonlardaki alternatifleri (docs/24 · madde 5).
+  /// İlk eleman her zaman [suggest] sonucudur; öneri yoksa boş liste.
+  Future<List<RewriteSuggestion>> suggestTones(CivilityAnalysis analysis);
 }
 
 /// Yan cümlenin konuşma edimi. Öbek modunda hangi nötr kalıbın
@@ -94,6 +102,17 @@ enum _Edim {
 
   /// Hiçbiri ayırt edilemedi.
   genel,
+}
+
+/// Konu sözlüğündeki bir ad: tanınan kökler ve kalıba girecek çekimli biçimler.
+class _Konu {
+  const _Konu(this.kokler, this.tekil, this.cogul);
+
+  /// Kökün yazılışları; ünsüz yumuşaması ve ünlü düşmesi ayrı yazılır
+  /// ("cevap/cevab", "fikir/fikr").
+  final List<String> kokler;
+  final String tekil;
+  final String cogul;
 }
 
 /// Metnin, kendi başına yeniden yazılabilen bir parçası.
@@ -150,12 +169,15 @@ class LocalRewriteSuggester implements RewriteSuggester {
       _Edim.unlem: 'bu durum kabul edilemez',
       _Edim.genel: 'bu durumu kabul edilemez buluyorum',
     },
+    // Tehdit bir ÖFKE ifadesidir; nötr karşılığı öfkeyi silmez, dile getirir.
+    // Önceki "bu durumdan çok rahatsızım" kalıbı yazanın duygusunu
+    // tanımıyordu ve 299 önerinin 29'unda aynen tekrarlanıyordu (docs/24 · 1).
     ToxicityCategory.tehdit: {
-      _Edim.soru: 'bu durumdan çok rahatsızım',
-      _Edim.davranis: 'bu davranıştan çok rahatsızım',
-      _Edim.ifade: 'bu söylediğinden çok rahatsızım',
-      _Edim.unlem: 'bu durumdan çok rahatsızım',
-      _Edim.genel: 'bu durumdan çok rahatsızım',
+      _Edim.soru: 'buna gerçekten çok öfkelendim',
+      _Edim.davranis: 'bu davranışına gerçekten çok öfkelendim',
+      _Edim.ifade: 'bu söylediğine gerçekten çok öfkelendim',
+      _Edim.unlem: 'şu an gerçekten çok öfkeliyim',
+      _Edim.genel: 'şu an sana gerçekten çok kızgınım',
     },
     ToxicityCategory.nefret: {
       _Edim.soru: 'bu genellemeye katılmıyorum',
@@ -231,6 +253,7 @@ class LocalRewriteSuggester implements RewriteSuggester {
     // "embesil misin" → "yanlış misin" (olması gereken "yanlış mısın").
     rewritten = TurkishMorphology.fixQuestionParticles(rewritten);
     rewritten = TurkishMorphology.capitalize(rewritten);
+    rewritten = _soruIsaretiEkle(rewritten);
 
     if (rewritten.trim().isEmpty) return null;
     if (_sameIgnoringCase(rewritten, text)) return null;
@@ -245,6 +268,75 @@ class LocalRewriteSuggester implements RewriteSuggester {
       source: 'Cihaz üzerinde (çevrimdışı)',
       projectedCivilityScore: verification.civilityScore,
     );
+  }
+
+  // ─── Ton seçenekleri (docs/24 · madde 5) ───────────────────────────────────
+  //
+  // Tek öneri, kullanıcıya "ya bunu kullan ya kendin yaz" der. Oysa aynı
+  // itiraz farklı ilişkilerde farklı söylenir: bir iş arkadaşına nazik, bir
+  // tartışmada net, bir arkadaşa soruyla. Tonlar BELİRLENİMCİDİR — ana öneriye
+  // uygulanan sabit dönüşümlerdir, rastgele üretim değildir — ve her biri
+  // motordan AYRICA geçer: temiz çıkmayan ton hiç sunulmaz.
+
+  /// Nazik ton için öne eklenen yumuşatıcılar, kategoriye göre.
+  static const Map<ToxicityCategory, String> _nazikOnEk = {
+    ToxicityCategory.tehdit: 'Açık konuşmam gerekirse',
+    ToxicityCategory.nefret: 'Kimseyi kırmak istemem ama',
+  };
+
+  /// Diyalog tonu için sona eklenen davet cümleleri, kategoriye göre.
+  static const Map<ToxicityCategory, String> _diyalogSonEk = {
+    ToxicityCategory.tehdit: 'Biraz sakinleşince konuşalım mı?',
+    ToxicityCategory.nefret: 'Bu kanıya nereden vardığını konuşabilir miyiz?',
+    ToxicityCategory.taciz: 'Lütfen bu konuda sınırıma saygı göster.',
+  };
+
+  @override
+  Future<List<RewriteSuggestion>> suggestTones(CivilityAnalysis analysis) async {
+    final ana = await suggest(analysis);
+    if (ana == null) return const [];
+
+    final kategori = analysis.dominantCategory;
+    final govde = ana.text.trim();
+    final kucukGovde = govde.isEmpty
+        ? govde
+        : TurkishMorphology.toLowerTr(govde[0]) + govde.substring(1);
+    final noktali = RegExp(r'[.!?]$').hasMatch(govde) ? govde : '$govde.';
+
+    final adaylar = <(String, String)>[
+      (
+        'Nazik',
+        '${_nazikOnEk[kategori] ?? 'Kırmak istemem ama'} $kucukGovde',
+      ),
+      (
+        'Diyalog',
+        '$noktali ${_diyalogSonEk[kategori] ?? 'Bunu biraz daha konuşabilir miyiz?'}',
+      ),
+    ];
+
+    final sonuc = <RewriteSuggestion>[
+      RewriteSuggestion(
+        text: ana.text,
+        source: ana.source,
+        projectedCivilityScore: ana.projectedCivilityScore,
+        tone: 'Net',
+      ),
+    ];
+
+    for (final (ton, metin) in adaylar) {
+      if (sonuc.any((s) => s.text == metin)) continue;
+      final dogrulama = _classifier.analyze(metin);
+      // Ton alternatifi ana önerinin sözleşmesinden daha sıkıdır: yalnızca
+      // TAMAMEN temiz çıkan ton sunulur.
+      if (dogrulama.risk != RiskLevel.temiz) continue;
+      sonuc.add(RewriteSuggestion(
+        text: metin,
+        source: ana.source,
+        projectedCivilityScore: dogrulama.civilityScore,
+        tone: ton,
+      ));
+    }
+    return sonuc;
   }
 
   // ─── Yan cümle düzeyi ──────────────────────────────────────────────────────
@@ -276,6 +368,20 @@ class LocalRewriteSuggester implements RewriteSuggester {
       // kesin çöpe gidiyordu.
       final ozel = dominant.neutralAlternative?.trim();
       if (ozel != null && ozel.contains(' ')) return ozel;
+
+      // ── KONU TAŞIMA (docs/24 · madde 1) ──────────────────────────────────
+      // Kategori kalıbı, kullanıcının NEYİ eleştirdiğini siliyordu. Ölçüm
+      // (299 öneri): 89'u aynı cümleydi ve eleştirinin nesnesi kayboluyordu:
+      //
+      //   "beyinsiz yorumlar yapıyorsun"   → "Bu davranışını doğru bulmuyorum"
+      //   "onursuz bir tavır sergiledin"   → "Bu davranışını doğru bulmuyorum"
+      //   "dangalak gibi konuşuyorsun"     → "Bu davranışını doğru bulmuyorum"
+      //
+      // Yan cümlede, BULGUNUN DIŞINDA, eleştirilen şeyin adı ya da fiili
+      // bulunursa kalıp onu taşır: "Bu yorumlarına katılmıyorum", "Bu tavrını
+      // doğru bulmuyorum", "Bu şekilde konuşmanı doğru bulmuyorum".
+      final konulu = _konuKalibi(body, clause, inside, dominant);
+      if (konulu != null) return konulu;
 
       final byEdim = _clauseTemplate[dominant.category];
       if (byEdim == null) return 'bu konuda sana katılmıyorum';
@@ -335,6 +441,153 @@ class LocalRewriteSuggester implements RewriteSuggester {
     'yorum', 'öneri', 'fikir', 'laf', 'söz', 'cümle', 'açıklama', 'iddia',
     'diyorsun', 'dediğin', 'yazdığın', 'yazıyorsun', 'üslup', 'üslubun',
   ];
+
+  // ── KONU SÖZLÜĞÜ (docs/24 · madde 1) ──────────────────────────────────────
+  // Kapalı liste kasıtlıdır: açık uçlu bir ad çıkarıcı, "kararsız herif"
+  // cümlesinde "karar"ı konu sanardı. Her ad, kalıba HAZIR ÇEKİMLİ biçimiyle
+  // yazılır; ek üretimi yok, dolayısıyla bozuk ek riski de yok.
+
+  /// Söz, yorum, fikir — "katılmıyorum" ile (yönelme hâli, 2. tekil iyelik).
+  static const List<_Konu> _ifadeAdlari = [
+    _Konu(['yorum'], 'yorumuna', 'yorumlarına'),
+    _Konu(['fikir', 'fikr'], 'fikrine', 'fikirlerine'),
+    _Konu(['görüş'], 'görüşüne', 'görüşlerine'),
+    _Konu(['düşünce'], 'düşüncene', 'düşüncelerine'),
+    _Konu(['söz'], 'sözüne', 'sözlerine'),
+    _Konu(['laf'], 'lafına', 'laflarına'),
+    _Konu(['iddia'], 'iddiana', 'iddialarına'),
+    _Konu(['açıklama'], 'açıklamana', 'açıklamalarına'),
+    _Konu(['savunma'], 'savunmana', 'savunmalarına'),
+    _Konu(['argüman'], 'argümanına', 'argümanlarına'),
+    _Konu(['öneri'], 'önerine', 'önerilerine'),
+    _Konu(['paylaşım'], 'paylaşımına', 'paylaşımlarına'),
+    _Konu(['gönderi'], 'gönderine', 'gönderilerine'),
+    _Konu(['mesaj'], 'mesajına', 'mesajlarına'),
+    _Konu(['cevap', 'cevab'], 'cevabına', 'cevaplarına'),
+    _Konu(['yanıt'], 'yanıtına', 'yanıtlarına'),
+    _Konu(['cümle'], 'cümlene', 'cümlelerine'),
+    _Konu(['analiz'], 'analizine', 'analizlerine'),
+    _Konu(['karar'], 'kararına', 'kararlarına'),
+    _Konu(['yaklaşım'], 'yaklaşımına', 'yaklaşımlarına'),
+    _Konu(['teori'], 'teorine', 'teorilerine'),
+  ];
+
+  /// Tavır, davranış — "doğru bulmuyorum" ile (belirtme hâli, 2. tekil iyelik).
+  static const List<_Konu> _davranisAdlari = [
+    _Konu(['tavır', 'tavr'], 'tavrını', 'tavırlarını'),
+    _Konu(['davranış'], 'davranışını', 'davranışlarını'),
+    _Konu(['hareket'], 'hareketini', 'hareketlerini'),
+    _Konu(['üslup', 'üslub'], 'üslubunu', 'üsluplarını'),
+    _Konu(['tutum'], 'tutumunu', 'tutumlarını'),
+    _Konu(['tepki'], 'tepkini', 'tepkilerini'),
+    _Konu(['tarz'], 'tarzını', 'tarzlarını'),
+    _Konu(['seçim'], 'seçimini', 'seçimlerini'),
+  ];
+
+  /// Konuşulan şey — "farklı düşünüyorum" ile. Soyut konu adları bulunma
+  /// hâliyle ("bu konuda"), somut adlar "hakkında" ile kurulur.
+  static const List<_Konu> _konuAdlari = [
+    _Konu(['konu'], 'konuda', 'konularda'),
+    _Konu(['mesele'], 'meselede', 'meselelerde'),
+    _Konu(['tartışma'], 'tartışmada', 'tartışmalarda'),
+    _Konu(['maç'], 'maç hakkında', 'maçlar hakkında'),
+    _Konu(['proje'], 'proje hakkında', 'projeler hakkında'),
+    _Konu(['plan'], 'plan hakkında', 'planlar hakkında'),
+    _Konu(['film'], 'film hakkında', 'filmler hakkında'),
+    _Konu(['dizi'], 'dizi hakkında', 'diziler hakkında'),
+    _Konu(['kitap', 'kitab'], 'kitap hakkında', 'kitaplar hakkında'),
+    _Konu(['oyun'], 'oyun hakkında', 'oyunlar hakkında'),
+    _Konu(['video'], 'video hakkında', 'videolar hakkında'),
+    _Konu(['şarkı'], 'şarkı hakkında', 'şarkılar hakkında'),
+    _Konu(['haber'], 'haber hakkında', 'haberler hakkında'),
+    _Konu(['ödev'], 'ödev hakkında', 'ödevler hakkında'),
+    _Konu(['sınav'], 'sınav hakkında', 'sınavlar hakkında'),
+    _Konu(['toplantı'], 'toplantı hakkında', 'toplantılar hakkında'),
+    _Konu(['olay'], 'olay hakkında', 'olaylar hakkında'),
+  ];
+
+  /// Eleştirilen eylem — ikinci şahıs çekimi → "bu şekilde …manı".
+  static final List<(RegExp, String, String)> _eylemler = [
+    (RegExp(r'^konuş(uyor|tu|muş|ur)(s[ıiuü]n|n|s[ıiuü]n[ıiuü]z|n[ıiuü]z)$'), 'konuşmanı', 'konuşmanızı'),
+    (RegExp(r'^davran(ıyor|dı|mış|ır)(s[ıiuü]n|n|s[ıiuü]n[ıiuü]z|n[ıiuü]z)$'), 'davranmanı', 'davranmanızı'),
+    (RegExp(r'^yaz(ıyor|dı|mış|ar)(s[ıiuü]n|n|s[ıiuü]n[ıiuü]z|n[ıiuü]z)$'), 'yazmanı', 'yazmanızı'),
+    (RegExp(r'^tartış(ıyor|tı|mış|ır)(s[ıiuü]n|n|s[ıiuü]n[ıiuü]z|n[ıiuü]z)$'), 'tartışmanı', 'tartışmanızı'),
+  ];
+
+  /// Adın ardından gelebilen çekim ekleri — yapım eki GELEMEZ.
+  /// "kararlar", "fikrini", "konusunda" geçer; "kararsız", "yorumcu" geçmez.
+  static final RegExp _cekimKuyrugu = RegExp(
+    r'^(?:l[ae]r)?'
+    r'(?:[ıiuü]?m|[ıiuü]?n|[ıiuü]m[ıiuü]z|[ıiuü]n[ıiuü]z|s?[ıiuü])?'
+    r'(?:[yn]?[ae]|[yn]?[ıiuü]|n?d[ae]|n?t[ae]|n?d[ae]n|n?t[ae]n|yl[ae]|l[ae])?$',
+  );
+
+  static final RegExp _kelime = RegExp(r'[a-zA-ZçğıöşüÇĞİÖŞÜâîû]+');
+
+  /// Yan cümlede eleştirilen şeyi taşıyan nötr kalıp; bulunamazsa `null`.
+  String? _konuKalibi(
+    String body,
+    _Clause clause,
+    List<ToxicityFinding> inside,
+    ToxicityFinding dominant,
+  ) {
+    // Tehdit ve nefret söyleminin kendi kalıpları konudan bağımsızdır;
+    // tacizde konuyu tekrar etmek istenmeyen içeriği geri getirebilir.
+    if (dominant.category == ToxicityCategory.tehdit ||
+        dominant.category == ToxicityCategory.nefret ||
+        dominant.category == ToxicityCategory.taciz) {
+      return null;
+    }
+
+    String? ifade, davranis, konu, eylem;
+
+    for (final m in _kelime.allMatches(body)) {
+      final start = clause.start + m.start;
+      final end = clause.start + m.end;
+      // Bulgunun kendi kelimeleri konu olamaz ("işe yaramaz" içindeki "iş").
+      if (inside.any((f) => start < f.end && end > f.start)) continue;
+
+      final word = TurkishMorphology.toLowerTr(m.group(0)!);
+
+      ifade ??= _konuBicimi(word, _ifadeAdlari);
+      davranis ??= _konuBicimi(word, _davranisAdlari);
+      konu ??= _konuBicimi(word, _konuAdlari);
+      if (eylem == null) {
+        for (final (desen, tekil, cogul) in _eylemler) {
+          final e = desen.firstMatch(word);
+          if (e == null) continue;
+          final kisi = e.group(2)!;
+          eylem = (kisi.contains('ız') || kisi.contains('iz') ||
+                  kisi.contains('uz') || kisi.contains('üz'))
+              ? cogul
+              : tekil;
+          break;
+        }
+      }
+    }
+
+    if (ifade != null) return 'bu $ifade katılmıyorum';
+    if (davranis != null) return 'bu $davranis doğru bulmuyorum';
+    if (eylem != null) return 'bu şekilde $eylem doğru bulmuyorum';
+    if (konu != null) return 'bu $konu farklı düşünüyorum';
+    return null;
+  }
+
+  /// [word] listedeki bir adın çekimli biçimi mi? Öyleyse kalıba girecek
+  /// hazır biçimi (tekil ya da çoğul) döner.
+  static String? _konuBicimi(String word, List<_Konu> adlar) {
+    for (final ad in adlar) {
+      for (final kok in ad.kokler) {
+        if (!word.startsWith(kok)) continue;
+        final kuyruk = word.substring(kok.length);
+        if (!_cekimKuyrugu.hasMatch(kuyruk)) continue;
+        return (kuyruk.startsWith('lar') || kuyruk.startsWith('ler'))
+            ? ad.cogul
+            : ad.tekil;
+      }
+    }
+    return null;
+  }
 
   /// Yan cümlenin konuşma edimi.
   _Edim _edimOf(String clause) {
@@ -557,6 +810,17 @@ class LocalRewriteSuggester implements RewriteSuggester {
     if (upperCount / letters.length < 0.7) return text;
 
     return TurkishMorphology.toLowerTr(text);
+  }
+
+  /// Soru ekiyle biten ama noktalaması olmayan öneriye soru işareti koyar:
+  /// "Biraz dinler misin" → "Biraz dinler misin?". Nötr karşılıklar kalıp
+  /// olarak noktalamasız yazılır; soru kuruluşu işaretsiz kalınca emir gibi
+  /// okunuyordu.
+  String _soruIsaretiEkle(String text) {
+    final t = text.trimRight();
+    if (t.isEmpty || RegExp(r'[.!?…,;:]$').hasMatch(t)) return text;
+    final son = t.split(RegExp(r'\s+')).last;
+    return TurkishMorphology.isQuestionParticle(son) ? '$t?' : text;
   }
 
   /// "!!!" → "!",  "???" → "?"

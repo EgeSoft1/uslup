@@ -13,6 +13,8 @@
 //   dart run bin/evaluate.dart --gundelik      → İP-30 gündelik metin (yanlış alarm)
 //   dart run bin/evaluate.dart --yonelim       → İP-31 somut adlar + ikinci şahıs
 //   dart run bin/evaluate.dart --savunma       → İP-32 aktarılan düşmanca görüş
+//   dart run bin/evaluate.dart --eksenler      → İP-33 cinsiyet · yaş · engellilik · göç
+//                                                (İP-34 ayrık küme de birlikte basılır)
 //   dart run bin/evaluate.dart --karsilastir   → katman katkısı (A/B)
 //   dart run bin/evaluate.dart --hepsi         → hepsi birden
 //
@@ -51,6 +53,7 @@ void main(List<String> args) {
   final wantsEveryday = wantsAll || args.contains('--gundelik');
   final wantsDirection = wantsAll || args.contains('--yonelim');
   final wantsStance = wantsAll || args.contains('--savunma');
+  final wantsAxes = wantsAll || args.contains('--eksenler');
   final wantsDev = wantsAll ||
       (!wantsHoldout &&
           !wantsCompare &&
@@ -61,7 +64,8 @@ void main(List<String> args) {
           !wantsGeneralization5 &&
           !wantsEveryday &&
           !wantsDirection &&
-          !wantsStance);
+          !wantsStance &&
+          !wantsAxes);
 
   if (wantsDev) {
     stdout.write(
@@ -293,6 +297,94 @@ void main(List<String> args) {
       ..writeln('  ⓘ  Hata sınıfı bilindikten SONRA, düzeltmeden ÖNCE yazıldı.')
       ..writeln('     Kayıt: docs/22.')
       ..writeln();
+  }
+
+  if (wantsAxes) {
+    // İP-33 — Kimlik eksenleri. A saldırı, B aynı fiilleri taşıyan masum.
+    final cases = IdentityAxesDataset.cases;
+    final engine = LexicalTurkishClassifier();
+    final hatalar = [
+      for (final c in cases)
+        if (engine.analyze(c.text) case final a
+            when (a.risk != RiskLevel.temiz) != c.shouldFlag)
+          '    ${c.shouldFlag ? "KAÇTI      " : "YANLIŞ ALARM"} '
+              '${a.risk.label.padRight(12)} ${c.text}  '
+              '[${a.findings.map((f) => f.term).join(", ")}]',
+    ];
+    const eksenler = ['cinsiyet', 'yaş', 'engellilik', 'göç'];
+    stdout
+      ..write(evaluator.run(engine, cases).format(
+            title: 'İP-33 · KİMLİK EKSENLERİ KÜMESİ — ${cases.length} örnek',
+          ))
+      ..writeln('  A. saldırı                        : '
+          '${_parca(evaluator, engine, cases.sublist(0, 32))}')
+      ..writeln('  B. aynı kalıpları taşıyan masum   : '
+          '${_parca(evaluator, engine, cases.sublist(32, 64))}');
+    for (var e = 0; e < eksenler.length; e++) {
+      stdout.writeln('     ${eksenler[e].padRight(11)} saldırı '
+          '${_parca(evaluator, engine, cases.sublist(e * 8, e * 8 + 8))}'
+          '  ·  masum '
+          '${_parca(evaluator, engine, cases.sublist(32 + e * 8, 40 + e * 8))}');
+    }
+    stdout.writeln();
+    for (final satir in hatalar) {
+      stdout.writeln(satir);
+    }
+    stdout
+      ..writeln()
+      ..writeln('  ⓘ  Hata sınıfı bilindikten SONRA, düzeltmeden ÖNCE yazıldı;')
+      ..writeln('     yazan örüntü kataloğunu bilir, küme kör değildir.')
+      ..writeln('     Düzeltme bu kümeye bakılarak yapıldı: YANMIŞTIR.')
+      ..writeln('     Kayıt: docs/26.')
+      ..writeln();
+
+    void ayrikKume(String baslik, List<GoldCase> kor, List<String> notlar) {
+      final korHatalar = [
+        for (final c in kor)
+          if (engine.analyze(c.text) case final a
+              when (a.risk != RiskLevel.temiz) != c.shouldFlag)
+            '    ${c.shouldFlag ? "KAÇTI      " : "YANLIŞ ALARM"} '
+                '${a.risk.label.padRight(12)} ${c.text}  '
+                '[${a.findings.map((f) => f.term).join(", ")}]',
+      ];
+      stdout
+        ..write(evaluator.run(engine, kor).format(
+              title: '$baslik — ${kor.length} örnek',
+            ))
+        ..writeln('  A. saldırı : ${_parca(evaluator, engine, kor.sublist(0, 20))}')
+        ..writeln('  B. masum   : ${_parca(evaluator, engine, kor.sublist(20, 40))}');
+      for (var e = 0; e < eksenler.length; e++) {
+        stdout.writeln('     ${eksenler[e].padRight(11)} saldırı '
+            '${_parca(evaluator, engine, kor.sublist(e * 5, e * 5 + 5))}'
+            '  ·  masum '
+            '${_parca(evaluator, engine, kor.sublist(20 + e * 5, 25 + e * 5))}');
+      }
+      stdout.writeln();
+      for (final satir in korHatalar) {
+        stdout.writeln(satir);
+      }
+      stdout.writeln();
+      for (final satir in notlar) {
+        stdout.writeln(satir);
+      }
+      stdout.writeln();
+    }
+
+    // İP-34 — ilk turdan SONRA yazıldı; ikinci tur ona bakılarak yapıldı.
+    ayrikKume('İP-34 · KİMLİK EKSENLERİ AYRIK KÜMESİ',
+        IdentityAxesBlindDataset.cases, const [
+      '  ⚠  YANMIŞTIR — ikinci tur (docs/26 §6) bu kümenin kaçaklarından',
+      '     çıkarılan hata sınıflarıyla yapıldı. İlk ve tek geçerli geçişi:',
+      '     kesinlik %100,0 · duyarlılık %15,0 · özgüllük %100,0.',
+    ]);
+
+    // İP-35 — ikinci turdan SONRA yazıldı. İP-33 çalışmasının geçerli sayısı.
+    ayrikKume('İP-35 · KİMLİK EKSENLERİ İKİNCİ AYRIK KÜME',
+        IdentityAxesBlind2Dataset.cases, const [
+      '  ⓘ  İkinci tur bittikten SONRA yazıldı, bir kez ölçüldü.',
+      '     Bu kümeye bakılarak motor değiştirilirse küme yanar.',
+      '     Kayıt: docs/26 §7.',
+    ]);
   }
 
   if (wantsCompare) {

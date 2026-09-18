@@ -192,15 +192,34 @@ abstract final class TurkishMorphology {
 
   /// Türkçe Büyük ve Küçük Ünlü Uyumu kontrolü (Normalize metin üzerinde).
   ///
-  /// Kalın ünlülü kökler ('a', 'o', 'u') eklerinde 'e' içeremez (örn: aptal+ler ✗).
-  /// İnce ünlülü kökler ('e', 'i') eklerinde 'a' içeremez (örn: şerefsiz+lar ✗).
-  static bool isVowelHarmonious(String normalizedStem, String normalizedSuffix) {
+  /// Kalın ünlülü kökler ('a', 'ı', 'o', 'u') eklerinde 'e' içeremez (örn: aptal+ler ✗).
+  /// İnce ünlülü kökler ('e', 'i', 'ö', 'ü') eklerinde 'a' içeremez (örn: şerefsiz+lar ✗).
+  ///
+  /// ── KATLAMA UYUM SINIFINI SİLER (denetim D9 · docs/23) ────────────────────
+  /// Normalize kökte "ı" ile "i", "ü" ile "u", "ö" ile "o" aynı harftir. Kökün
+  /// sınıfı normalize hâlinden okunduğunda Türkçenin en yaygın hakaret
+  /// çoğulları reddediliyordu:
+  ///
+  ///   "gerizekalı" → "gerizekali" → son ünlü 'i' → ince → "-lar" ✗  (kaçıyordu)
+  ///   "öküz"       → "okuz"       → son ünlü 'u' → kalın → "-ler" ✗  (kaçıyordu)
+  ///
+  /// [stemSpelling] verildiğinde sınıf kökün TÜRKÇE yazılışından okunur;
+  /// sözlük girdileri aksanlı yazıldığı için bu bilgi kurulumda hazırdır.
+  /// Ekin kendisi normalize kalır: orada yalnızca 'a' ve 'e' kesin sınıf taşır.
+  static bool isVowelHarmonious(
+    String normalizedStem,
+    String normalizedSuffix, {
+    String? stemSpelling,
+  }) {
     if (normalizedSuffix.isEmpty) return true;
-    final stemVowel = lastVowel(normalizedStem);
+    final stemVowel = stemSpelling == null
+        ? lastVowel(normalizedStem)
+        : lastVowel(_foldCircumflex(stemSpelling));
     if (stemVowel == null) return true;
 
-    final isBackStem = (stemVowel == 'a' || stemVowel == 'o' || stemVowel == 'u');
-    final isFrontStem = (stemVowel == 'e' || stemVowel == 'i');
+    final isBackStem = _backUnrounded.contains(stemVowel) ||
+        _backRounded.contains(stemVowel);
+    final isFrontStem = !isBackStem;
 
     for (var i = 0; i < normalizedSuffix.length; i++) {
       final ch = normalizedSuffix[i];
@@ -217,27 +236,39 @@ abstract final class TurkishMorphology {
     return true;
   }
 
+  /// Şapkalı ünlüleri düz karşılığına indirir: "zekâ" → "zeka".
+  static String _foldCircumflex(String text) => toLowerTr(text)
+      .replaceAll('â', 'a')
+      .replaceAll('î', 'i')
+      .replaceAll('û', 'u');
+
   /// Verilen ekin Türkçe kurallarına göre geçerli bir çekim eki olup olmadığını denetler.
   static bool isValidSuffix(
     String normalizedStem,
     String normalizedSuffix, {
     bool isVerbal = false,
     bool isStrictShortRoot = false,
+    String? stemSpelling,
   }) {
     if (normalizedSuffix.isEmpty) return true;
 
     // 1. Ünlü uyumu kuralı
-    if (!isVowelHarmonious(normalizedStem, normalizedSuffix)) {
+    if (!isVowelHarmonious(normalizedStem, normalizedSuffix,
+        stemSpelling: stemSpelling)) {
       return false;
     }
 
     // 2. Kısa ve yüksek riskli kökler ("am", "bok", "it", "mal") için katı liste
     if (isStrictShortRoot || normalizedStem.length <= 3) {
+      if (_joinedQuestionSuffixes.contains(normalizedSuffix)) {
+        return !_verbHomographShortRoots.contains(normalizedStem);
+      }
       return _strictShortRootSuffixes.contains(normalizedSuffix);
     }
 
     // 3. Standart isim veya fiil çekim ekleri
     if (_validNounSuffixes.contains(normalizedSuffix)) return true;
+    if (_joinedQuestionSuffixes.contains(normalizedSuffix)) return true;
     if (isVerbal && _validVerbSuffixes.contains(normalizedSuffix)) return true;
 
     return false;
@@ -245,10 +276,14 @@ abstract final class TurkishMorphology {
 
   /// Verilen token'ın, [normalizedStem] kökünden türetilmiş geçerli bir çekimli
   /// form olup olmadığını doğrular (Ünsüz yumuşaması dahil).
+  ///
+  /// [stemSpelling] kökün Türkçe yazılışıdır ("gerizekalı"); verilirse ünlü
+  /// uyumu sınıfı ondan okunur. Gerekçe: [isVowelHarmonious].
   static bool isValidInflectedForm(
     String fullNormalizedToken,
     String normalizedStem, {
     bool isVerbal = false,
+    String? stemSpelling,
   }) {
     if (fullNormalizedToken == normalizedStem) return true;
 
@@ -258,7 +293,9 @@ abstract final class TurkishMorphology {
     if (fullNormalizedToken.startsWith(normalizedStem)) {
       final suffix = fullNormalizedToken.substring(normalizedStem.length);
       if (isValidSuffix(normalizedStem, suffix,
-          isVerbal: isVerbal, isStrictShortRoot: isShort)) {
+          isVerbal: isVerbal,
+          isStrictShortRoot: isShort,
+          stemSpelling: stemSpelling)) {
         return true;
       }
     }
@@ -269,7 +306,9 @@ abstract final class TurkishMorphology {
       final suffix = fullNormalizedToken.substring(softened.length);
       if (suffix.isNotEmpty && _vowels.contains(suffix[0])) {
         if (isValidSuffix(normalizedStem, suffix,
-            isVerbal: isVerbal, isStrictShortRoot: isShort)) {
+            isVerbal: isVerbal,
+            isStrictShortRoot: isShort,
+            stemSpelling: stemSpelling)) {
           return true;
         }
       }
@@ -279,6 +318,23 @@ abstract final class TurkishMorphology {
   }
 
   // ─── GEÇERLİ TÜRKÇE ÇEKİM EKİ ŞABLONLARI (NORMALIZE) ──────────────────────
+
+  /// BİTİŞİK YAZILMIŞ SORU EKİ (docs/25).
+  ///
+  /// Soru eki kurala göre ayrı yazılır ama mobilde çoğu zaman bitiştirilir:
+  /// "salakmısın", "gerizekalımısın", "şerefsizmisin". Ek listede olmadığı
+  /// için bu biçimlerin hepsi temiz dönüyordu. Normalize yazımda ünlüleri
+  /// yalnızca "i/u" olduğundan ünlü uyumu denetimi onları elemez.
+  static const Set<String> _joinedQuestionSuffixes = {
+    'misin', 'musun', 'misiniz', 'musunuz', 'midir', 'mudur',
+    'larmi', 'lermi', 'larmisiniz', 'lermisiniz',
+  };
+
+  /// Aynı zamanda fiil kökü olan kısa kökler. ASCII yazımda "-mişsin"
+  /// geçmiş zaman eki soru ekiyle aynı dizgiye iner: "itmisin" (itmişsin),
+  /// "kazmisin" (kazmışsın), "sikmisin" (sıkmışsın). Bunlarda bitişik soru
+  /// eki kabul edilmez.
+  static const Set<String> _verbHomographShortRoots = {'it', 'kaz', 'sik'};
 
   /// Kısa kökler ("am", "bok", "it", "mal") için sınırlı güvenli çekim ekleri.
   static const Set<String> _strictShortRootSuffixes = {
@@ -319,6 +375,9 @@ abstract final class TurkishMorphology {
     'ni', 'ini', 'unu', 'nda', 'nde', 'inda', 'inde', 'unda', 'unde',
     'ndan', 'nden', 'indan', 'inden', 'undan', 'unden',
     'nin', 'inin', 'unin', 'nla', 'nle', 'inle', 'unle',
+    // Yuvarlak ünlüyle biten köklerin belirtme ve ilgi eki (docs/25):
+    // "orospunun", "orospunu" kaçıyordu; düz karşılıkları ('ni', 'nin') vardı.
+    'nu', 'nun',
 
     'si', 'su', 'sine', 'sina', 'sini', 'sunu', 'sinde', 'sinda',
     'sinden', 'sindan', 'sinin', 'sunun', 'siyle', 'suyla',
