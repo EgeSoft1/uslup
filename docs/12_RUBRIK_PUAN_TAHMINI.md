@@ -34,10 +34,14 @@ karşı tek tek denetlendi. "Tam" = maddenin istediği şey metinde açıkça va
 ## 2. Bu 99 ne demek, ne demek değil
 
 **Demek olan:** rubrikte istenen her kontrol maddesinin metinde bir karşılığı
-var. Yapısal olarak kaybedilen tek madde, yapılmamış kullanılabilirlik
-testidir (3.3, −1 puan) ve bu **bilinçli bir dürüstlük tercihidir**:
-yapılmamış testi "yürütülmüştür" diye yazmak 1 puan kazandırır, yakalanırsa
-raporun tamamının güvenilirliğini götürür.
+var. Önceki sürümde yapısal olarak kaybedilen tek madde **yapılmamış
+kullanılabilirlik testiydi** (3.3, −1 puan); o madde 18 Eylül 2026'da test
+gerçekten uygulanarak kapatıldı (`docs/10`, `docs/30`, rapor §3.3).
+
+Not: o dönemki tercih — yapılmamış testi "yürütülmüştür" diye yazmamak —
+doğruydu ve aynı kural şimdi de geçerli. Test artık uygulandığı için sonuç
+raporlanıyor; sayılar oturumun kaydı olarak sunuluyor, beş katılımcının
+genelleme sağlamadığı hem raporda hem sunumda açıkça yazılı.
 
 **Demek olmayan:** jürinin 99 vereceği. Şablon "alt maddeler kısmi/tam
 karşılanma oranına göre puanlanıp toplanır" diyor; "kısmi" takdiri jürinindir.
