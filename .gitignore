@@ -13,6 +13,7 @@ mobile/**/generated_plugin_registrant.dart
 
 # Platform derleme çıktıları
 mobile/android/.gradle/
+mobile/android/build/
 mobile/android/app/build/
 mobile/android/local.properties
 mobile/android/key.properties
@@ -71,3 +72,7 @@ docs/gorseller/ekranlar/
 # Python önbelleği (görsel üretim betikleri)
 __pycache__/
 *.pyc
+
+# Geçici hata ayıklama betikleri — alt çizgiyle başlayanlar tek seferliktir,
+# depoya girmez (ölçüm okuyucuları, jüri prova betikleri vb.)
+packages/*/bin/_*.dart
