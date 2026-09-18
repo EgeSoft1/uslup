@@ -231,14 +231,19 @@ bitirmeyi** hedefleyin.
 
 ## 3. Beklenen sorular — hazır cevaplar
 
-**"Duyarlılık %42 düşük değil mi?"** *(ilk geçişte %45)*
-> Evet, gizlemiyoruz. Ürünün hedefi F0.5 — yanlış pozitif, yanlış
+**"Duyarlılık %46,7 düşük değil mi?"**
+> Evet, düşük ve gizlemiyoruz. Ürünün hedefi F0.5 — yanlış pozitif, yanlış
 > negatiften pahalı: mağduru ya da sert ama meşru eleştiriyi susturmaktansa
-> bir hakareti kaçırmayı tercih ediyoruz. Bu yüzden kesinlik %96. Açık
-> saldırıda %75 yakalıyoruz; zayıf olduğumuz yer küfürsüz, örtük
-> düşmanlık (%29) ve cinsiyet/yaş hedefli genellemeler. Son düşüşü bilerek
-> kabul ettik: gündelik cümlelerde 29 yanlış alarmı kapatmanın bedeliydi.
-> Hangi cümlelerin kaçtığı tek tek kayıtlı (`docs/18`, `docs/21`).
+> bir hakareti kaçırmayı tercih ediyoruz. Bu yüzden **kesinlik %100**: kör
+> kümedeki 30 masum cümlenin 30'u temiz. Açık saldırıda %83,3 yakalıyoruz;
+> zayıf olduğumuz yer küfürsüz örtük düşmanlık (%32,4) ve cinsiyet/yaş
+> hedefli genellemeler (İP-35'te %15). Kaçan 32 örneğin hepsi tek tek
+> kayıtlı (`docs/18`, `docs/30`).
+>
+> **Bunu da söyleyin:** duyarlılıktaki son +%1,7 kör değildir. Onu yakalayan
+> örüntünün kod açıklaması ölçüm kümemizin cümlesini alıntılıyor; fark
+> edince yazdık (`docs/30` §3.1). İP-29'un bugün geçerli iddiası
+> **kesinliktir**, duyarlılık değil.
 
 **"Bu sayıya neden güvenelim?"**
 > Küme ölçümden önce ayrı bir commit olarak depoya girdi; beklentilerimizi
@@ -286,9 +291,16 @@ bitirmeyi** hedefleyin.
 > cezalandırılan kullanıcı özelliği kapatır.
 
 **"Kaç kişi denedi? Hakemler arası uyum?"**
-> Kullanılabilirlik testi ve kappa henüz yapılmadı; açıkça yazıyoruz.
-> Protokol ve araçlar hazır (`docs/10`, `bin/kappa.dart`), eksik olan
-> katılımcı ve ikinci etiketleyici.
+> Kullanılabilirlik testini yaptık: 18 Eylül, beş katılımcı, beş görev,
+> sesli düşünme. Yardımsız görev başarısı **%72,7 (16/22)**, ortalama
+> kolaylık **6,6/7**. Kritik ölçüt mağdur anlatısı ve kimlik beyanıydı —
+> o on denemede **beklenmedik uyarı çıkmadı (0/10)**. Beş kişi genelleme
+> sağlamaz, bunu hem raporda hem slaytta yazdık; küçük örneklem oran
+> iddiası için değil kusur bulmak içindir. Nitekim dört somut bulgu çıktı:
+> en zorlanılan görev uyarıdan sonraki adımdı (`docs/10`, `docs/30`).
+>
+> Kappa hâlâ **yok** — tek etiketleyiciyiz. Araç hazır (`bin/kappa.dart`),
+> eksik olan ikinci insan. Bunu gizlemiyoruz.
 
 **"Sayıyı yeniden üretebilir miyiz?"**
 > `cd packages/civility_core && dart run bin/evaluate.dart --genelleme5` — tek komut.
@@ -320,8 +332,12 @@ bitirmeyi** hedefleyin.
 - **"Federated learning / sunucuda eğitim yapıyoruz."** Yapmıyoruz. Önceki bir
   sürümdeki sahte gradyan gönderen düğme 13 Eylül'de kaldırıldı.
 - **"Akıştaki veriler gerçek."** Kurgudur.
-- Ölçülmemiş bir şeyi ölçülmüş gibi anlatmak. Kullanılabilirlik testi ve
-  kappa **yapılmadı**; sorulursa olduğu gibi söyleyin.
+- Ölçülmemiş bir şeyi ölçülmüş gibi anlatmak. **Kappa hâlâ yapılmadı**;
+  sorulursa olduğu gibi söyleyin. Kullanılabilirlik testi yapıldı ama beş
+  katılımcılıktır — "kullanıcılarımız beğendi" değil, "beş kişilik bir
+  oturumda şu bulgular çıktı" deyin.
+- **"Yanlış uyarı oranımız sıfır."** Değil. Beş katılımcılı oturumda on
+  denemede kusur görülmedi; bu bir oran iddiası değildir.
 
 ---
 
@@ -368,15 +384,15 @@ yazı tipleri, motorun gerçek çıktısı). Slaytlar için önerilenler:
 
 ---
 
-## 8. Sayı kartı — bugün doğrulandı (15 Eylül 2026)
+## 8. Sayı kartı — bugün doğrulandı (18 Eylül 2026)
 
 | Sayı | Değer | Kaynak |
 |---|---|---|
-| Sözlük girdisi | 308 | çalışma anında sayılır |
-| Örüntü ve deyim | 214 | çalışma anında sayılır |
-| Nefret kuruluşu · kimlik terimi | 29 · 104 | çalışma anında sayılır |
+| Sözlük girdisi | 310 | çalışma anında sayılır |
+| Örüntü ve deyim | 221 (131 edimbilimsel · 59 deyim · 31 nefret) | çalışma anında sayılır |
+| Kimlik terimi | 104 | çalışma anında sayılır |
 | Etiketli örnek | 1.115 (13 küme) | çalışma anında sayılır |
-| Çekirdek test | 696 | `dart test` |
+| Çekirdek test | 765 | `dart test` |
 | Mesaj çözümleme (p50 · p99) | 84 µs · 1.219 µs | `bin/benchmark.dart`, AOT |
 | 2.400 karakterlik gönderi (p99) | 2,7 ms · kare bütçesinin %17'si | aynı |
 | Hızlanma · birinci geçiş | mesajda ~5×, uzun gönderide ~7× · çıktı birebir aynı | docs/19 |
