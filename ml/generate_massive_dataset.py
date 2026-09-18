@@ -1,12 +1,8 @@
-import json
-import os
 import random
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-FILE_PATH = os.path.join(HERE, 'veri.json')
+import veri_deposu
 
-with open(FILE_PATH, 'r', encoding='utf-8') as f:
-    data = json.load(f)
+data = veri_deposu.load()
 
 # Toksik Kökler
 toxic_roots = [
@@ -56,7 +52,7 @@ clean_templates = [
     "bu {w} bizi çıkmaza sürüklüyor"
 ]
 
-existing_texts = set(d['text'].lower() for d in data['dev'])
+existing_texts = set()
 new_entries = []
 
 for w in toxic_roots:
@@ -105,12 +101,8 @@ for i in range(8000):
             new_entries.append({"text": text, "label": 0})
             existing_texts.add(text.lower())
 
-print(f"Başlangıç boyutu: {len(data['dev'])}")
-data['dev'].extend(new_entries)
-print(f"Yeni eklenen veri: {len(new_entries)}")
-print(f"Toplam boyut: {len(data['dev'])}")
-
-with open(FILE_PATH, 'w', encoding='utf-8') as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
-
-print("Tamamlandı.")
+# Protokolün geliştirme kümesine (dev) YAZILMAZ; ayrık kümeyle çakışan
+# şablon cümleler de atılır — gerekçe: veri_deposu.py
+added = veri_deposu.add_augmented(data, new_entries, source='generate_massive_dataset')
+veri_deposu.save(data)
+print(f"Eklenen artırılmış örnek: {added} · toplam artırılmış: {len(data['augmented'])}")

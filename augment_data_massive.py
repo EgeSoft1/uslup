@@ -1,11 +1,10 @@
-import json
 import os
+import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-FILE_PATH = os.path.join(HERE, 'ml', 'veri.json')
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ml'))
+import veri_deposu  # noqa: E402
 
-with open(FILE_PATH, 'r', encoding='utf-8') as f:
-    data = json.load(f)
+data = veri_deposu.load()
 
 # The user explicitly asked for "bütün küfürlerle sözlerle eğitilsin"
 # Adding an extreme dataset augmentation of permutations.
@@ -65,14 +64,8 @@ massive_data = [
     {"text": "kahverengi", "label": 0},
 ]
 
-print(f"Eski dev boyutu: {len(data['dev'])}")
-for entry in massive_data:
-    if not any(d['text'] == entry['text'] for d in data['dev']):
-        data['dev'].append(entry)
+# Protokolün geliştirme kümesine (dev) YAZILMAZ — gerekçe: ml/veri_deposu.py
+added = veri_deposu.add_augmented(data, massive_data, source='augment_data_massive')
+veri_deposu.save(data)
 
-print(f"Yeni dev boyutu: {len(data['dev'])}")
-
-with open(FILE_PATH, 'w', encoding='utf-8') as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
-
-print("Massive dataset added.")
+print(f"Eklenen artırılmış örnek: {added} · toplam artırılmış: {len(data['augmented'])}")

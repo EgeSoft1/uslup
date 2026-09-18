@@ -1,53 +1,25 @@
-import os
-import itertools
+"""SÖZLÜĞE OTOMATİK GİRDİ ÜRETEN BETİK — DEVRE DIŞI (kod denetimi · docs/23)
 
-DART_FILE = r'c:\TurkiyeMesajlasma\packages\civility_core\lib\src\lexicon\toxicity_lexicon.dart'
+Bu betik 50 kök × 14 ekin permütasyonlarından 8.000'e kadar girdiyi
+`toxicity_lexicon.dart` dosyasına, hepsini `hakaret · 0.75` olarak ve TAM
+EŞLEŞME kipinde ekliyordu. Çalıştırılsaydı:
 
-toxic_roots = [
-    "aptal", "salak", "gerizekalı", "ahmak", "manyak", "şerefsiz", "piç", "oç",
-    "orospu", "yavşak", "pezevenk", "göt", "sürtük",
-    "kahpe", "bok", "it", "köpek", "mal", "dangalak", "embesil", "beyinsiz",
-    "çapulcu", "zavallı", "ezik", "yobaz", "çomar", "ayyaş", "hıyar", "öküz",
-    "hayvan", "zibidi", "züppe", "kaltak", "fahişe", "gavat", "ibne", "puşt",
-    "dalyarak", "dürzü", "lavuk", "denyo", "keko", "kıro", "şıllık",
-    "süzme", "haysiyetsiz", "karaktersiz", "cıvık", "arsız", "yüzsüz"
-]
+  • "it" + "in"  → "itin"   · "mal" + "ın" → "malın"  · "hayvan" + "lar"
+    gibi Türkçenin en sık kelimeleri hakaret olurdu ("malın fiyatı",
+    "hayvanlar alemi"). Sözlüğün `requiresDirection`, `maskedPrefixes` ve
+    kısa kök çakışma listesi korumalarının HİÇBİRİ bu girdilere uygulanmazdı.
+  • Motor zaten kök + ek çözümlemesini `TurkishMorphology` ile yapıyor;
+    çekimli biçimleri tek tek yazmak gereksizdir ve ünlü uyumunu da
+    denetlemez ("aptalsın" ile birlikte "aptalsun" da girer).
+  • Mutlak yol (c:\\TurkiyeMesajlasma\\...) başka bir makinede çalışmaz.
 
-suffixes = [
-    "lar", "lık", "ca", "sın", "sun", "sunuz", "sınız",
-    "cı", "cü", "cu", "ler", "in", "un", "ın"
-]
+Her sözlük girdisi bir kesinlik kararıdır ve bir ölçümle birlikte eklenir
+(README · "Ölçüm geçmişi"). Toplu ekleme o disiplini atlar. Betik bu yüzden
+hiçbir şey yazmadan çıkar; tarihsel kayıt için depoda bırakılmıştır.
+"""
+import sys
 
-with open(DART_FILE, 'r', encoding='utf-8') as f:
-    content = f.read()
-
-# Generate 5000+ entries
-new_entries = []
-count = 0
-for root in toxic_roots:
-    for i in range(1, 3):
-        for combo in itertools.permutations(suffixes, i):
-            word = root + "".join(combo)
-            if word not in content and count < 8000:
-                entry = f"    LexiconEntry(term: '{word}', category: ToxicityCategory.hakaret, severity: 0.75),"
-                new_entries.append(entry)
-                count += 1
-
-# Insert into Dart file just before the closing bracket of _entries list
-# We look for:
-#   ];
-# }
-insertion_point = content.rfind("  ];\n")
-
-if insertion_point != -1:
-    before = content[:insertion_point]
-    after = content[insertion_point:]
-    
-    header = "\n    // ── OTONOM GENİŞLETİLMİŞ SÖZLÜK (8000+ KELİME) ──\n"
-    new_content = before + header + "\n".join(new_entries) + "\n" + after
-    
-    with open(DART_FILE, 'w', encoding='utf-8') as f:
-        f.write(new_content)
-    print(f"Başarıyla {len(new_entries)} kelime Dart sözlüğüne eklendi!")
-else:
-    print("Ekleme noktası bulunamadı.")
+sys.exit(
+    "expand_dart_lexicon.py devre dışı: sözlüğe toplu, ölçümsüz girdi eklemek "
+    "kesinlik iddiasını bozar. Gerekçe bu dosyanın başında ve docs/23'te."
+)

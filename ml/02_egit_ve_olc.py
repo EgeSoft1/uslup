@@ -43,6 +43,15 @@ def fold(s):
 
 # ---------------------------------------------------------------- veri
 d = json.load(io.open(os.path.join(HERE, 'veri.json'), encoding='utf-8'))
+
+# Protokol n=256 geliştirme kümesi üzerine kuruludur. Eski artırma betikleri
+# şablon cümleleri doğrudan 'dev' içine yazıyordu; o hâlde ölçüm README'dekiyle
+# karşılaştırılamaz (kod denetimi · docs/23).
+if len(d['dev']) != 256:
+    sys.exit('veri.json geliştirme kümesi %d örnek (beklenen 256). Önce '
+             '`python 01_veri_cikar.py` çalıştırın; artırılmış veri ayrı '
+             'tutulur (veri_deposu.py).' % len(d['dev']))
+
 Xd = [r['text'] for r in d['dev']];      yd = np.array([r['label'] for r in d['dev']])
 Xh = [r['text'] for r in d['holdout']];  yh = np.array([r['label'] for r in d['holdout']])
 gh = [r['group'] for r in d['holdout']]

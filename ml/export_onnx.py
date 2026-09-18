@@ -45,9 +45,17 @@ def export_model():
     print("Veri yükleniyor...")
     with io.open(os.path.join(HERE, 'veri.json'), encoding='utf-8') as f:
         d = json.load(f)
-    
-    Xd = [normalize(r['text']) for r in d['dev']]
-    yd = np.array([r['label'] for r in d['dev']])
+
+    # Eğitim kümesi AÇIKÇA dev + augmented'dır. Ayrık küme (holdout) asla
+    # eğitime girmez; artırmalar da ona karşı ayıklanmıştır (veri_deposu.py).
+    # Not: Bu model 02_egit_ve_olc.py'de ÖLÇÜLEN karakter n-gram modeli
+    # DEĞİLDİR (skl2onnx char_wb desteklemiyor). Uygulamada yalnızca ikinci
+    # görüş olarak durur ve temiz/işaretli kararına dokunamaz.
+    rows = d['dev'] + d.get('augmented', [])
+    print(f"Eğitim: dev={len(d['dev'])} + augmented={len(d.get('augmented', []))}")
+
+    Xd = [normalize(r['text']) for r in rows]
+    yd = np.array([r['label'] for r in rows])
     
     print("Model (Word TF-IDF + LR) eğitiliyor...")
     pipe = get_wordpipe()

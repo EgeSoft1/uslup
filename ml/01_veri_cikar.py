@@ -57,8 +57,25 @@ for g, c in Counter(r['group'] for r in hold).most_common():
     print('  %-14s %d' % (g, c))
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'veri.json')
+
+# Artırılmış veri (augmented) korunur ama yeni ayrık kümeye karşı yeniden
+# ayıklanır: çıkarım sonrası holdout değişmişse sızıntı kalmamalı.
+augmented = []
+if os.path.exists(out):
+    try:
+        eski = json.load(io.open(out, encoding='utf-8'))
+        protokol = dset | hset
+        augmented = [r for r in eski.get('augmented', [])
+                     if r['text'].strip().lower() not in protokol]
+        # Eski sürümler artırmayı doğrudan 'dev' içine yazıyordu; o satırlar
+        # burada kaybolur. Artırma betiklerini yeniden çalıştırın.
+    except (ValueError, KeyError):
+        augmented = []
+
 io.open(out, 'w', encoding='utf-8').write(
-    json.dumps({'dev': dev, 'holdout': hold}, ensure_ascii=False, indent=1))
+    json.dumps({'dev': dev, 'holdout': hold, 'augmented': augmented},
+               ensure_ascii=False, indent=1))
+print('artirilmis (korunan):', len(augmented))
 print('\nyazildi:', out)
 print('\nornekler:')
 for r in dev[:3] + hold[:3]:

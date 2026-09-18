@@ -1,11 +1,6 @@
-import json
-import os
+import veri_deposu
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-FILE_PATH = os.path.join(HERE, 'veri.json')
-
-with open(FILE_PATH, 'r', encoding='utf-8') as f:
-    data = json.load(f)
+data = veri_deposu.load()
 
 new_data = [
     # TOXIC - Kategori: Çok İnce / Örtük Hakaret
@@ -61,14 +56,8 @@ new_data = [
     {"text": "Derdi olan gelsin bana anlatsın", "label": 0},
 ]
 
-print(f"Eski dev boyutu: {len(data['dev'])}")
-for entry in new_data:
-    if not any(d['text'] == entry['text'] for d in data['dev']):
-        data['dev'].append(entry)
+# Protokolün geliştirme kümesine (dev) YAZILMAZ — gerekçe: veri_deposu.py
+added = veri_deposu.add_augmented(data, new_data, source='augment_data_2')
+veri_deposu.save(data)
 
-print(f"Yeni dev boyutu: {len(data['dev'])}")
-
-with open(FILE_PATH, 'w', encoding='utf-8') as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
-
-print("İleri seviye veriler başarıyla eklendi.")
+print(f"Eklenen artırılmış örnek: {added} · toplam artırılmış: {len(data['augmented'])}")

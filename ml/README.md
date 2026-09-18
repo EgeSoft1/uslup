@@ -82,6 +82,34 @@ Yanlış pozitiflerin karakteri bu oranın doğrudan sonucudur — model
 "salak"/"aptal"/"şerefsiz" karakter dizilerinin varlığını öğrenmekte,
 olumsuzlama ve aktarımın bu dizileri tersine çevirdiğini öğrenememektedir.
 
+## Uygulamaya paketlenen model ayrıca ölçüldü (14 Eylül 2026)
+
+Yukarıdaki sayılar karakter n-gram modeline aittir. Uygulamadaki
+`mobile/assets/models/uslup_model.onnx` ise `export_onnx.py` ile üretilen
+**kelime n-gram** modelidir (skl2onnx karakter analizörünü desteklemiyor) ve
+hiç ölçülmemişti. `04_paket_modeli_olc.py`, 10 kümenin 971 cümlesinde:
+
+| Küme | Kesinlik | Duyarlılık | YP |
+|---|---|---|---|
+| Geliştirme (eğitimde görüldü) | %91,4 | %96,2 | 12 |
+| İP-29 (geçerli ayrık) | %79,7 | %85,0 | 13 |
+| İP-30 gündelik (120 masum) | — | — | **86** |
+| İP-31 yönelim (30 masum) | %42,6 | %100 | **27** |
+
+Önceki melez kural (model, işaretlenmiş metnin skorunu yükseltebilir)
+53 cümlenin risk basamağını değiştiriyordu — 39'u Riskli → Yüksek risk,
+yani gönderimde onay diyaloğu. Web kabuğunda model olmadığı için aynı cümle
+platforma göre farklı basamak alıyordu. Model artık **karar ve basamağa
+dokunmaz**; şeffaflık panelinde bilgi amaçlı ikinci görüş olarak gösterilir
+ve ayrı bir isolate'te çalışır.
+
+```bash
+cd packages/civility_core
+dart run bin/hibrit_disa_aktar.dart ../../ml/motor_ciktisi.json
+cd ../../ml
+python 04_paket_modeli_olc.py
+```
+
 ## Bu bulgunun sınırı
 
 Bu ölçüm, **doğrusal bir taban çizgisinin bu veri hacminde** yetersiz kaldığını
