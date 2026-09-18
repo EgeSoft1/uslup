@@ -45,8 +45,16 @@ class CommunityHealthStore extends ChangeNotifier {
   ///
   /// Metin parametre olarak alınmaz — `CommunitySignal.fromAnalysis` zaten
   /// metni göremez. Çağıran taraf yanlışlıkla sızdıramaz.
-  void record(CivilityAnalysis analysis, SignalOutcome outcome) {
-    _aggregator.add(CommunitySignal.fromAnalysis(analysis, outcome));
+  ///
+  /// [yanlisAlarm]: kullanıcı gönderilen metnin uyarısına "Bu uyarı yanlış"
+  /// dedi (docs/27). Sinyale yalnızca bu evet/hayır bilgisi girer.
+  void record(
+    CivilityAnalysis analysis,
+    SignalOutcome outcome, {
+    bool yanlisAlarm = false,
+  }) {
+    _aggregator.add(CommunitySignal.fromAnalysis(analysis, outcome,
+        yanlisAlarm: yanlisAlarm));
     _realCount++;
     notifyListeners();
   }
@@ -103,6 +111,9 @@ class CommunityHealthStore extends ChangeNotifier {
           outcome: sonuc,
           civilityBucket: rnd.nextInt(6),
           dayIndex: gun,
+          // Uyarıya rağmen gönderenlerin bir kısmı itiraz eder (docs/27).
+          yanlisAlarmBildirildi: sonuc == SignalOutcome.uyariyaRagmenGonderdi &&
+              rnd.nextDouble() < 0.25,
         ));
       }
     }

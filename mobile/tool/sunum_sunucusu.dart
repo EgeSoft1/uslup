@@ -62,23 +62,49 @@ Future<void> main(List<String> args) async {
   stdout.writeln('Kapatmak için bu pencereyi kapatın ya da Ctrl+C.');
 
   await for (final istek in sunucu) {
-    var yol = Uri.decodeComponent(istek.uri.path);
-    if (yol == '/' || yol.isEmpty) yol = '/index.html';
-    if (yol.contains('..')) {
-      istek.response.statusCode = HttpStatus.forbidden;
-      await istek.response.close();
-      continue;
+    // Her istek kendi hatasını yutar. Önceden tek bir bozuk yüzde-kodlaması
+    // (`Uri.decodeComponent` FormatException) ya da yanıt yazılırken sekmenin
+    // kapatılması (`addStream` SocketException) `await for` döngüsünü
+    // kırıyor ve sunucu SUNUMUN ORTASINDA kapanıyordu (denetim · docs/23).
+    try {
+      await _yanitla(istek, kok);
+    } catch (e) {
+      stderr.writeln('İstek işlenemedi (${istek.uri}): $e');
+      try {
+        istek.response.statusCode = HttpStatus.internalServerError;
+        await istek.response.close();
+      } catch (_) {
+        // Bağlantı zaten kopmuş; yapılacak bir şey yok.
+      }
     }
-
-    var dosya = File('${kok.path}$yol');
-    if (!dosya.existsSync()) dosya = File('${kok.path}/index.html');
-
-    final nokta = dosya.path.lastIndexOf('.');
-    final uzanti = nokta < 0 ? '' : dosya.path.substring(nokta);
-    istek.response.headers
-      ..set('Content-Type', _turler[uzanti] ?? 'application/octet-stream')
-      ..set('Cache-Control', 'no-store');
-    await istek.response.addStream(dosya.openRead());
-    await istek.response.close();
   }
+}
+
+Future<void> _yanitla(HttpRequest istek, Directory kok) async {
+  final String yol;
+  try {
+    final cozulmus = Uri.decodeComponent(istek.uri.path);
+    yol = (cozulmus == '/' || cozulmus.isEmpty) ? '/index.html' : cozulmus;
+  } on FormatException {
+    istek.response.statusCode = HttpStatus.badRequest;
+    await istek.response.close();
+    return;
+  }
+
+  if (yol.contains('..') || yol.contains('\\')) {
+    istek.response.statusCode = HttpStatus.forbidden;
+    await istek.response.close();
+    return;
+  }
+
+  var dosya = File('${kok.path}$yol');
+  if (!dosya.existsSync()) dosya = File('${kok.path}/index.html');
+
+  final nokta = dosya.path.lastIndexOf('.');
+  final uzanti = nokta < 0 ? '' : dosya.path.substring(nokta);
+  istek.response.headers
+    ..set('Content-Type', _turler[uzanti] ?? 'application/octet-stream')
+    ..set('Cache-Control', 'no-store');
+  await istek.response.addStream(dosya.openRead());
+  await istek.response.close();
 }

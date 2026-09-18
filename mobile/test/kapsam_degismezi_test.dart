@@ -120,12 +120,24 @@ void main() {
       // İstisnanın GEREKÇESİ "metin zaten motora gidiyor"du. Gitmiyorsa
       // istisna da yok: bu ekran o zaman sıradan bir metin kutusudur ve
       // `CivilityComposer` kullanmak zorundadır.
+      //
+      // Ekran asistana dönüştüğünde çağrı biçimi değişti: motor artık
+      // doğrudan değil, `UslupAsistani`ye verilerek çağrılıyor
+      // (`UslupAsistani(motor: Civility.engine)`). Gerekçe aynı — metin hâlâ
+      // motora gidiyor — ama düz metin araması bunu göremiyordu. Aranan şey
+      // motorun bu dosyada gerçekten bağlanmış olmasıdır.
       expect(
-        chat.source.contains('Civility.engine.analyze'),
+        chat.source.contains('Civility.engine'),
         isTrue,
-        reason: 'engine_chat_screen.dart motoru çağırmıyor; izinli listedeki '
+        reason: 'engine_chat_screen.dart motoru bağlamıyor; izinli listedeki '
             'gerekçesi düşmüş. Ya motoru çağırsın ya CivilityComposer '
             'kullansın.',
+      );
+      expect(
+        chat.source.contains('UslupAsistani') ||
+            chat.source.contains('.analyze('),
+        isTrue,
+        reason: 'Motor bağlanmış ama çözümleme yapılmıyor görünüyor.',
       );
     });
   });
@@ -222,6 +234,11 @@ void main() {
 
       expect(source.contains('usesCleartextTraffic="true"'), isFalse,
           reason: 'Düz metin (HTTP) trafiğine izin verilmiş.');
+
+      // docs/24 · madde 42: cihaz dışı yedek de bir veri çıkış yoludur.
+      expect(source.contains('android:allowBackup="false"'), isTrue,
+          reason: 'Uygulama verisi bulut yedeğine ve adb backup ile dışarı '
+              'alınabilir hâle gelmiş.');
     });
   });
 

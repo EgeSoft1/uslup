@@ -2,32 +2,32 @@
 // ONNX ikinci görüş katmanı — cihaz sürümü (Android · iOS · masaüstü)
 // Dosya: mobile/lib/core/civility/onnx_classifier_io.dart
 //
-// ── SÖZLEŞME: MODEL KARAR VERMEZ, YALNIZCA ŞİDDETİ TEYİT EDER ─────────────
-// Deterministik kural motoru "bu metin işaretlenmeli mi?" sorusunun TEK
-// sahibidir. ONNX modeli (ml/ altında eğitilen denetimli taban çizgisi)
-// yalnızca ZATEN işaretlenmiş bir metnin basamağını yükseltebilir:
+// ── SÖZLEŞME: MODEL KARAR VERMEZ, BASAMAĞA DA DOKUNMAZ ────────────────────
+// Deterministik kural motoru "bu metin işaretlenmeli mi?" ve "hangi basamak?"
+// sorularının TEK sahibidir. ONNX modeli yalnızca bir İKİNCİ GÖRÜŞ üretir:
+// şeffaflık panelinde ayrı bir satırda, kullanıcıya bilgi olarak gösterilir.
 //
-//   kural motoru temiz      → model hiç çalışmaz, sonuç temiz
-//   kural motoru işaretledi → model aynı fikirdeyse şiddet artabilir,
-//                             ama ASLA düşmez ve temize dönmez
+// ── NEDEN (docs/24 · madde 22–23, 14 Eylül 2026) ──────────────────────────
+// Önceki sözleşmede model, işaretlenmiş metnin skorunu (motor + model)/2 ile
+// YÜKSELTEBİLİYORDU. Paketlenen model hiç ölçülmemişti; `ml/04_paket_modeli_olc.py`
+// onu 971 etiketli cümlede ölçtü:
 //
-// Sebebi ölçümdür. Aynı ayrık kümede model, kural motorunun kaçırdığı
-// hiçbir örneği yakalamadı ve motorun yapmadığı altı yanlış pozitif üretti
-// (hepsi iltifat, olumsuzlama ya da mağduru savunan cümle — ml/README.md).
-// Modele temiz/işaretli kararı üzerinde söz hakkı vermek, raporlanan
-// kesinliği uygulamada geçersiz kılardı. Bu sözleşmeyle ölçülen kesinlik ve
-// duyarlılık, uygulamada da birebir geçerlidir.
+//   • Tek başına: gündelik 120 masum cümlenin 86'sını, İP-31'deki 30 masum
+//     cümlenin 27'sini saldırgan buluyor.
+//   • Melez kuralda: 53 cümlenin risk BASAMAĞINI değiştiriyor — 39'u
+//     Riskli → Yüksek risk ("sen tam bir aptalsın"), yani gönderimde onay
+//     diyaloğu açıyor.
+//   • Web kabuğunda ONNX yok: aynı cümle telefonda Yüksek risk, jüri
+//     sunumundaki masaüstünde Riskli oluyordu. "Aynı motor, aynı karar"
+//     iddiası platformlar arasında bozuluyordu ve bu fark hiçbir ölçümde yoktu.
+//
+// Ayrıca model her işaretlenmiş tuş vuruşunda ANA İŞ PARÇACIĞINDA FFI
+// çağrısıyla çalışıyordu. İkinci görüş artık `runAsync` ile ayrı bir
+// isolate'te, yalnızca istendiğinde üretilir.
 //
 // ── KALDIRILANLAR (13 Eylül 2026) ─────────────────────────────────────────
-// Önceki sürümde üç sorun vardı:
-//   1. `analyze` her TUŞ VURUŞUNDA çağrılıyor ama bir "kullanıcı sicili"
-//      bunu MESAJ sayıyordu; 20 temiz tuştan sonra eşik gevşiyordu.
-//   2. Yüksek skorlu metinlerin kendisi bellekte bir listede "karantina"
-//      adıyla biriktiriliyordu — ürünün hiçbir metni saklamama ilkesine
-//      aykırı; "şifreli kasa" diye anılan yapı düz bir listeydi.
-//   3. "haha", ":)" gibi ifadeler skoru düşürüyordu: "amk haha" yazmak
-//      şiddeti azaltmanın yolu hâline geliyordu.
-// Üçü de kaldırıldı. Eşik sabittir ve hiçbir metin saklanmaz.
+// Kullanıcı sicili, metin "karantinası" ve "haha" ile şiddet düşürme —
+// üçü de kaldırılmıştı; hiçbir metin saklanmaz.
 // =============================================================================
 
 import 'package:civility_core/civility_core.dart';
@@ -43,9 +43,6 @@ class HybridOnnxClassifier implements ToxicityClassifier {
   OrtSession? _session;
   bool _isLoaded = false;
 
-  /// Modelin "saldırgan" dediği olasılık eşiği. Sabittir.
-  static const double _modelThreshold = 0.5;
-
   ToxicityClassifier get base => _baseClassifier;
 
   bool get isLoaded => _isLoaded;
@@ -53,7 +50,7 @@ class HybridOnnxClassifier implements ToxicityClassifier {
   /// ONNX oturumunu kurar. Uygulama açılışında bir kez çağrılır.
   ///
   /// Hiçbir hata yukarı fırlatılmaz: model yüklenemediğinde ürün çalışmaya
-  /// devam etmeli, yalnızca ikinci görüş katmanı devre dışı kalmalıdır.
+  /// devam etmeli, yalnızca ikinci görüş kapanmalıdır.
   Future<void> init() async {
     try {
       OrtEnv.instance.init();
@@ -78,49 +75,27 @@ class HybridOnnxClassifier implements ToxicityClassifier {
 
   @override
   String get modelName => _isLoaded
-      ? '${_baseClassifier.modelName} + ONNX ikinci görüş'
+      ? '${_baseClassifier.modelName} + ONNX ikinci görüş (bilgi amaçlı)'
       : _baseClassifier.modelName;
 
+  /// Kararın tamamı kural motorunundur. Model sonucu değiştirmez.
   @override
-  CivilityAnalysis analyze(String text) {
-    final baseResult = _baseClassifier.analyze(text);
+  CivilityAnalysis analyze(String text) => _baseClassifier.analyze(text);
 
-    // Temiz/işaretli kararı kural motorunundur. Temiz bir metinde model
-    // hiç çalışmaz — hem sözleşme hem de maliyet gereği.
-    if (!_isLoaded || _session == null || baseResult.risk == RiskLevel.temiz) {
-      return baseResult;
-    }
+  /// Modelin metni saldırgan bulma olasılığı [0,1]; model yoksa `null`.
+  ///
+  /// Ayrı bir isolate'te çalışır; arayüz iş parçacığını bekletmez. Sonuç
+  /// yalnızca şeffaflık panelinde gösterilir.
+  Future<double?> secondOpinion(String text) async {
+    final session = _session;
+    if (!_isLoaded || session == null) return null;
 
-    try {
-      final modelRisk = _modelProbability(text);
-      if (modelRisk == null || modelRisk <= _modelThreshold) return baseResult;
-
-      // Model aynı fikirde: iki bağımsız yöntemin ortalaması, kural motorunun
-      // skorundan YÜKSEKSE kullanılır. Düşükse kural motorunun skoru kalır.
-      final blended = (baseResult.toxicity + modelRisk) / 2;
-      if (blended <= baseResult.toxicity) return baseResult;
-
-      return CivilityAnalysis(
-        text: baseResult.text,
-        toxicity: blended,
-        civilityScore: ((1.0 - blended) * 100).round().clamp(0, 100),
-        risk: _riskFrom(blended),
-        findings: baseResult.findings,
-        signals: baseResult.signals,
-        elapsed: baseResult.elapsed,
-        needsSupport: baseResult.needsSupport,
-      );
-    } catch (e) {
-      debugPrint('ONNX çıkarım hatası: $e');
-      return baseResult;
-    }
-  }
-
-  double? _modelProbability(String text) {
     final runOptions = OrtRunOptions();
     final inputTensor = OrtValueTensor.createTensorWithDataList([text], [1, 1]);
     try {
-      final outputs = _session!.run(runOptions, {'input_text': inputTensor});
+      final outputs =
+          await session.runAsync(runOptions, {'input_text': inputTensor});
+      if (outputs == null) return null;
       try {
         final probs = outputs.length > 1
             ? outputs[1]?.value as List<List<double>>?
@@ -134,19 +109,12 @@ class HybridOnnxClassifier implements ToxicityClassifier {
           element?.release();
         }
       }
+    } catch (e) {
+      debugPrint('ONNX ikinci görüş hatası: $e');
+      return null;
     } finally {
       inputTensor.release();
       runOptions.release();
     }
-  }
-
-  /// Kural motoruyla AYNI eşikler (`LexicalTurkishClassifier._riskFrom`).
-  /// Farklı eşik kullanmak, aynı skorun iki ekranda iki farklı basamak
-  /// göstermesine yol açardı.
-  RiskLevel _riskFrom(double toxicity) {
-    if (toxicity < 0.15) return RiskLevel.temiz;
-    if (toxicity < 0.40) return RiskLevel.dikkat;
-    if (toxicity < 0.70) return RiskLevel.riskli;
-    return RiskLevel.yuksek;
   }
 }

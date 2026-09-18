@@ -38,12 +38,33 @@ abstract final class Civility {
   static RewriteSuggester? _suggester;
   static bool _hybridReady = false;
 
+  /// Deterministik çekirdek — melez katman da bunu sarar. Tek örnektir.
+  static LexicalTurkishClassifier? _base;
+
+  static LexicalTurkishClassifier get _cekirdek =>
+      _base ??= LexicalTurkishClassifier();
+
   /// Uygulamadaki tek sınıflandırıcı.
   ///
   /// İlk erişimde deterministik çekirdek kurulur. `init()` daha sonra
   /// melez sürümle değiştirir; arada kalan çağrılar hata almaz.
-  static ToxicityClassifier get engine =>
-      _engine ??= LexicalTurkishClassifier();
+  static ToxicityClassifier get engine => _engine ??= _cekirdek;
+
+  static bool _isitildi = false;
+
+  /// İlk çözümlemenin maliyetini öne alır (docs/24 · madde 38).
+  ///
+  /// Ölçüm (AOT): ısıtılmamış motorda ilk çözümleme 55,9 ms — kullanıcının
+  /// İLK tuş vuruşunda üç kare kaybı ve risk şeridinde "55931 µs". Isıtmadan
+  /// sonra ilk çözümleme ~100 µs. `main()` bunu ilk kare çizildikten sonra
+  /// çağırır: açılış gecikmez, maliyet kullanıcı akışı okurken ödenir.
+  static Future<void> warmUp() async {
+    if (_isitildi) return;
+    _isitildi = true;
+    _cekirdek.warmUp();
+    // Yeniden yazıcının düzenli ifadeleri de ilk kullanımda derlenir.
+    await suggester.suggestTones(_cekirdek.analyze('sen tam bir aptalsın'));
+  }
 
   /// Yeniden yazıcı — cihaz üstü, ağ yok.
   static RewriteSuggester get suggester =>
@@ -55,7 +76,7 @@ abstract final class Civility {
   /// Melez katmanı kurar. Hata fırlatmaz — kurulamazsa ürün deterministik
   /// çekirdekle çalışmaya devam eder.
   static Future<void> init() async {
-    final base = LexicalTurkishClassifier();
+    final base = _cekirdek;
     _engine = base;
     // Yeniden yazıcı TEMEL motoru kullanır: öneri üretimi örüntü
     // tablolarını okur, olasılık skoru değil.
@@ -65,11 +86,25 @@ abstract final class Civility {
       final hybrid = HybridOnnxClassifier(base);
       await hybrid.init();
       _engine = hybrid;
+      _hybrid = hybrid;
       _hybridReady = hybrid.isLoaded;
     } catch (e) {
       debugPrint('Melez katman kurulamadı, deterministik çekirdek sürüyor: $e');
       _hybridReady = false;
     }
+  }
+
+  static HybridOnnxClassifier? _hybrid;
+
+  /// ONNX modelinin ikinci görüşü [0,1] — yalnızca BİLGİ amaçlı.
+  ///
+  /// Karar ve basamak her zaman kural motorunundur (docs/24 · madde 22):
+  /// paketlenen model ölçüldüğünde gündelik masum cümlelerin %72'sini
+  /// saldırgan buldu. Model yoksa (web, yükleme hatası) `null`.
+  static Future<double?> secondOpinion(String text) async {
+    final hybrid = _hybrid;
+    if (!_hybridReady || hybrid == null) return null;
+    return hybrid.secondOpinion(text);
   }
 
   /// Testlerin kendi motorunu takabilmesi için.
@@ -80,6 +115,7 @@ abstract final class Civility {
   }) {
     _engine = engine;
     _suggester = suggester;
+    _hybrid = null;
     _hybridReady = false;
   }
 
@@ -104,23 +140,27 @@ abstract final class Civility {
 
   /// AOT derlenmiş motorun ölçülen gecikmesi.
   ///
-  /// Kaynak: `packages/civility_core/bin/benchmark.dart`, 13 Eylül 2026,
-  /// 11 senaryo × 2000 tekrar, üç turun ortancası. "Mesaj" 200 karakterin
-  /// altındaki 9 senaryodur (önceki raporların kapsamı); "uzun gönderi"
-  /// ~600 ve ~2.400 karakterdir.
+  /// Kaynak: `packages/civility_core/bin/benchmark.dart`, 15 Eylül 2026,
+  /// 11 senaryo × 2000 tekrar. "Mesaj" 200 karakterin altındaki 9
+  /// senaryodur (önceki raporların kapsamı); "uzun gönderi" ~600 ve ~2.400
+  /// karakterdir.
   ///
   /// Geçmiş: 219 → 159 → 357 µs. Uzun gönderi ilk kez 13 Eylül'de ölçüldü
   /// ve 600 karakterde kare bütçesinin AŞILDIĞI görüldü (p99 16,5 ms).
-  /// Sözlük dizini ve örüntü ön filtresinden sonra AYNI makinede, aynı
-  /// araçla: mesaj p50 1.104 → 206 µs, 2.400 kr p99 75,9 → 10,2 ms.
-  /// (O oturumda makine sabahkinden yavaştı; eski motor mesajda 357 değil
-  /// 1.104 µs verdi. Karşılaştırma bu yüzden aynı turda yapıldı.)
-  static const String gecikmeP50 = '206 µs';
-  static const String gecikmeP99 = '2.519 µs';
+  /// İki hızlandırma geçişi yapıldı, ikisi de çıktıyı değiştirmeden:
+  ///   • sözlük dizini + örüntü ön filtresi (docs/19)
+  ///   • karakter başına String ayırmanın kaldırılması (docs/28)
+  /// İkinci geçişte AYNI makinede, aynı araçla: mesaj p50 169 → 84 µs,
+  /// 2.400 kr p99 8,8 → 2,7 ms.
+  ///
+  /// Mutlak sayı makinenin anlık durumuna göre kat kat oynar; bu yüzden her
+  /// karşılaştırma aynı turda yapılır ve karşılaştırılabilir olan orandır.
+  static const String gecikmeP50 = '84 µs';
+  static const String gecikmeP99 = '1.219 µs';
 
   /// En pahalı senaryo: ~2.400 karakterlik gönderi.
-  static const String gecikmeUzunP99 = '10,2 ms';
-  static const String kareButcesiUzunP99 = '%64';
+  static const String gecikmeUzunP99 = '2,7 ms';
+  static const String kareButcesiUzunP99 = '%17';
 
   /// Etiketli değerlendirme örneklerinin toplamı — çalışma anında sayılır.
   static int get etiketliOrnek =>
@@ -133,18 +173,25 @@ abstract final class Civility {
       Generalization5Dataset.cases.length +
       EverydayDataset.cases.length +
       DirectionDataset.cases.length +
-      StanceDataset.cases.length;
+      StanceDataset.cases.length +
+      IdentityAxesDataset.cases.length +
+      IdentityAxesBlindDataset.cases.length +
+      IdentityAxesBlind2Dataset.cases.length;
 
   /// Geçerli genelleme ölçümü — bugünkü motorun hiç görmediği küme.
   ///
   /// Kaynak: docs/18. Küme ölçümden önce commit edildi (`9179ee4`). İlk
-  /// geçiş %96,4 / %45,0 idi; gösterilen sayı, küme DIŞINDA bulunan bir
-  /// yanlış alarm onarımından (docs/21, D7) sonraki ikinci geçiştir — küme
-  /// yanmadı, iki saldırı örneği kaçtı (docs/18 §7).
+  /// geçiş %96,4 / %45,0 idi. Gösterilen sayı, küme DIŞINDA bulunan
+  /// onarımlardan sonraki altıncı geçiştir: D7 (docs/21) iki saldırı örneğini
+  /// kaçırdı; D9 (docs/23, kod denetimi) kesme işaretinin tırnak sayılmasını
+  /// düzeltti ve kümenin tek yanlış pozitifi kendiliğinden temizlendi;
+  /// docs/25 ve docs/26 birer örnek daha kazandırdı. Altıncı geçişteki
+  /// +1 örnek (`karşıma çıkma, iyi olmaz`) KÖR DEĞİLDİR — onu yakalayan
+  /// örüntünün açıklaması kümenin cümlesini alıntılar (docs/30).
   static const String olcumOzeti =
-      'Geçerli ayrık küme (İP-29) · kesinlik %96,2 · duyarlılık %41,7';
+      'Geçerli ayrık küme (İP-29) · kesinlik %100,0 · duyarlılık %46,7';
 
   /// Kapsam satırı — sayılar çalışma anında hesaplanır.
   static String get olcumKapsami =>
-      '10 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
+      '13 küme · $etiketliOrnek etiketli örnek · $sozlukGirdisi sözlük girdisi';
 }

@@ -21,6 +21,7 @@
 // kalmıştı ve renkler sabit yazılıydı (koyu tema çalışmıyordu).
 // =============================================================================
 
+import 'package:civility_core/civility_core.dart' show CivilityCoreSurum;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -28,6 +29,7 @@ import '../../core/civility/civility_runtime.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_surfaces.dart';
+import '../intro/intro_tour.dart';
 
 /// Bir bileşenin gerçek durumu.
 enum FeatureStatus { working, planned, outOfScope }
@@ -69,12 +71,21 @@ class AboutScreen extends StatelessWidget {
           Center(
             child: Text(
               'Cihaz üstü Türkçe sosyal yapay zekâ katmanı\n'
-              'Sürüm 1.0.0 · Prototip · Takım Aliz AI',
+              'Motor sürümü ${CivilityCoreSurum.surum} · Prototip · Takım Aliz AI',
               textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 13, color: p.textSecondary, height: 1.45),
             ),
           ).animate().fadeIn(delay: 120.ms),
+
+          const SizedBox(height: AppSpacing.base),
+          Center(
+            child: OutlinedButton.icon(
+              onPressed: () => IntroTour.show(context),
+              icon: const Icon(Icons.play_circle_outline_rounded, size: 18),
+              label: const Text('Üslup nasıl çalışır?'),
+            ),
+          ),
 
           const SizedBox(height: AppSpacing.xl),
 
@@ -111,6 +122,19 @@ class AboutScreen extends StatelessWidget {
                   status: FeatureStatus.working,
                 ),
                 const _FeatureRow(
+                  icon: Icons.tune_rounded,
+                  label: 'Kullanıcı ayarları',
+                  detail: 'Aç/kapat · 3 hassasiyet · argo ve alay susturma · '
+                      'klavyeyle ortak',
+                  status: FeatureStatus.working,
+                ),
+                const _FeatureRow(
+                  icon: Icons.flag_outlined,
+                  label: '“Bu uyarı yanlış” bildirimi',
+                  detail: 'Metin taşımaz · k-anonimlik altında sayılır',
+                  status: FeatureStatus.working,
+                ),
+                const _FeatureRow(
                   icon: Icons.insights_rounded,
                   label: 'Topluluk sağlığı paneli',
                   detail: 'Anonim sinyal · k-anonimlik (k=5)',
@@ -119,8 +143,8 @@ class AboutScreen extends StatelessWidget {
                 const _FeatureRow(
                   icon: Icons.science_rounded,
                   label: 'Ayrık küme ölçümü',
-                  detail: 'İP-29 · kesinlik %96,2 · duyarlılık %41,7 · '
-                      'F0.5 %76,2 (ilk geçiş %96,4 · %45,0)',
+                  detail: 'İP-29 · kesinlik %100,0 · duyarlılık %46,7 · '
+                      'F0.5 %81,4 (ilk geçiş %96,4 · %45,0)',
                   status: FeatureStatus.working,
                 ),
                 const _FeatureRow(

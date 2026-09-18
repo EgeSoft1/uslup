@@ -35,4 +35,7 @@ class HybridOnnxClassifier implements ToxicityClassifier {
 
   @override
   CivilityAnalysis analyze(String text) => _baseClassifier.analyze(text);
+
+  /// Web'de model yok; ikinci görüş hiç üretilmez.
+  Future<double?> secondOpinion(String text) async => null;
 }

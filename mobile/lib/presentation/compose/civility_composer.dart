@@ -35,10 +35,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/civility/civility_runtime.dart';
 import '../../core/civility/civility_text_controller.dart';
+import '../../core/civility/uslup_ayar_denetleyici.dart';
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
+import '../settings/uslup_ayarlari_screen.dart';
 import '../uslup/demo_scenarios.dart';
 import '../widgets/social_widgets.dart';
+import 'suggestion_morph.dart';
 
 /// Yazım kutusunun kullanıldığı yer. Yalnızca metinleri değiştirir;
 /// çözümleme davranışı her yerde birebir aynıdır.
@@ -59,11 +62,22 @@ class ComposerResult {
     required this.text,
     required this.analysis,
     required this.outcome,
+    this.yanlisAlarm = false,
+    this.olcumeDahil = true,
   });
 
   final String text;
   final CivilityAnalysis analysis;
   final SignalOutcome outcome;
+
+  /// Kullanıcı bu gönderimdeki uyarıya "Bu uyarı yanlış" dedi (docs/27).
+  final bool yanlisAlarm;
+
+  /// Gönderim topluluk ölçümüne katılmalı mı?
+  ///
+  /// Katman kapalıyken HAYIR: çözümleme gösterilmediği için her gönderim
+  /// "temiz" görünür ve paneldeki müdahale oranını sahte biçimde düşürürdü.
+  final bool olcumeDahil;
 
   /// Kullanıcı uyarıyı gördü ve metnini değiştirdi.
   bool get revised =>
@@ -122,12 +136,45 @@ class CivilityComposer extends StatefulWidget {
   State<CivilityComposer> createState() => _CivilityComposerState();
 }
 
-class _CivilityComposerState extends State<CivilityComposer> {
+class _CivilityComposerState extends State<CivilityComposer>
+    with TickerProviderStateMixin {
   late final CivilityTextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
 
+  // ── Öneri uygulama deneyimi (docs/24 · madde 2–4) ────────────────────────
+
+  /// Öneri uygulanırken metin kutusunun yerine çizilen dönüşüm. Doluyken
+  /// kutu salt görüntüdür ve gönderim kapalıdır.
+  ({String from, String to, int fromScore})? _morph;
+
+  /// Yazı kutusu — öneri uygulanırken görünür alana kaydırmak için.
+  final GlobalKey _inputBoxKey = GlobalKey();
+
+  /// Son uygulanan öneri — "Geri al" bunu kullanır. Kullanıcı metne kendisi
+  /// dokunursa ya da süre dolarsa silinir.
+  ({String original, String applied, int fromScore})? _undo;
+
+  /// "Geri al" düğmesinin görünür kaldığı süre; düğmenin altındaki ince
+  /// çubuk bu sayacı gösterir.
+  late final AnimationController _undoCountdown = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 6),
+  )..addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() => _undo = null);
+      }
+    });
+
   CivilityAnalysis? _analysis;
   RewriteSuggestion? _suggestion;
+
+  /// Aynı önerinin ton seçenekleri (docs/24 · madde 5). `_suggestion` her
+  /// zaman bu listeden seçili olandır; liste tek elemanlıysa seçici çizilmez.
+  List<RewriteSuggestion> _tones = const [];
+
+  /// ONNX modelinin bilgi amaçlı ikinci görüşü — hangi metin için üretildiği
+  /// ile birlikte. Yalnızca model yüklüyse (cihaz sürümü) dolar.
+  ({String text, double olasilik})? _ikinciGorus;
 
   /// Bu yazım oturumunda hiç `riskli`/`yüksek` seviyeye çıkıldı mı?
   ///
@@ -146,6 +193,10 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Yeniden girişi (re-entrancy) engelleyen bayrak.
   bool _analyzing = false;
 
+  /// En son çözümlenen metin. Yalnızca imleç/seçim değiştiğinde motor
+  /// yeniden çalışmasın diye tutulur.
+  String? _lastAnalyzedText;
+
   /// Uyarıya rağmen gönderimde kısa bir duraksama sürüyor mu?
   ///
   /// Dürtme (nudge) yaklaşımı: gönderim ENGELLENMEZ, yalnızca 1,5 saniye
@@ -156,6 +207,45 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Yeniden yazma önerisi hazırlanıyor mu?
   bool _suggestionPending = false;
 
+  // ── "Bu uyarı yanlış" (docs/27) ──────────────────────────────────────────
+
+  /// Kullanıcının itiraz ettiği metin. Kutudaki metin bununla aynı kaldıkça
+  /// uyarı gizlenir; metin değişirse katman normal çalışmaya döner. Gönderim
+  /// sinyaline yalnızca "itiraz edildi: evet/hayır" girer.
+  String? _itirazEdilenMetin;
+
+  bool get _itirazSuruyor =>
+      _itirazEdilenMetin != null && _itirazEdilenMetin == _controller.text;
+
+  /// Kullanıcı ayarı bu kutuda uygulanır mı?
+  ///
+  /// Üslup panelindeki deneme kutusu motorun ÖLÇÜLEN davranışını gösterir;
+  /// jüriye ya da kullanıcıya "katman ne yapıyor" sorusunun cevabıdır ve
+  /// kişisel ayardan etkilenmez. Yayın yüzeyleri (gönderi, yanıt,
+  /// biyografi) ayarı izler.
+  bool get _ayarUygulanir => widget.surface != ComposerSurface.deneme;
+
+  bool get _katmanKapali =>
+      _ayarUygulanir && !UslupAyarDenetleyici.instance.value.etkin;
+
+  /// Motor çözümlemesi + kullanıcı ayarı. Motor her zaman aynı çalışır;
+  /// ayar yalnızca yansıtmayı değiştirir (`MudahalePolitikasi`).
+  CivilityAnalysis _cozumle(String text) {
+    final ham = Civility.engine.analyze(text);
+    return _ayarUygulanir ? UslupAyarDenetleyici.instance.yansit(ham) : ham;
+  }
+
+  void _ayarDegisti() {
+    if (!mounted) return;
+    // Aynı metin yeni ayarla yeniden yansıtılır.
+    _lastAnalyzedText = null;
+    if (_controller.text.isEmpty) {
+      setState(() {});
+      return;
+    }
+    _onTextChanged();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -163,6 +253,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
       text: widget.initialText,
       resolveColor: _severityColorStatic,
     )..addListener(_onTextChanged);
+    UslupAyarDenetleyici.instance.addListener(_ayarDegisti);
 
     if (widget.initialText.isEmpty) return;
 
@@ -174,9 +265,10 @@ class _CivilityComposerState extends State<CivilityComposer> {
     // `_analyzing` bayrağı burada da gerekli: `findings` atanınca denetleyici
     // dinleyicilerini uyarır ve `_onTextChanged` dolaylı olarak tetiklenirdi.
     _analyzing = true;
-    final analysis = Civility.engine.analyze(widget.initialText);
+    final analysis = _cozumle(widget.initialText);
     _controller.findings = analysis.findings;
     _analysis = analysis;
+    _lastAnalyzedText = widget.initialText;
     _sawWarning =
         analysis.risk == RiskLevel.riskli || analysis.risk == RiskLevel.yuksek;
     _analyzing = false;
@@ -184,6 +276,8 @@ class _CivilityComposerState extends State<CivilityComposer> {
 
   @override
   void dispose() {
+    UslupAyarDenetleyici.instance.removeListener(_ayarDegisti);
+    _undoCountdown.dispose();
     _controller
       ..removeListener(_onTextChanged)
       ..dispose();
@@ -196,29 +290,47 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Her tuş vuruşunda çalışır.
   ///
   /// Gecikmeli tetikleme (debounce) KASITLI OLARAK YOKTUR. AOT derlemede
-  /// mesajda p50 206 µs; 2.400 karakterlik gönderide p99 bile 10,2 ms,
-  /// 16 ms'lik kare bütçesinin %64'ü. Geciktirmek yalnızca geri bildirimi
+  /// mesajda p50 84 µs; 2.400 karakterlik gönderide p99 bile 2,7 ms,
+  /// 16 ms'lik kare bütçesinin %17'si. Geciktirmek yalnızca geri bildirimi
   /// yavaşlatırdı. Kutuda karakter sınırı yok; bu yüzden uzun gönderi de
-  /// ölçülür. Ölçüm: `packages/civility_core/bin/benchmark.dart` (13 Eylül 2026).
+  /// ölçülür. Ölçüm: `packages/civility_core/bin/benchmark.dart` (15 Eylül 2026).
   void _onTextChanged() {
     if (_analyzing) return;
+
+    // ── YALNIZCA METİN DEĞİŞİNCE (denetim · docs/23) ─────────────────────
+    // `TextEditingController` imleç ve seçim değişiminde de bildirim yapar.
+    // Önceden kullanıcı metne dokunup imleci taşıdığında motor yeniden
+    // çalışıyor, hazır öneri silinip yeniden isteniyor ve kart titriyordu.
+    final text = _controller.text;
+    if (text == _lastAnalyzedText) return;
+    _lastAnalyzedText = text;
+
     _analyzing = true;
 
     final CivilityAnalysis analysis;
     try {
-      analysis = Civility.engine.analyze(_controller.text);
+      analysis = _cozumle(_controller.text);
       // İşaretleme aralıklarını denetleyiciye ver; o da metni yeniden çizer.
-      _controller.findings = analysis.findings;
+      // İtiraz edilen metinde vurgu da kalkar.
+      _controller.findings = _itirazSuruyor ? const [] : analysis.findings;
     } finally {
       _analyzing = false;
     }
 
-    final warned =
-        analysis.risk == RiskLevel.riskli || analysis.risk == RiskLevel.yuksek;
+    final warned = !_itirazSuruyor &&
+        (analysis.risk == RiskLevel.riskli || analysis.risk == RiskLevel.yuksek);
+
+    // Kullanıcı uygulanan öneriyi kendisi değiştirdiyse geri alma teklifi
+    // artık anlamsızdır: geri almak onun yazdıklarını silerdi.
+    final undo = _undo;
+    final undoStale = undo != null && text != undo.applied;
+    if (undoStale) _undoCountdown.stop();
 
     setState(() {
       _analysis = analysis;
       _suggestion = null;
+      _tones = const [];
+      if (undoStale) _undo = null;
       if (warned) {
         _sawWarning = true;
         _reasonsExpanded = true;
@@ -230,15 +342,33 @@ class _CivilityComposerState extends State<CivilityComposer> {
 
     if (!warned) return;
 
-    Civility.suggester.suggest(analysis).then((suggestion) {
+    // İkinci görüş ayrı isolate'te üretilir; gelene kadar kullanıcı yazmaya
+    // devam ettiyse eski metnin görüşü gösterilmez.
+    if (Civility.hybridReady) {
+      Civility.secondOpinion(analysis.text).then((olasilik) {
+        if (!mounted || olasilik == null) return;
+        if (_controller.text != analysis.text) return;
+        setState(() =>
+            _ikinciGorus = (text: analysis.text, olasilik: olasilik));
+      });
+    }
+
+    Civility.suggester.suggestTones(analysis).then((tones) {
       if (!mounted) return;
       // Kullanıcı bu arada yazmaya devam etmiş olabilir — eski öneriyi gösterme.
       if (_controller.text != analysis.text) return;
       HapticFeedback.lightImpact();
       setState(() {
-        _suggestion = suggestion;
+        _tones = tones;
+        _suggestion = tones.isEmpty ? null : tones.first;
         _suggestionPending = false;
       });
+    }, onError: (Object error, StackTrace stack) {
+      // Öneri üretilemezse bekleme kartı sonsuza dek dönmesin; uyarı paneli
+      // yerinde kalır, yalnızca öneri gelmez.
+      debugPrint('Öneri üretilemedi: $error');
+      if (!mounted || _controller.text != analysis.text) return;
+      setState(() => _suggestionPending = false);
     });
   }
 
@@ -286,17 +416,24 @@ class _CivilityComposerState extends State<CivilityComposer> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
-    final analysis = _analysis ?? Civility.engine.analyze(text);
+    final analysis = _analysis ?? _cozumle(text);
     final risk = analysis.risk;
 
+    // Kullanıcı bu metnin uyarısına zaten itiraz etti: aynı soruyu ikinci
+    // kez sormak ve düşünme payı eklemek, itirazı yok saymak olurdu.
+    // Sistem zaten hiçbir basamakta engellemez.
+    final itiraz = _itirazSuruyor;
+
     // Yalnızca EN ÜST basamakta onay istenir.
-    if (risk == RiskLevel.yuksek) {
+    if (risk == RiskLevel.yuksek && !itiraz) {
       final proceed = await _confirmHighRisk(analysis);
       if (!mounted || proceed != true) return;
     }
-    
+
     // Uyarıya rağmen gönderimde kısa, AÇIKLAMALI bir duraksama.
-    if (_sawWarning && (risk == RiskLevel.riskli || risk == RiskLevel.yuksek)) {
+    if (!itiraz &&
+        _sawWarning &&
+        (risk == RiskLevel.riskli || risk == RiskLevel.yuksek)) {
       setState(() => _isFrictionDelaying = true);
       HapticFeedback.lightImpact();
       await Future.delayed(const Duration(milliseconds: 1500));
@@ -309,16 +446,54 @@ class _CivilityComposerState extends State<CivilityComposer> {
       text: text,
       analysis: analysis,
       outcome: _outcome(risk),
+      // İtiraz yalnızca GÖNDERİLEN metnin uyarısına aitse sayılır.
+      yanlisAlarm: itiraz,
+      olcumeDahil: !_katmanKapali,
     ));
 
     _controller.clear();
+    _undoCountdown.stop();
     setState(() {
       _analysis = null;
       _suggestion = null;
       _sawWarning = false;
       _acceptedSuggestion = false;
       _isFrictionDelaying = false;
+      _undo = null;
+      _itirazEdilenMetin = null;
     });
+  }
+
+  /// "Bu uyarı yanlış" — kullanıcı uyarıya itiraz eder (docs/27).
+  ///
+  /// Metin hiçbir yere gönderilmez. Uyarı bu metin için gizlenir; gönderim
+  /// anında topluluk sinyaline yalnızca "itiraz edildi: evet" girer ve
+  /// panelde k-anonimlik eşiğini geçerse sayılır.
+  void _uyariyaItirazEt() {
+    HapticFeedback.selectionClick();
+    _controller.findings = const [];
+    setState(() {
+      _itirazEdilenMetin = _controller.text;
+      _suggestion = null;
+      _tones = const [];
+      _suggestionPending = false;
+    });
+  }
+
+  void _itiraziGeriAl() {
+    HapticFeedback.selectionClick();
+    final analysis = _analysis;
+    if (analysis != null) _controller.findings = analysis.findings;
+    setState(() => _itirazEdilenMetin = null);
+    // Öneri yeniden istensin.
+    _lastAnalyzedText = null;
+    _onTextChanged();
+  }
+
+  void _ayarlariAc() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const UslupAyarlariScreen()),
+    );
   }
 
   Future<bool?> _confirmHighRisk(CivilityAnalysis analysis) {
@@ -392,13 +567,75 @@ class _CivilityComposerState extends State<CivilityComposer> {
     );
   }
 
+  /// Öneriyi uygular — önce dönüşüm animasyonu, sonra metin.
+  ///
+  /// Metin denetleyiciye dönüşüm BİTTİĞİNDE yazılır: arada motor eski
+  /// metinle çalışmaya devam eder, uyarı paneli ve risk şeridi animasyon
+  /// boyunca "önceki" hâli gösterir ve bitişte hep birlikte temize geçer.
   void _applySuggestion(RewriteSuggestion suggestion) {
+    if (_morph != null) return;
     HapticFeedback.selectionClick();
+    // Öneri kartı dönüşüm bitene kadar yerinde ("Uygulanıyor…") kalır.
+    // Kartı hemen kaldırmak içeriği kısaltıyor, kaydırma konumu kayıyor ve
+    // dönüşümün göründüğü kutu ekranın üstünden kırpılıyordu.
+    setState(() {
+      _morph = (
+        from: _controller.text,
+        to: suggestion.text,
+        fromScore: _analysis?.civilityScore ?? 0,
+      );
+    });
+
+    // Kullanıcı düğmeye basmak için aşağı kaydırmış olabilir; dönüşüm
+    // ekranın dışında oynarsa hiç görülmez. Kutu görünür alana getirilir.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final kutu = _inputBoxKey.currentContext;
+      if (kutu == null || !mounted) return;
+      Scrollable.ensureVisible(
+        kutu,
+        duration: AppDurations.normal,
+        curve: AppCurves.standard,
+        alignment: 0.05,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+      );
+    });
+  }
+
+  void _finishMorph() {
+    final morph = _morph;
+    if (morph == null || !mounted) return;
+
     _acceptedSuggestion = true;
     _controller.value = TextEditingValue(
-      text: suggestion.text,
-      selection: TextSelection.collapsed(offset: suggestion.text.length),
+      text: morph.to,
+      selection: TextSelection.collapsed(offset: morph.to.length),
     );
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _morph = null;
+      _suggestion = null;
+      _undo = (
+        original: morph.from,
+        applied: morph.to,
+        fromScore: morph.fromScore,
+      );
+    });
+    _undoCountdown.forward(from: 0);
+  }
+
+  /// Uygulanan öneriyi geri alır. Karar kullanıcınınsa geri dönüş de onundur.
+  void _undoSuggestion() {
+    final undo = _undo;
+    if (undo == null) return;
+    HapticFeedback.selectionClick();
+    _undoCountdown.stop();
+    _acceptedSuggestion = false;
+    setState(() => _undo = null);
+    _controller.value = TextEditingValue(
+      text: undo.original,
+      selection: TextSelection.collapsed(offset: undo.original.length),
+    );
+    _focusNode.requestFocus();
   }
 
   // ─── Görünüm ──────────────────────────────────────────────────────────────
@@ -421,7 +658,8 @@ class _CivilityComposerState extends State<CivilityComposer> {
   Widget build(BuildContext context) {
     final p = context.palette;
     final analysis = _analysis;
-    final risk = analysis?.risk ?? RiskLevel.temiz;
+    final itiraz = _itirazSuruyor;
+    final risk = itiraz ? RiskLevel.temiz : (analysis?.risk ?? RiskLevel.temiz);
     final hasText = _controller.text.trim().isNotEmpty;
     final showBorder = hasText && risk != RiskLevel.temiz;
     final riskColor = _riskColor(p, risk);
@@ -432,6 +670,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
       children: [
         if (widget.replyingTo != null) _replyingBanner(p),
         AnimatedContainer(
+          key: _inputBoxKey,
           duration: AppDurations.fast,
           curve: AppCurves.standard,
           decoration: BoxDecoration(
@@ -487,11 +726,14 @@ class _CivilityComposerState extends State<CivilityComposer> {
         ],
 
         // ── Müdahale merdiveni · 3. ve 4. basamak ────────────────────────
-        if (analysis != null && analysis.hasFindings) ...[
+        if (analysis != null && analysis.hasFindings && !itiraz) ...[
           const SizedBox(height: AppSpacing.md),
           _reasonPanel(p, analysis),
         ],
-        if (_suggestionPending) ...[
+        if (itiraz && hasText) ...[
+          const SizedBox(height: AppSpacing.md),
+          _itirazBandi(p),
+        ] else if (_suggestionPending) ...[
           const SizedBox(height: AppSpacing.md),
           _suggestionPendingCard(p),
         ] else if (_suggestion != null) ...[
@@ -523,6 +765,7 @@ class _CivilityComposerState extends State<CivilityComposer> {
   /// Liste `demo_scenarios.dart` içindedir; panelin bağlam karnesi de aynı
   /// listeyi okur.
   void _loadScenario(String text) {
+    if (_morph != null) return;
     HapticFeedback.selectionClick();
     _controller.value = TextEditingValue(
       text: text,
@@ -665,27 +908,31 @@ class _CivilityComposerState extends State<CivilityComposer> {
   }
 
   Widget _inputRow(AppPalette p) {
-    final field = TextField(
-      controller: _controller,
-      focusNode: _focusNode,
-      autofocus: widget.autofocus,
-      readOnly: _isFrictionDelaying,
-      minLines: widget.minLines,
-      maxLines: widget.maxLines,
-      textCapitalization: TextCapitalization.sentences,
-      keyboardType: TextInputType.multiline,
-      style: TextStyle(fontSize: 16, color: p.textPrimary, height: 1.45),
-      decoration: InputDecoration(
-        hintText: _hint,
-        hintStyle: TextStyle(color: p.textTertiary, fontSize: 15.5),
-        border: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        filled: false,
-        isDense: true,
-        contentPadding: EdgeInsets.zero,
-      ),
-    );
+    final textStyle = TextStyle(fontSize: 16, color: p.textPrimary, height: 1.45);
+    final morph = _morph;
+
+    final Widget field = morph != null
+        // Dönüşüm sırasında kutu aynı yazı stiliyle çizilen bir animasyondur;
+        // bittiğinde gerçek kutu aynı yere, yeni metinle geri gelir.
+        ? ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: textStyle.fontSize! * textStyle.height! * widget.minLines,
+            ),
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: SuggestionMorphText(
+                key: ValueKey(morph),
+                from: morph.from,
+                to: morph.to,
+                style: textStyle,
+                removedColor: p.danger,
+                addedColor: p.success,
+                addedBackground: p.successSoft,
+                onCompleted: _finishMorph,
+              ),
+            ),
+          )
+        : _textField(p, textStyle);
 
     if (!widget.showAvatar) return field;
 
@@ -696,6 +943,30 @@ class _CivilityComposerState extends State<CivilityComposer> {
         const SizedBox(width: AppSpacing.md),
         Expanded(child: field),
       ],
+    );
+  }
+
+  Widget _textField(AppPalette p, TextStyle textStyle) {
+    return TextField(
+      controller: _controller,
+      focusNode: _focusNode,
+      autofocus: widget.autofocus,
+      readOnly: _isFrictionDelaying,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
+      textCapitalization: TextCapitalization.sentences,
+      keyboardType: TextInputType.multiline,
+      style: textStyle,
+      decoration: InputDecoration(
+        hintText: _hint,
+        hintStyle: TextStyle(color: p.textTertiary, fontSize: 15.5),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        filled: false,
+        isDense: true,
+        contentPadding: EdgeInsets.zero,
+      ),
     );
   }
 
@@ -718,7 +989,9 @@ class _CivilityComposerState extends State<CivilityComposer> {
         if (widget.onSubmit != null) ...[
           const SizedBox(width: AppSpacing.sm),
           FilledButton(
-            onPressed: hasText && !_isFrictionDelaying ? _submit : null,
+            onPressed: hasText && !_isFrictionDelaying && _morph == null
+                ? _submit
+                : null,
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, 40),
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -757,6 +1030,43 @@ class _CivilityComposerState extends State<CivilityComposer> {
   Widget _riskMeter(
       AppPalette p, RiskLevel risk, Color riskColor, bool hasText) {
     final elapsed = _analysis?.elapsed.inMicroseconds;
+
+    // Katman kapalıyken şerit bunu söyler ve ayara götürür: kullanıcı neden
+    // uyarı almadığını bilmeli, katmanı kapattığını unutmuş olabilir.
+    if (_katmanKapali) {
+      return Semantics(
+        button: true,
+        label: 'Üslup kapalı. Ayarları açmak için dokun.',
+        child: ExcludeSemantics(
+          child: InkWell(
+            onTap: _ayarlariAc,
+            borderRadius: AppRadius.smAll,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.visibility_off_outlined,
+                      size: 14, color: p.textTertiary),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'Üslup kapalı · Ayarlar',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: p.textTertiary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Semantics(
       liveRegion: true,
@@ -870,6 +1180,30 @@ class _CivilityComposerState extends State<CivilityComposer> {
                       finding: finding,
                       color: _severityColor(p, finding.adjustedSeverity),
                     ),
+                  if (_ikinciGorus != null &&
+                      _ikinciGorus!.text == analysis.text) ...[
+                    // Bilgi amaçlıdır; basamak ve karar kural motorunundur
+                    // (docs/24 · madde 22).
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.model_training_rounded,
+                              size: 12, color: p.textTertiary),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              'İkinci görüş (cihazdaki ONNX modeli): '
+                              '%${(_ikinciGorus!.olasilik * 100).round()} '
+                              'saldırgan · karar kural motorunun',
+                              style: TextStyle(
+                                  fontSize: 11, color: p.textTertiary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 2),
                   Row(
                     children: [
@@ -886,6 +1220,37 @@ class _CivilityComposerState extends State<CivilityComposer> {
                       ),
                     ],
                   ),
+                  // Kullanıcı kontrolü (docs/27): itiraz ve ayar. Deneme
+                  // kutusunda yok — orada ölçülen davranış gösterilir.
+                  if (_ayarUygulanir) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: 2,
+                      children: [
+                        TextButton.icon(
+                          onPressed: _morph != null ? null : _uyariyaItirazEt,
+                          icon: const Icon(Icons.flag_outlined, size: 16),
+                          label: const Text('Bu uyarı yanlış'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: p.textSecondary,
+                            visualDensity: VisualDensity.compact,
+                            minimumSize: const Size(48, 40),
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: _ayarlariAc,
+                          icon: const Icon(Icons.tune_rounded, size: 16),
+                          label: const Text('Uyarı ayarları'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: p.textSecondary,
+                            visualDensity: VisualDensity.compact,
+                            minimumSize: const Size(48, 40),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -899,7 +1264,111 @@ class _CivilityComposerState extends State<CivilityComposer> {
     ).animate().fadeIn(duration: 200.ms).slideY(begin: 0.04, end: 0);
   }
 
+  /// İtiraz sonrası bant: bildirimin ne olduğunu ve ne OLMADIĞINI söyler.
+  Widget _itirazBandi(AppPalette p) {
+    return Semantics(
+      liveRegion: true,
+      label: 'Uyarı bu metin için gizlendi. Bildirimin metin içermez.',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.base, AppSpacing.md, AppSpacing.sm, AppSpacing.md),
+        decoration: BoxDecoration(
+          color: p.surfaceMuted,
+          borderRadius: AppRadius.mdAll,
+          border: Border.all(color: p.border),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.flag_rounded, size: 18, color: p.textSecondary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: ExcludeSemantics(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Teşekkürler — uyarı bu metin için gizlendi.',
+                      style: appBody(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: p.textPrimary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Gönderdiğinde topluluk ölçümüne yalnızca “bu uyarıya '
+                      'itiraz edildi” bilgisi girer; metnin ya da kelime '
+                      'girmez.',
+                      style: appBody(
+                          fontSize: 12, color: p.textSecondary, height: 1.35),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _itiraziGeriAl,
+              style: TextButton.styleFrom(
+                foregroundColor: p.textSecondary,
+                visualDensity: VisualDensity.compact,
+              ),
+              child: const Text('Geri al'),
+            ),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 180.ms);
+  }
+
   // ─── Yeniden yazma önerisi ────────────────────────────────────────────────
+
+  /// Ton seçici: "Net · Nazik · Diyalog". Aynı itiraz, farklı ilişki.
+  Widget _tonSecici(AppPalette p, RewriteSuggestion secili) {
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (final ton in _tones)
+          Semantics(
+            button: true,
+            selected: identical(ton, secili),
+            label: '${ton.tone} ton',
+            child: ExcludeSemantics(
+              child: Material(
+                color: identical(ton, secili)
+                    ? p.success
+                    : p.success.withValues(alpha: p.isDark ? 0.16 : 0.10),
+                borderRadius: AppRadius.pill,
+                child: InkWell(
+                  borderRadius: AppRadius.pill,
+                  onTap: _morph != null || identical(ton, secili)
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          setState(() => _suggestion = ton);
+                        },
+                  child: AnimatedContainer(
+                    duration: AppDurations.fast,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md, vertical: 6),
+                    child: Text(
+                      ton.tone ?? '',
+                      style: appBody(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: identical(ton, secili)
+                            ? Colors.white
+                            : (p.isDark ? p.success : p.textPrimary),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 
   Widget _suggestionCard(AppPalette p, RewriteSuggestion suggestion) {
     return Container(
@@ -928,15 +1397,29 @@ class _CivilityComposerState extends State<CivilityComposer> {
                 ),
               ),
               AppBadgePill(
-                label: '${suggestion.projectedCivilityScore} puan',
+                label: _analysis == null
+                    ? '${suggestion.projectedCivilityScore} puan'
+                    : '${_analysis!.civilityScore} → '
+                        '${suggestion.projectedCivilityScore} puan',
                 color: p.success,
               ),
             ],
           ),
+          if (_tones.length > 1) ...[
+            const SizedBox(height: AppSpacing.md),
+            _tonSecici(p, suggestion),
+          ],
           const SizedBox(height: AppSpacing.md),
-          Text(
-            suggestion.text,
+          // Önce/sonra farkı: kullanıcı neyin değişeceğini okumadan görür
+          // (docs/24 · madde 4). Aynı kalan kelimeler sade, silinecekler
+          // üstü çizili, eklenecekler vurgulu.
+          SuggestionDiffPreview(
+            original: _controller.text,
+            suggestion: suggestion.text,
             style: TextStyle(fontSize: 15, color: p.textPrimary, height: 1.45),
+            removedColor: p.danger,
+            addedColor: p.isDark ? p.success : p.textPrimary,
+            addedBackground: p.success.withValues(alpha: p.isDark ? 0.22 : 0.16),
           ),
           const SizedBox(height: AppSpacing.base),
           Row(
@@ -951,13 +1434,38 @@ class _CivilityComposerState extends State<CivilityComposer> {
                         appBody(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   // Karar KULLANICININ. Sistem asla kendiliğinden değiştirmez.
+                  // Dönüşüm sürerken düğme etkin görünür ama ikinci basışı
+                  // `_applySuggestion` yok sayar.
                   onPressed: () => _applySuggestion(suggestion),
-                  child: const Text('Bunu kullan'),
+                  child: AnimatedSwitcher(
+                    duration: AppDurations.fast,
+                    child: _morph == null
+                        ? const Text('Bunu kullan', key: ValueKey('kullan'))
+                        : const Row(
+                            key: ValueKey('uygulaniyor'),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Text('Uygulanıyor…'),
+                            ],
+                          ),
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
               TextButton(
-                onPressed: () => setState(() => _suggestion = null),
+                onPressed: _morph != null
+                    ? null
+                    : () => setState(() => _suggestion = null),
                 style: TextButton.styleFrom(foregroundColor: p.textTertiary),
                 child: const Text('Kendim yazarım'),
               ),
@@ -1082,27 +1590,117 @@ class _CivilityComposerState extends State<CivilityComposer> {
     ).animate().fadeIn(duration: 200.ms);
   }
 
+  /// Uyarı giderildiğinde görünen bant.
+  ///
+  /// Öneri uygulanarak giderildiyse (docs/24 · madde 2–3) nezaket puanı eski
+  /// değerden yenisine sayarak yükselir ve birkaç saniye "Geri al" sunulur;
+  /// düğmenin altındaki çubuk kalan süreyi gösterir.
   Widget _resolvedBanner(AppPalette p) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.base, vertical: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: p.successSoft,
-        borderRadius: AppRadius.mdAll,
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle_rounded, size: 18, color: p.success),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Text(
-              'Artık temiz görünüyor. Metin değişti, fikir yerinde kaldı.',
-              style: TextStyle(fontSize: 13.5, color: p.textPrimary),
+    final undo = _undo;
+    final current = _analysis?.civilityScore ?? 100;
+
+    return Semantics(
+      liveRegion: true,
+      label: undo != null
+          ? 'Öneri uygulandı. Nezaket puanı ${undo.fromScore}\'dan $current\'e '
+              'yükseldi. Geri almak için Geri al düğmesi.'
+          : 'Artık temiz görünüyor.',
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.base, AppSpacing.md, AppSpacing.sm, AppSpacing.md),
+        decoration: BoxDecoration(
+          color: p.successSoft,
+          borderRadius: AppRadius.mdAll,
+          border: Border.all(color: p.success.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.4, end: 1),
+                  duration: const Duration(milliseconds: 420),
+                  curve: Curves.easeOutBack,
+                  builder: (context, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
+                  child: Icon(Icons.check_circle_rounded,
+                      size: 22, color: p.success),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: ExcludeSemantics(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Artık temiz görünüyor. Metin değişti, fikir yerinde '
+                          'kaldı.',
+                          style: TextStyle(fontSize: 13.5, color: p.textPrimary),
+                        ),
+                        if (undo != null) ...[
+                          const SizedBox(height: 2),
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(
+                              begin: undo.fromScore.toDouble(),
+                              end: current.toDouble(),
+                            ),
+                            duration: const Duration(milliseconds: 900),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, _) => Text(
+                              'Nezaket puanı ${undo.fromScore} → '
+                              '${value.round()}',
+                              style: appBody(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: p.success,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures()
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                if (undo != null)
+                  TextButton.icon(
+                    onPressed: _undoSuggestion,
+                    icon: const Icon(Icons.undo_rounded, size: 16),
+                    label: const Text('Geri al'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: p.textSecondary,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+              ],
             ),
-          ),
-        ],
+            if (undo != null)
+              Padding(
+                padding: const EdgeInsets.only(
+                    top: AppSpacing.sm, right: AppSpacing.sm),
+                child: AnimatedBuilder(
+                  animation: _undoCountdown,
+                  builder: (context, _) => ClipRRect(
+                    borderRadius: AppRadius.pill,
+                    child: LinearProgressIndicator(
+                      value: 1 - _undoCountdown.value,
+                      minHeight: 2,
+                      backgroundColor: p.success.withValues(alpha: 0.12),
+                      valueColor: AlwaysStoppedAnimation(
+                          p.success.withValues(alpha: 0.55)),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
-    ).animate().fadeIn(duration: 200.ms);
+    ).animate().fadeIn(duration: 200.ms).slideY(begin: 0.06, end: 0);
   }
 }
 

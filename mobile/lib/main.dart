@@ -12,15 +12,19 @@
 // açılmaz hâle getirmez — yalnızca melez katmanı kapatır.
 // =============================================================================
 
+import 'dart:convert';
+
 import 'package:civility_core/civility_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'core/civility/civility_runtime.dart';
+import 'core/civility/uslup_ayar_denetleyici.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'presentation/home/adaptive_shell.dart';
+import 'presentation/intro/intro_tour.dart';
 
 /// Dokunmatik olmayan platformlarda (masaüstü tarayıcı, Windows) yön
 /// kilidi ve kenardan kenara sistem çubuğu ayarı anlamsızdır.
@@ -32,11 +36,19 @@ bool get _isMobilePlatform =>
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Klavye kanalı ONNX kurulumundan ÖNCE bağlanır. Önceden `init()`
+  // beklendikten sonra bağlanıyordu; klavye servisinin motoru başlattığı
+  // ilk saniyelerde gelen tuş vuruşları MissingPluginException ile
+  // sessizce düşüyordu. `Civility.engine` tembel kurulduğu için beklemeye
+  // gerek yok (denetim · docs/23).
+  if (_isMobilePlatform) _bindKeyboardService();
+
+  // Kullanıcının katman ayarı (docs/27). Kanal yoksa varsayılanda kalır.
+  await UslupAyarDenetleyici.instance.yukle();
+
   await Civility.init();
 
   if (_isMobilePlatform) {
-    _bindKeyboardService();
-
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -46,7 +58,31 @@ Future<void> main() async {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
-  runApp(const NSosyalApp());
+  // Tanıtım turu yalnızca gerçek açılışta gösterilir; testler ve ekran
+  // görüntüsü aracı `NSosyalApp()` ile turu atlar (docs/24 · madde 31).
+  runApp(const NSosyalApp(showIntro: true));
+
+  // İlk kare çizildikten sonra motoru ısıt: açılış beklemez, kullanıcının
+  // ilk tuş vuruşu da kare kaybetmez (docs/24 · madde 38).
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future<void>.delayed(const Duration(milliseconds: 300), Civility.warmUp);
+  });
+}
+
+/// Klavye servisinin kendi Dart giriş noktası (docs/24 · madde 27).
+///
+/// Klavye servisi önceden varsayılan `main()`'i çalıştırıyordu: görünmez bir
+/// motorda bütün uygulama arayüzü (akış, panel, yazı tipleri) kuruluyor,
+/// yön kilidi ve sistem çubuğu ayarı bir SERVİS bağlamında çağrılıyordu.
+/// Klavyenin ihtiyacı yalnızca motor ve kanaldır; bellek ve açılış süresi
+/// buna göre düşer. Kotlin tarafı bu işlevi adıyla çağırır.
+@pragma('vm:entry-point')
+Future<void> imeMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  _bindKeyboardService();
+  await Civility.init();
+  // Klavyede arayüz yok; ısıtma hemen yapılır, ilk tuş vuruşu beklemez.
+  await Civility.warmUp();
 }
 
 /// Klavye (IME) servisinden gelen metinleri yakalayıp çözümler.
@@ -74,21 +110,39 @@ void _bindKeyboardService() {
     final text = args?['text'] as String?;
     if (text == null || text.isEmpty) return null;
 
-    final analysis = Civility.engine.analyze(text);
+    // Uygulamada seçilen ayar klavye servisinden her istekte gelir (ayrı
+    // Flutter motoru, ortak yerel dosya). Bozuksa varsayılan (docs/27).
+    UslupAyarlari ayar = UslupAyarlari.varsayilan;
+    final hamAyar = args?['ayarlar'];
+    if (hamAyar is String && hamAyar.isNotEmpty) {
+      try {
+        ayar = UslupAyarlari.fromMap(jsonDecode(hamAyar));
+      } catch (_) {}
+    }
+
+    final analysis =
+        MudahalePolitikasi.uygula(Civility.engine.analyze(text), ayar);
 
     // Kendine zarar ifadesi: uyarı değil destek (docs/20, D4). Şeritte
     // değiştirilecek bir öneri yoktur.
+    // `sourceText`: sonucun HANGİ metin için üretildiği. Çözümleme
+    // eşzamansızdır; kullanıcı yazmaya devam ederken eski bir sonucun şeride
+    // düşmesi ve dokununca alanın TAMAMININ eski metnin önerisiyle
+    // değiştirilmesi, yeni yazılan kelimelerin kaybolması demekti. Klavye,
+    // alandaki metin bununla aynı değilse sonucu yok sayar (denetim · docs/23).
     if (analysis.needsSupport && !analysis.hasFindings) {
       await methodChannel.invokeMethod('updateSuggestion', {
         'risk': 'destek',
         'message': 'Zor bir an geçiriyor olabilirsin. Güvende değilsen 112.',
+        'sourceText': text,
       });
       return null;
     }
 
     if (analysis.risk.index < RiskLevel.riskli.index ||
         analysis.findings.isEmpty) {
-      await methodChannel.invokeMethod('updateSuggestion', {'risk': 'temiz'});
+      await methodChannel.invokeMethod(
+          'updateSuggestion', {'risk': 'temiz', 'sourceText': text});
       return null;
     }
 
@@ -100,13 +154,17 @@ void _bindKeyboardService() {
           ? 'Öneri: ${suggestion.text}'
           : analysis.findings.first.explanation,
       'cleanText': suggestion?.text,
+      'sourceText': text,
     });
     return null;
   });
 }
 
 class NSosyalApp extends StatelessWidget {
-  const NSosyalApp({super.key});
+  const NSosyalApp({super.key, this.showIntro = false});
+
+  /// Açılışta üç adımlı tanıtım turu gösterilsin mi?
+  final bool showIntro;
 
   @override
   Widget build(BuildContext context) {
@@ -133,7 +191,9 @@ class NSosyalApp extends StatelessWidget {
                 child: child!,
               );
             },
-            home: const AdaptiveShell(),
+            home: showIntro
+                ? const IntroGate(child: AdaptiveShell())
+                : const AdaptiveShell(),
           );
         },
       ),

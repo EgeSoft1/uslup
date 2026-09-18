@@ -10,6 +10,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedTextRequest
 import android.widget.TextView
+import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
@@ -55,6 +56,9 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
     private var methodChannel: MethodChannel? = null
     private var currentCleanText: String? = null
 
+    /// Şeritteki önerinin üretildiği metin. Alan bundan farklıysa öneri eskidir.
+    private var currentSourceText: String? = null
+
     /// Bu alanda çözümleme yapılabilir mi? Parola ve gizli kip alanlarında
     /// hayır: klavye o metni motora vermez ve şeritte hiçbir şey göstermez.
     private var analysisEnabled = true
@@ -63,8 +67,13 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
         super.onCreate()
 
         flutterEngine = FlutterEngine(this)
+        // Varsayılan `main()` değil, yalnızca motoru ve kanalı kuran `imeMain`
+        // çalıştırılır (docs/24 · madde 27; gerekçe main.dart'ta).
         flutterEngine?.dartExecutor?.executeDartEntrypoint(
-            DartExecutor.DartEntrypoint.createDefault()
+            DartExecutor.DartEntrypoint(
+                FlutterInjector.instance().flutterLoader().findAppBundlePath(),
+                "imeMain",
+            )
         )
 
         methodChannel = MethodChannel(flutterEngine!!.dartExecutor.binaryMessenger, "uslup/ime")
@@ -74,6 +83,7 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
                     risk = call.argument<String>("risk") ?: "temiz",
                     message = call.argument<String>("message") ?: "",
                     cleanText = call.argument<String>("cleanText"),
+                    sourceText = call.argument<String>("sourceText"),
                 )
                 result.success(null)
             } else {
@@ -82,12 +92,30 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
         }
     }
 
+    /// Alandaki güncel metin; okunamazsa null.
+    private fun currentFieldText(): String? =
+        currentInputConnection
+            ?.getExtractedText(ExtractedTextRequest(), 0)
+            ?.text
+            ?.toString()
+
     /// Şerit, uygulamadaki kutuyla aynı basamakta açılır: `riskli` ve üstü.
-    private fun showSuggestion(risk: String, message: String, cleanText: String?) {
+    private fun showSuggestion(
+        risk: String,
+        message: String,
+        cleanText: String?,
+        sourceText: String?,
+    ) {
         val strip = suggestionStrip ?: return // görünüm henüz kurulmadı
 
-        // Çözümleme sonucu eşzamansız gelir. Kullanıcı bu arada bir parola
-        // alanına geçtiyse eski sonuç orada GÖSTERİLMEZ.
+        // Çözümleme sonucu eşzamansız gelir. Kullanıcı bu arada yazmaya devam
+        // ettiyse bu sonuç ESKİ metne aittir: gösterilmez. Gösterilseydi
+        // dokunmak, alanın tamamını eski metnin önerisiyle değiştirip yeni
+        // yazılanları silerdi (denetim · docs/23).
+        if (sourceText != null && sourceText != currentFieldText()) return
+
+        // Kullanıcı bu arada bir parola alanına geçtiyse eski sonuç orada
+        // GÖSTERİLMEZ.
         val shown = risk == "riskli" || risk == "yuksek" || risk == "destek"
         if (!analysisEnabled || !shown || message.isEmpty()) {
             currentCleanText = null
@@ -109,6 +137,7 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
         }
 
         currentCleanText = cleanText
+        currentSourceText = sourceText
         strip.text = "⚠️ $message"
 
         if (risk == "yuksek") {
@@ -135,13 +164,25 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
             if (!textToCommit.isNullOrEmpty()) {
                 val ic = currentInputConnection
                 val extracted = ic?.getExtractedText(ExtractedTextRequest(), 0)
-                if (extracted != null && extracted.text != null) {
-                    ic?.deleteSurroundingText(extracted.text.length, extracted.text.length)
+                val fieldText = extracted?.text?.toString()
+
+                // Öneri başka bir metin için üretildiyse alana dokunulmaz.
+                val source = currentSourceText
+                if (source != null && source != fieldText) {
+                    strip.visibility = View.GONE
+                    currentCleanText = null
+                    currentSourceText = null
+                    return@setOnClickListener
+                }
+
+                if (fieldText != null) {
+                    ic?.deleteSurroundingText(fieldText.length, fieldText.length)
                 }
                 ic?.commitText(textToCommit, 1)
 
                 strip.visibility = View.GONE
                 currentCleanText = null
+                currentSourceText = null
             }
         }
 
@@ -159,6 +200,7 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
         // `onCreateInputView`den ÖNCE de gelebilir — o yüzden null geçilir.
         suggestionStrip?.visibility = View.GONE
         currentCleanText = null
+        currentSourceText = null
     }
 
     /// Parola alanları ve uygulamanın "kişiselleştirilmiş öğrenme yok"
@@ -186,7 +228,12 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
         val extr = ic?.getExtractedText(ExtractedTextRequest(), 0)
         val text = extr?.text?.toString() ?: return
 
-        methodChannel?.invokeMethod("analyze", mapOf("text" to text))
+        // Kullanıcının uygulamada seçtiği ayar (açık/kapalı, hassasiyet) her
+        // çözümlemede taşınır; klavye ile uygulama aynı kuralı izler (docs/27).
+        val ayarlar = getSharedPreferences(MainActivity.AYAR_DOSYASI, MODE_PRIVATE)
+            .getString(MainActivity.AYAR_ANAHTARI, null)
+
+        methodChannel?.invokeMethod("analyze", mapOf("text" to text, "ayarlar" to ayarlar))
     }
 
     // --- OnKeyboardActionListener methods ---
@@ -214,11 +261,24 @@ class CivilityInputMethodService : InputMethodService(), KeyboardView.OnKeyboard
                 // Tanımsız özel tuş kodları (negatif) karakter olarak YAZILMAZ;
                 // `toChar()` onları anlamsız bir Unicode karakterine çevirirdi.
                 if (primaryCode <= 0) return
-                var code = primaryCode.toChar()
-                if (isCaps) {
-                    code = code.uppercaseChar()
+                val code = primaryCode.toChar()
+                // Türkçe büyük harf: i → İ, ı → I. `uppercaseChar()` yerel
+                // ayardan bağımsızdır ve "i"yi noktasız "I" yapıyordu.
+                val output = if (!isCaps) code.toString() else when (code) {
+                    'i' -> "İ"
+                    'ı' -> "I"
+                    else -> code.uppercaseChar().toString()
                 }
-                ic.commitText(code.toString(), 1)
+                ic.commitText(output, 1)
+
+                // Tek seferlik büyük harf (docs/24 · madde 26): Shift bir harf
+                // için geçerlidir. Önceki davranış kalıcı kilitti ve cümle
+                // başındaki büyük harften sonra bütün metin büyük yazılıyordu.
+                if (isCaps && code.isLetter()) {
+                    isCaps = false
+                    keyboard.isShifted = false
+                    keyboardView.invalidateAllKeys()
+                }
             }
         }
 

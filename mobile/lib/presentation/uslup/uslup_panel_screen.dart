@@ -37,6 +37,7 @@ import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../compose/civility_composer.dart';
 import '../settings/about_screen.dart';
+import '../settings/uslup_ayarlari_screen.dart';
 import '../widgets/social_widgets.dart';
 import 'demo_scenarios.dart';
 import 'engine_chat_screen.dart';
@@ -109,6 +110,17 @@ class UslupPanelScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _NavCard(
+                    icon: Icons.tune_rounded,
+                    title: 'Üslup ayarları',
+                    subtitle: 'Aç/kapat · hassasiyet · argo ve alay uyarıları',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                          builder: (_) => const UslupAyarlariScreen()),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  _NavCard(
                     icon: Icons.analytics_rounded,
                     title: 'Sistem detayları',
                     subtitle: 'İşlem hattı · ölçüm geçmişi · yanmış kümeler · '
@@ -122,8 +134,9 @@ class UslupPanelScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   _NavCard(
                     icon: Icons.forum_rounded,
-                    title: 'Motorla soru-cevap',
-                    subtitle: 'Bir cümle yaz, motor gerekçesiyle cevaplasın',
+                    title: 'Üslup Asistanı',
+                    subtitle: 'İçerik iste, soru sor ya da cümle yaz · '
+                        'kural tabanlı, cihaz üstü',
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute<void>(
@@ -1240,13 +1253,30 @@ class UslupDetailsScreen extends StatelessWidget {
       (
         kume: '6. ayrık küme (İP-29)',
         boyut: '90',
-        kesinlik: '%96,2',
-        duyarlilik: '%41,7',
-        f1: '%58,1',
-        durum: 'GEÇERLİ — ölçümden önce kilitlenmiş küme. İlk geçiş %96,4 · '
-            '%45,0; bugünkü sayı küme dışı bir yanlış alarm onarımından '
-            'sonra (2 saldırı kaçtı). Açık %75, örtük %29, masum 30\'da 29',
+        kesinlik: '%100,0',
+        duyarlilik: '%46,7',
+        f1: '%63,6',
+        durum: 'KESİNLİK GEÇERLİ, DUYARLILIK ARTIK KÖR DEĞİL — ölçümden önce '
+            'kilitlenmiş küme. İlk geçiş %96,4 · %45,0; bugünkü sayı küme dışı '
+            'beş onarımdan sonra (D7: 2 saldırı kaçtı · D9: kesme işareti '
+            'düzeltmesi tek yanlış alarmı giderdi · docs/25: çift harfle '
+            'uzatılmış hakaret · docs/26: "engelliler evde otursun" — yarı-kör '
+            '· docs/30: "karşıma çıkma" örüntüsü kümenin cümlesine bakılarak '
+            'yazıldı, bu +1 kör değil). Açık %83, örtük %32, masum 30\'da 30',
         vurgu: true,
+      ),
+      (
+        kume: 'Kimlik eksenleri (İP-35)',
+        boyut: '40',
+        kesinlik: '%100,0',
+        duyarlilik: '%15,0',
+        f1: '%26,1',
+        durum: 'Cinsiyet · yaş · engellilik · göç. İki turdan sonra yazılan '
+            'ayrık küme, tek geçiş: bu gruplardan söz eden 20 masum cümlenin '
+            '20\'si temiz, hiç görülmemiş saldırıların 3\'ü yakalandı. Kural '
+            'katmanı burada kesinlik bekçisi; duyarlılık için model gerekiyor '
+            '(docs/26)',
+        vurgu: false,
       ),
       (
         kume: 'Yönelim (İP-31)',
@@ -1255,7 +1285,7 @@ class UslupDetailsScreen extends StatelessWidget {
         duyarlilik: '%100,0',
         f1: '—',
         durum: '"Sana köpeğimin fotoğrafını atayım" türü 30 masum cümlede '
-            'yanlış alarm 29 → 2; 20 hitap/yüklem saldırısının hepsi '
+            'yanlış alarm 29 → 0; 20 hitap/yüklem saldırısının hepsi '
             'yakalanıyor',
         vurgu: false,
       ),

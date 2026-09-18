@@ -83,6 +83,8 @@ class _CommunityHealthScreenState extends State<CommunityHealthScreen> {
             const SizedBox(height: AppSpacing.base),
             _RatesRow(report: report),
             const SizedBox(height: AppSpacing.base),
+            _YanlisAlarmKarti(report: report),
+            const SizedBox(height: AppSpacing.base),
             _TrendCard(report: report),
             const SizedBox(height: AppSpacing.base),
             _CategoryCard(report: report),
@@ -256,6 +258,74 @@ class _RatesRow extends StatelessWidget {
   }
 }
 
+// ─── Yanlış alarm (docs/27) ───────────────────────────────────────────────────
+
+/// Kullanıcıların "Bu uyarı yanlış" dediği uyarıların oranı.
+///
+/// Kural katmanının SAHADAKİ kesinlik göstergesidir: laboratuvardaki kör
+/// küme ölçümünün (%100 kesinlik) gerçek kullanımda tutup tutmadığını söyler.
+/// Sayı k-anonimlik eşiğinin altındaysa gösterilmez.
+class _YanlisAlarmKarti extends StatelessWidget {
+  const _YanlisAlarmKarti({required this.report});
+  final CommunityHealthReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final oran = report.falseAlarmRate;
+    final adet = report.falseAlarmReports;
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.flag_outlined, size: 22, color: p.textSecondary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Yanlış alarm bildirimi',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: p.textPrimary)),
+                const SizedBox(height: 3),
+                Text(
+                  oran == null || adet == null
+                      ? 'Henüz ${report.kThreshold} bildirimden az — sayı '
+                          'gizli tutuluyor.'
+                      : '${report.interventions} uyarının $adet tanesine '
+                          '“Bu uyarı yanlış” dendi.'
+                          '${report.falseAlarmByCategory.isEmpty ? '' : ' En çok: ${_enCok(report)}.'}',
+                  style: TextStyle(
+                      fontSize: 11.5, color: p.textTertiary, height: 1.35),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            oran == null ? '—' : '%${(oran * 100).round()}',
+            style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.w800,
+                color: p.textSecondary,
+                height: 1.1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _enCok(CommunityHealthReport r) {
+    final sirali = r.falseAlarmByCategory.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return sirali.first.key.label.toLowerCase();
+  }
+}
+
 class _StatTile extends StatelessWidget {
   const _StatTile({
     required this.value,
@@ -308,6 +378,9 @@ class _TrendCard extends StatelessWidget {
   const _TrendCard({required this.report});
   final CommunityHealthReport report;
 
+  static String _gunEtiketi(int fark) =>
+      fark == 0 ? 'Son gün' : '$fark gün önce';
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -336,7 +409,13 @@ class _TrendCard extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   color: p.textPrimary)),
           const SizedBox(height: 4),
-          Text('Son ${trend.length} gün',
+          Text(
+              report.suppressedDays == 0
+                  ? 'Son ${trend.length} gün'
+                  // Trend de k-anonimliğe tabidir (docs/24 · madde 35);
+                  // gizleme kategori tablosundaki gibi açıkça yazılır.
+                  : 'Son ${trend.length} gün · ${report.suppressedDays} gün '
+                      'yetersiz örnek (k=${report.kThreshold}) nedeniyle gizlendi',
               style: TextStyle(fontSize: 11.5, color: p.textTertiary)),
           const SizedBox(height: AppSpacing.base),
           SizedBox(
@@ -348,8 +427,12 @@ class _TrendCard extends StatelessWidget {
                   if (i > 0) const SizedBox(width: 6),
                   Expanded(
                     child: Semantics(
-                      label: '${trend.length - i} gün önce, müdahale oranı '
-                          'yüzde ${(trend[i].interventionRate * 100).round()}',
+                      // Gün farkı sıra numarasından değil gün kovasından
+                      // hesaplanır: gizlenen günler sırayı kaydırır. Önceki
+                      // etiket en son günü de "1 gün önce" diye okuyordu.
+                      label: '${_gunEtiketi(trend.last.dayIndex - trend[i].dayIndex)}, '
+                          'müdahale oranı yüzde '
+                          '${(trend[i].interventionRate * 100).round()}',
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [

@@ -31,6 +31,7 @@ import '../../core/theme/theme_controller.dart';
 import '../feed/post_card.dart';
 import '../feed/post_detail_screen.dart';
 import '../settings/about_screen.dart';
+import '../settings/uslup_ayarlari_screen.dart';
 import '../widgets/social_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -143,6 +144,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                         tooltip: 'Temayı değiştir',
                         onTap: () =>
                             ThemeController.instance.toggle(context),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      _CoverAction(
+                        icon: Icons.tune_rounded,
+                        tooltip: 'Üslup ayarları',
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const UslupAyarlariScreen(),
+                          ),
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       _CoverAction(

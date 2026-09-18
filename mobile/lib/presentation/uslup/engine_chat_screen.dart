@@ -1,23 +1,26 @@
 // =============================================================================
-// Motorla soru-cevap — cihaz üstü motorun gerekçeli cevabı
+// Üslup Asistanı — cihaz üstü, kural tabanlı soru-cevap
 // Dosya: mobile/lib/presentation/uslup/engine_chat_screen.dart
 //
 // ── NE DEĞİLDİR ───────────────────────────────────────────────────────────
 // Bu ekran bir dil modeli (LLM) sohbeti DEĞİLDİR ve öyle adlandırılmaz.
-// Önceki adı "Üslup Yapay Zekâ Sohbeti (LLM)" idi; oysa ekranın arkasında
-// hiçbir dil modeli yok ve projede bir LLM'in ölçülüp kasıtlı olarak
-// kaldırıldığı belgelenmiş durumda (docs/03_LLM_SERVISI.md). Jüriye yanlış
-// bir etiket göstermek, doğru olan her şeyin güvenilirliğini düşürür.
+// Önceki adı "Üslup Yapay Zekâ Sohbeti (LLM)" idi; oysa arkasında hiçbir dil
+// modeli yok ve projede bir LLM'in ölçülüp kasıtlı olarak kaldırıldığı
+// belgelenmiş durumda (docs/03). Jüriye yanlış bir etiket göstermek, doğru
+// olan her şeyin güvenilirliğini düşürür.
 //
-// Kullanıcı bir cümle yazar → cihaz üstü motor çözümler → ekran sonucu
-// yapılandırılmış olarak gösterir: risk basamağı, bulgular ve gerekçeleri,
-// önerilen yeni metin. Hiçbir şey cihazdan çıkmaz.
+// ── NE YAPAR ──────────────────────────────────────────────────────────────
+// İki iş: kullanıcının Türkçe cümlesinden NİYETİ çıkarır (`UslupAsistani`)
+// ve istenen içeriği getirir — "bana nefret söylemi örnekleri sun" → o
+// örnekler. Niyet bir soru değilse cümleyi motora verir ve gerekçeli sonucu
+// gösterir. Hiçbir şey cihazdan çıkmaz.
 //
 // ── NEDEN DÜZ METİN DEĞİL, BİLEŞEN ────────────────────────────────────────
 // Önceki sürüm cevabı `**kalın**` işaretleri ve emoji içeren tek bir metin
 // olarak kuruyordu. `Text` bileşeni markdown çizmez: ekranda yıldızlar
 // olduğu gibi görünüyordu. Emoji ise çevrimdışı web sürümünde yazı tipi
-// indirilemediği için kutu olarak çiziliyordu.
+// indirilemediği için kutu olarak çiziliyordu. Cevap bu yüzden yapıdır:
+// başlık, gövde, maddeler, örnekler ve devam önerileri ayrı alanlardır.
 // =============================================================================
 
 import 'package:civility_core/civility_core.dart';
@@ -40,27 +43,29 @@ class EngineChatScreen extends StatefulWidget {
 class _ChatMessage {
   const _ChatMessage.user(this.text)
       : isUser = true,
-        analysis = null,
+        cevap = null,
         suggestion = null;
 
-  const _ChatMessage.engine(this.text, {this.analysis, this.suggestion})
-      : isUser = false;
+  const _ChatMessage.asistan(this.cevap, {this.suggestion})
+      : isUser = false,
+        text = '';
 
   final String text;
   final bool isUser;
-  final CivilityAnalysis? analysis;
+  final AsistanCevabi? cevap;
   final RewriteSuggestion? suggestion;
 }
 
 class _EngineChatScreenState extends State<EngineChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
-  final _messages = <_ChatMessage>[
-    const _ChatMessage.engine(
-      'Bir cümle yaz; onu bu cihazda çözümleyip hangi ifadenin neden '
-      'saldırgan okunabileceğini ve daha yapıcı bir alternatifi göstereyim. '
-      'Yazdığın hiçbir şey dışarı çıkmaz.',
-    ),
+
+  /// Asistan motorla birlikte kurulur: cümle çözümleme niyeti motoru
+  /// kullanır, geri kalan niyetler kullanmaz.
+  late final UslupAsistani _asistan = UslupAsistani(motor: Civility.engine);
+
+  late final List<_ChatMessage> _messages = [
+    _ChatMessage.asistan(_asistan.yanitla('')),
   ];
 
   @override
@@ -70,32 +75,26 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
     super.dispose();
   }
 
-  Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
+  Future<void> _gonder(String ham) async {
+    final text = ham.trim();
     if (text.isEmpty) return;
     _controller.clear();
 
-    // ── CİHAZ ÜSTÜ ÇÖZÜMLEME ─────────────────────────────────────────────
-    final analysis = Civility.engine.analyze(text);
-    final suggestion = analysis.hasFindings
-        ? await Civility.suggester.suggest(analysis)
+    // ── CİHAZ ÜSTÜ ─────────────────────────────────────────────────────────
+    // Niyet çözümleme de, cümle çözümleme de burada yapılır; ağ çağrısı yok.
+    final cevap = _asistan.yanitla(text);
+
+    // Öneri yalnızca bulgu varsa üretilir ve üretimi yereldir.
+    final analiz = cevap.cozumleme;
+    final suggestion = (analiz != null && analiz.hasFindings)
+        ? await Civility.suggester.suggest(analiz)
         : null;
     if (!mounted) return;
 
     setState(() {
       _messages
         ..add(_ChatMessage.user(text))
-        ..add(_ChatMessage.engine(
-          analysis.hasFindings
-              ? analysis.risk.intervention
-              : analysis.needsSupport
-                  // Kendine zarar ifadesi saldırı değildir (docs/20, D4).
-                  ? 'Bu cümlede saldırgan bir ifade yok. Zor bir an '
-                      'geçiriyor olabilirsin — güvende değilsen 112\'yi ara.'
-                  : 'Bu cümlede saldırgan bir ifade bulmadım.',
-          analysis: analysis,
-          suggestion: suggestion,
-        ));
+        ..add(_ChatMessage.asistan(cevap, suggestion: suggestion));
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -114,12 +113,13 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
 
     return Scaffold(
       backgroundColor: p.background,
-      appBar: const AppTopBar(title: 'Motorla soru-cevap'),
+      appBar: const AppTopBar(title: 'Üslup Asistanı'),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: Column(
             children: [
+              _cihazSeridi(p),
               Expanded(
                 child: ListView.builder(
                   controller: _scrollController,
@@ -135,6 +135,22 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
       ),
     );
   }
+
+  /// Ekranın ne olduğunu söyleyen şerit. Jüri bu ekrana baktığında ilk
+  /// okuyacağı şey "bu bir LLM değil" olmalı.
+  Widget _cihazSeridi(AppPalette p) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.base, vertical: AppSpacing.sm),
+        color: p.surfaceMuted,
+        child: Text(
+          'Kural tabanlı · cihaz üstü · dil modeli yok · ağ çağrısı yok',
+          textAlign: TextAlign.center,
+          style: appBody(fontSize: 11.5, color: p.textTertiary),
+        ),
+      );
+
+  // ─── Baloncuklar ──────────────────────────────────────────────────────────
 
   Widget _bubble(_ChatMessage msg, AppPalette p) {
     if (msg.isUser) {
@@ -158,14 +174,14 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
       );
     }
 
-    final analysis = msg.analysis;
-    final riskColor = analysis == null ? p.textSecondary : _riskColor(analysis.risk, p);
+    final cevap = msg.cevap!;
+    final analiz = cevap.cozumleme;
 
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(
-            bottom: AppSpacing.md, right: AppSpacing.xxl),
+            bottom: AppSpacing.md, right: AppSpacing.lg),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: p.surface,
@@ -179,15 +195,18 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (analysis != null) ...[
+            // Çözümleme varsa risk rozeti başa gelir.
+            if (analiz != null) ...[
               Row(
                 children: [
-                  AppBadgePill(label: analysis.risk.label, color: riskColor),
+                  AppBadgePill(
+                      label: analiz.risk.label,
+                      color: _riskColor(analiz.risk, p)),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'nezaket puanı ${analysis.civilityScore} · '
-                      '${analysis.elapsed.inMicroseconds} µs',
+                      'nezaket puanı ${analiz.civilityScore} · '
+                      '${analiz.elapsed.inMicroseconds} µs',
                       style: appBody(fontSize: 11.5, color: p.textTertiary),
                     ),
                   ),
@@ -195,39 +214,60 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
             ],
-            Text(msg.text,
+
+            Text(cevap.baslik,
                 style: appBody(
-                    color: p.textPrimary, fontSize: 14.5, height: 1.45)),
-            if (analysis != null)
-              for (final f in analysis.findings) ...[
+                    color: p.textPrimary,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700)),
+            if (cevap.govde.trim().isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(cevap.govde,
+                  style: appBody(
+                      color: p.textSecondary, fontSize: 14, height: 1.45)),
+            ],
+
+            // Motorun bulguları ve önerisi.
+            if (analiz != null) ...[
+              if (analiz.findings.isEmpty && analiz.needsSupport) ...[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Bu cümlede saldırgan bir ifade yok. Zor bir an geçiriyor '
+                  'olabilirsin — güvende değilsen 112\'yi ara.',
+                  style: appBody(
+                      fontSize: 13.5, color: p.textSecondary, height: 1.45),
+                ),
+              ],
+              for (final f in analiz.findings) ...[
                 const SizedBox(height: AppSpacing.sm),
                 _findingLine(f, p),
               ],
+            ],
             if (msg.suggestion != null) ...[
               const SizedBox(height: AppSpacing.md),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: p.successSoft,
-                  borderRadius: AppRadius.mdAll,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Böyle de söyleyebilirsin',
-                        style: appBody(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            color: p.success)),
-                    const SizedBox(height: 3),
-                    Text(msg.suggestion!.text,
-                        style: appBody(
-                            fontSize: 14.5,
-                            color: p.textPrimary,
-                            height: 1.4)),
-                  ],
-                ),
+              _oneriKutusu(msg.suggestion!, p),
+            ],
+
+            // Madde listesi (ölçüm, katmanlar, mahremiyet, ayarlar…).
+            for (final m in cevap.maddeler) ...[
+              const SizedBox(height: 6),
+              _madde(m, p),
+            ],
+
+            // Örnek cümleler — dokunulunca çözümlenir.
+            for (final o in cevap.ornekler) ...[
+              const SizedBox(height: AppSpacing.sm),
+              _ornekKarti(o, p),
+            ],
+
+            if (cevap.devamOnerileri.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.md),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final s in cevap.devamOnerileri) _oneriCipi(s, p),
+                ],
               ),
             ],
           ],
@@ -235,6 +275,125 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
       ),
     );
   }
+
+  Widget _madde(String metin, AppPalette p) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 6, right: 8),
+            child: Container(
+              width: 5,
+              height: 5,
+              decoration:
+                  BoxDecoration(color: p.textTertiary, shape: BoxShape.circle),
+            ),
+          ),
+          Expanded(
+            child: Text(metin,
+                style: appBody(
+                    fontSize: 13.5, color: p.textSecondary, height: 1.45)),
+          ),
+        ],
+      );
+
+  /// Örnek cümle kartı.
+  ///
+  /// Rozet motorun ne yapacağını söyler ve bu bir iddiadır;
+  /// `civility_core/test/asistan_test.dart` her örneği gerçek motordan
+  /// geçirip bu rozetin doğruluğunu denetler. Karta dokunmak cümleyi
+  /// çözümletir, yani kullanıcı iddiayı yerinde sınayabilir.
+  Widget _ornekKarti(AsistanOrnegi o, AppPalette p) {
+    final renk = o.isaretlenir ? p.warning : p.success;
+    return Semantics(
+      button: true,
+      label: '${o.metin}. ${o.isaretlenir ? "İşaretlenir" : "Temiz"}. '
+          'Çözümlemek için dokun.',
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: () => _gonder(o.metin),
+          borderRadius: AppRadius.mdAll,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: p.background,
+              borderRadius: AppRadius.mdAll,
+              border: Border.all(color: p.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(o.metin,
+                          style: appBody(
+                              fontSize: 14.5,
+                              color: p.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              height: 1.35)),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    AppBadgePill(
+                        label: o.isaretlenir ? 'İşaretlenir' : 'Temiz',
+                        color: renk),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(o.aciklama,
+                    style: appBody(
+                        fontSize: 12, color: p.textTertiary, height: 1.4)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _oneriCipi(String metin, AppPalette p) => InkWell(
+        onTap: () => _gonder(metin),
+        borderRadius: AppRadius.lgAll,
+        child: Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 9),
+          constraints: const BoxConstraints(minHeight: 40),
+          decoration: BoxDecoration(
+            color: p.background,
+            borderRadius: AppRadius.lgAll,
+            border: Border.all(color: p.border),
+          ),
+          child: Text(metin,
+              style: appBody(
+                  fontSize: 12.5,
+                  color: p.textSecondary,
+                  fontWeight: FontWeight.w600)),
+        ),
+      );
+
+  Widget _oneriKutusu(RewriteSuggestion s, AppPalette p) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: p.successSoft,
+          borderRadius: AppRadius.mdAll,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Böyle de söyleyebilirsin',
+                style: appBody(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: p.success)),
+            const SizedBox(height: 3),
+            Text(s.text,
+                style: appBody(
+                    fontSize: 14.5, color: p.textPrimary, height: 1.4)),
+          ],
+        ),
+      );
 
   Widget _findingLine(ToxicityFinding f, AppPalette p) {
     return Row(
@@ -295,27 +454,35 @@ class _EngineChatScreenState extends State<EngineChatScreen> {
                 minLines: 1,
                 style: appBody(color: p.textPrimary, fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: 'Bir cümle yaz…',
+                  hintText: 'Sor ya da bir cümle yaz…',
                   hintStyle: appBody(color: p.textTertiary, fontSize: 15),
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.md, vertical: 12),
                   border: InputBorder.none,
                 ),
-                onSubmitted: (_) => _sendMessage(),
+                onSubmitted: _gonder,
               ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: p.brandGradient,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.send_rounded,
-                  color: Colors.white, size: 20),
-              tooltip: 'Çözümle',
-              onPressed: _sendMessage,
+          Semantics(
+            button: true,
+            label: 'Gönder',
+            child: ExcludeSemantics(
+              child: InkWell(
+                onTap: () => _gonder(_controller.text),
+                borderRadius: AppRadius.lgAll,
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: p.brandGradient,
+                    borderRadius: AppRadius.lgAll,
+                  ),
+                  child: const Icon(Icons.send_rounded,
+                      color: Colors.white, size: 22),
+                ),
+              ),
             ),
           ),
         ]),

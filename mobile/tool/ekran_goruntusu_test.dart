@@ -25,8 +25,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:turkiye_mesajlasma/core/civility/civility_runtime.dart';
 import 'package:turkiye_mesajlasma/core/theme/theme_controller.dart';
 import 'package:turkiye_mesajlasma/main.dart';
+import 'package:turkiye_mesajlasma/presentation/intro/intro_tour.dart';
 
 const _cikti = '../docs/gorseller/ekranlar';
 
@@ -60,7 +62,13 @@ Future<void> _cek(WidgetTester tester, GlobalKey anahtar, String ad) async {
 }
 
 void main() {
-  setUpAll(_yaziTipleriniYukle);
+  setUpAll(() async {
+    await _yaziTipleriniYukle();
+    // Üründe motor ilk kareden sonra ısıtılır (main.dart). Isıtılmamış
+    // motorla çekilen karelerde risk şeridi ilk çözümlemenin derleme
+    // maliyetini ("237204 µs") gösteriyordu — kullanıcının göreceği sayı değil.
+    await Civility.warmUp();
+  });
 
   const masaustu = Size(1440, 900);
   const masaustuUzun = Size(1440, 2600);
@@ -235,6 +243,65 @@ void main() {
     await bekle(tester);
     await _cek(tester, k, 'masaustu_21_destek_karti');
   });
+
+  // ── Öneri deneyimi (docs/24 · madde 1–4) ─────────────────────────────────
+  // Üç kare: kartta önce/sonra farkı, "Bunu kullan"dan sonraki dönüşüm anı,
+  // ve düzeltilmiş metin + yükselen puan + "Geri al". Geri alma sayacı 6 sn
+  // sürdüğü için son iki karede pumpAndSettle KULLANILMAZ.
+  testWidgets('masaüstü · öneri deneyimi', (tester) async {
+    final k = await ac(tester, masaustu);
+    await tester.tap(find.text('Yeni Gönderi').first);
+    await bekle(tester);
+    await tester.enterText(
+        find.byType(TextField).last, 'beyinsiz yorumlar yapıyorsun');
+    await bekle(tester);
+    await _cek(tester, k, 'masaustu_22_oneri_farki');
+
+    final kullan = find.text('Bunu kullan');
+    await tester.ensureVisible(kullan);
+    await tester.tap(kullan);
+    await tester.pump();
+    // Kaydırma (260 ms) sürerken silinen kelimeler kızarıp solar…
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await _cek(tester, k, 'masaustu_23a_donusum_silinme');
+    // …ardından yeni kelimeler yazılarak gelir.
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await _cek(tester, k, 'masaustu_23b_donusum_yazilma');
+
+    await tester.pump(const Duration(milliseconds: 900));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+    await _cek(tester, k, 'masaustu_24_duzeltildi_geri_al');
+  });
+
+  // ── İlk açılış turu (docs/24 · madde 31) ──────────────────────────────────
+  for (final (ad, boyut) in const [
+    ('masaustu_25_tanitim_turu', masaustu),
+    ('telefon_05_tanitim_turu', telefon),
+  ]) {
+    testWidgets('tanıtım turu · $ad', (tester) async {
+      final anahtar = GlobalKey();
+      tester.view.physicalSize = boyut;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      ThemeController.instance.value = ThemeMode.light;
+      // `tool/` test dizini sayılmaz ama bu dosya bir test çalıştırıcısıdır.
+      // ignore: invalid_use_of_visible_for_testing_member
+      IntroGate.resetForTest();
+      await tester.pumpWidget(RepaintBoundary(
+          key: anahtar, child: const NSosyalApp(showIntro: true)));
+      await tester.pumpAndSettle();
+      if (find.text('İleri').evaluate().isNotEmpty) {
+        await tester.tap(find.text('İleri'));
+        await tester.pumpAndSettle();
+      }
+      await _cek(tester, anahtar, ad);
+    });
+  }
 
   testWidgets('telefon · akış', (tester) async {
     final k = await ac(tester, telefon);

@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Türkçe Q düzeni (docs/24 · madde 26)
+
+     Önceki düzen İngilizce QWERTY idi: ç ğ ı ö ş ü tuşları yoktu. "Türkçeye
+     özel nezaket katmanı"nın klavyesi Türkçe yazamıyordu; kullanıcı "aptalsın"
+     yerine "aptalsin" yazmak zorunda kalıyor, motor aksan katlamasıyla bunu
+     çözse de destek kartındaki ve önerideki metin bozuk görünüyordu.
+
+     Tuş kodları Unicode kod noktasıdır: ı=305 · ğ=287 · ü=252 · ş=351 ·
+     i=105 · ö=246 · ç=231. Büyük harf dönüşümü Türkçe kuralla yapılır
+     (CivilityInputMethodService.kt: i → İ, ı → I).
+     ═══════════════════════════════════════════════════════════════════════ -->
 <Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
-    android:keyWidth="10%p"
+    android:keyWidth="8.33%p"
     android:horizontalGap="0px"
     android:verticalGap="0px"
     android:keyHeight="50dp">
@@ -12,11 +24,13 @@
         <Key android:codes="116" android:keyLabel="t"/>
         <Key android:codes="121" android:keyLabel="y"/>
         <Key android:codes="117" android:keyLabel="u"/>
-        <Key android:codes="105" android:keyLabel="i"/>
+        <Key android:codes="305" android:keyLabel="ı"/>
         <Key android:codes="111" android:keyLabel="o"/>
-        <Key android:codes="112" android:keyLabel="p" android:keyEdgeFlags="right"/>
+        <Key android:codes="112" android:keyLabel="p"/>
+        <Key android:codes="287" android:keyLabel="ğ"/>
+        <Key android:codes="252" android:keyLabel="ü" android:keyEdgeFlags="right"/>
     </Row>
-    <Row>
+    <Row android:keyWidth="9.09%p">
         <Key android:codes="97" android:keyLabel="a" android:keyEdgeFlags="left"/>
         <Key android:codes="115" android:keyLabel="s"/>
         <Key android:codes="100" android:keyLabel="d"/>
@@ -25,10 +39,12 @@
         <Key android:codes="104" android:keyLabel="h"/>
         <Key android:codes="106" android:keyLabel="j"/>
         <Key android:codes="107" android:keyLabel="k"/>
-        <Key android:codes="108" android:keyLabel="l" android:keyEdgeFlags="right"/>
+        <Key android:codes="108" android:keyLabel="l"/>
+        <Key android:codes="351" android:keyLabel="ş"/>
+        <Key android:codes="105" android:keyLabel="i" android:keyEdgeFlags="right"/>
     </Row>
-    <Row>
-        <Key android:codes="-1" android:keyLabel="CAPS" android:keyEdgeFlags="left"/>
+    <Row android:keyWidth="9.09%p">
+        <Key android:codes="-1" android:keyLabel="⇧" android:keyEdgeFlags="left"/>
         <Key android:codes="122" android:keyLabel="z"/>
         <Key android:codes="120" android:keyLabel="x"/>
         <Key android:codes="99" android:keyLabel="c"/>
@@ -36,11 +52,16 @@
         <Key android:codes="98" android:keyLabel="b"/>
         <Key android:codes="110" android:keyLabel="n"/>
         <Key android:codes="109" android:keyLabel="m"/>
-        <Key android:codes="-5" android:keyLabel="DEL" android:keyEdgeFlags="right"/>
+        <Key android:codes="246" android:keyLabel="ö"/>
+        <Key android:codes="231" android:keyLabel="ç"/>
+        <Key android:codes="-5" android:keyLabel="⌫" android:isRepeatable="true" android:keyEdgeFlags="right"/>
     </Row>
     <Row>
-        <Key android:codes="44" android:keyLabel="," android:keyWidth="20%p" android:keyEdgeFlags="left"/>
-        <Key android:codes="32" android:keyLabel="SPACE" android:keyWidth="60%p"/>
-        <Key android:codes="46" android:keyLabel="." android:keyWidth="20%p" android:keyEdgeFlags="right"/>
+        <Key android:codes="44" android:keyLabel="," android:keyWidth="12%p" android:keyEdgeFlags="left"/>
+        <Key android:codes="33" android:keyLabel="!" android:keyWidth="12%p"/>
+        <Key android:codes="32" android:keyLabel="boşluk" android:keyWidth="40%p"/>
+        <Key android:codes="63" android:keyLabel="\?" android:keyWidth="12%p"/>
+        <Key android:codes="46" android:keyLabel="." android:keyWidth="12%p"/>
+        <Key android:codes="-4" android:keyLabel="↵" android:keyWidth="12%p" android:keyEdgeFlags="right"/>
     </Row>
 </Keyboard>

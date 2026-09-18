@@ -36,9 +36,16 @@
          dosyayı okur.
          ═══════════════════════════════════════════════════════════════════ -->
 
+    <!-- allowBackup="false" (docs/24 · madde 42): uygulama verisi Google
+         yedeğine ve `adb backup` ile dışarı alınmaz. Uygulama bugün kalıcı
+         veri yazmıyor; bu satır, ileride yazılacak her şeyin (ayarlar,
+         topluluk sayıları) varsayılan olarak cihazda kalmasını güvenceye
+         alır. `kapsam_degismezi_test.dart` denetler. -->
     <application
         android:label="Üslup"
         android:name="${applicationName}"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

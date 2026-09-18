@@ -35,7 +35,7 @@ import '../explore/explore_screen.dart';
 import '../feed/feed_column.dart';
 import '../notifications/notifications_screen.dart';
 import '../profile/profile_screen.dart';
-import '../settings/about_screen.dart';
+import '../settings/uslup_ayarlari_screen.dart';
 import '../uslup/uslup_panel_screen.dart';
 import '../widgets/social_widgets.dart';
 import 'desktop_right_rail.dart';
@@ -253,7 +253,8 @@ class _Sidebar extends StatelessWidget {
               label: 'Ayarlar',
               compact: compact,
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AboutScreen()),
+                MaterialPageRoute<void>(
+                    builder: (_) => const UslupAyarlariScreen()),
               ),
             ),
           ],

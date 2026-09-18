@@ -239,8 +239,11 @@ class _ComposeBody extends StatelessWidget {
 
     // Topluluk sağlığı sinyali. Metin GEÇMEZ — `CommunitySignal` sınıfının
     // tek bir metin alanı yoktur ve bu, çekirdek pakette yapısal bir testle
-    // korunmaktadır.
-    CommunityHealthStore.instance.record(result.analysis, result.outcome);
+    // korunmaktadır. Katman kapalıyken gönderim ölçüme girmez (docs/27).
+    if (result.olcumeDahil) {
+      CommunityHealthStore.instance.record(result.analysis, result.outcome,
+          yanlisAlarm: result.yanlisAlarm);
+    }
 
     if (closeAfterSubmit && navigator.canPop()) navigator.pop();
 

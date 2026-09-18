@@ -139,7 +139,11 @@ class PostDetailScreen extends StatelessWidget {
             revised: result.revised,
             sentDespiteWarning: result.sentDespiteWarning,
           );
-          CommunityHealthStore.instance.record(result.analysis, result.outcome);
+          if (result.olcumeDahil) {
+            CommunityHealthStore.instance.record(
+                result.analysis, result.outcome,
+                yanlisAlarm: result.yanlisAlarm);
+          }
 
           FocusScope.of(context).unfocus();
 

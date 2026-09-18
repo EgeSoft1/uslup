@@ -59,13 +59,21 @@ class CivilityTextEditingController extends TextEditingController {
     notifyListeners();
   }
 
-  /// Aynı aralıklar mı? Her tuş vuruşunda `notifyListeners` çağırmak,
-  /// zaten `TextField`'ın kendi bildirimiyle birleşip iki kez yeniden
-  /// çizime yol açardı.
+  /// Aynı aralıklar ve aynı renk basamağı mı? Her tuş vuruşunda
+  /// `notifyListeners` çağırmak, zaten `TextField`'ın kendi bildirimiyle
+  /// birleşip iki kez yeniden çizime yol açardı.
+  ///
+  /// Şiddet de karşılaştırılır: aralık aynı kalıp şiddet değiştiğinde
+  /// ("aptal" → "aptal!!!" bağırma çarpanı) önceki sürüm eski rengi
+  /// göstermeye devam ediyordu.
   static bool _sameRanges(List<ToxicityFinding> a, List<ToxicityFinding> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
-      if (a[i].start != b[i].start || a[i].end != b[i].end) return false;
+      if (a[i].start != b[i].start ||
+          a[i].end != b[i].end ||
+          a[i].adjustedSeverity != b[i].adjustedSeverity) {
+        return false;
+      }
     }
     return true;
   }
