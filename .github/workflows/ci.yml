@@ -9,6 +9,11 @@
 #                  ölçüm tutarlılığı dâhil)
 #
 # Ağ yalnızca bağımlılık indirmek için kullanılır; testlerin hiçbiri ağ istemez.
+#
+# Runner SABİTLENMİŞTİR (ubuntu-24.04, `ubuntu-latest` değil). Sebep:
+# `ubuntu-latest` 19 Ekim 2026'da Ubuntu 26'ya geçiyor. Yarışma penceresinde
+# ölçümlerin aynı ortamda üretilmesi, bir gecede değişen bir tabanda
+# üretilmesine yeğlenir. Taban yükseltmesi bilinçli bir commit olmalıdır.
 # =============================================================================
 name: ci
 
@@ -22,12 +27,12 @@ permissions:
 
 jobs:
   motor:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: packages/civility_core
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
@@ -39,30 +44,30 @@ jobs:
       - run: dart run bin/rewrite_audit.dart --hepsi --ornek=0
 
   olcum:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: motor
     defaults:
       run:
         working-directory: packages/civility_core
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
       - run: dart pub get
       - run: dart run bin/evaluate.dart --hepsi | tee olcum.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: olcum
           path: packages/civility_core/olcum.txt
 
   istemci:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
