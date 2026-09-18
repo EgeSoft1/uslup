@@ -73,7 +73,7 @@ korur**: motorun hiçbir kararı değişmedi, ayrık kümeye bakılmadı.
 ## 5. Sonuç — aynı makine, aynı gün, aynı araç
 
 `dart compile exe bin/benchmark.dart` · 11 senaryo × 2.000 tekrar · üç
-turun ortancası. "Önce" ikilisi `8cf0ea1` commit'inden, aynı ölçüm
+turun ortancası. "Önce" ikilisi `d0058c6` commit'inden, aynı ölçüm
 dosyasıyla derlendi.
 
 | | Önce | Sonra | Kat |

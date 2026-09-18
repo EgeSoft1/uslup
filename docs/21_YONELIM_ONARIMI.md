@@ -74,7 +74,7 @@ girdilerin elenip elenmeyeceğine karar verir.
 
 ## 4. Sonuçlar
 
-Kayıt `030b409` ile girdi; D7 ondan sonraki commit'tedir. Kural listesi
+Kayıt `2ad41d5` ile girdi; D7 ondan sonraki commit'tedir. Kural listesi
 değiştirilmedi.
 
 ### İP-31 · yönelim kümesi

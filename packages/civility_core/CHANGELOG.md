@@ -14,7 +14,7 @@ diye yazılır; boş bırakılmaz.
 
 ## 2.0.0 — 15 Eylül 2026
 
-Taban: 1.0.0 (`1fc86e5`, 13 Eylül 2026). Bu sürüm henüz commit edilmedi;
+Taban: 1.0.0 (`0d13176`, 13 Eylül 2026). Bu sürüm henüz commit edilmedi;
 çalışma kopyasındadır.
 
 ### Kırıcı
@@ -137,7 +137,7 @@ Geçmiş geçişlerin ayrıntısı: README "Ölçülen sonuçlar" tablosu ve doc
 
 ## 1.0.0 — 13 Eylül 2026
 
-İlk sürümlü taban (`1fc86e5`). İçerik: normalizasyon ve gizleme direnci,
+İlk sürümlü taban (`0d13176`). İçerik: normalizasyon ve gizleme direnci,
 Türkçe biçimbilim, 256 girdilik sözlük, edimbilimsel örüntü ve deyim
 katmanları, 17 nefret kuruluşu, gönderge çözümleme, tavanlı bağlam, yerel
 yeniden yazıcı (Net · Nazik · Diyalog), topluluk sağlığı toplulaştırıcısı

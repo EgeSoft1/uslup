@@ -62,7 +62,7 @@ sınır olarak README'ye yazılır.
 
 ## 4. Sonuçlar
 
-Kayıt `2df4b82` ile girdi; D8 ondan sonraki commit'tedir. Kelime listesi
+Kayıt `173bf0c` ile girdi; D8 ondan sonraki commit'tedir. Kelime listesi
 kayıttakiyle birebir aynıdır.
 
 ### İP-32 · savunma dili kümesi

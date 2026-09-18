@@ -124,7 +124,7 @@ Ayrıntı: [`docs/16_URUN_KABUGU.md`](docs/16_URUN_KABUGU.md)
 ## Ölçülen sonuçlar
 
 Geçerli genelleme ölçümü **altıncı ayrık kümedir (İP-29)** — bugünkü motor,
-hiç görmediği 90 cümle, küme ölçümden ÖNCE commit edildi (`9179ee4`), sonuç
+hiç görmediği 90 cümle, küme ölçümden ÖNCE commit edildi (`55881fb`), sonuç
 düzeltilmeden raporlanıyor. Kayıt:
 [`docs/18_IP29_ILK_GECIS.md`](docs/18_IP29_ILK_GECIS.md)
 

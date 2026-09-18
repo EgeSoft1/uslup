@@ -28,7 +28,7 @@ etiketli kümeye bakılmadan üç tarama yapıldı:
 
 Kök neden iki yerde: (a) kısa köklere tanınan ortak çekim listesi, bu
 köklerle başlayan en sık Türkçe kelimeleri kapsıyor; (b) bağlamsız "ironi"
-örüntüleri gerçek övgü ve taziyeyi ayırt edemiyor. İkisi de 9a3f7b8 ara
+örüntüleri gerçek övgü ve taziyeyi ayırt edemiyor. İkisi de c0e1e57 ara
 commit'iyle gelmiş ve ayrıca ölçülmemişti.
 
 ## 2. Önceden kayıtlı değişiklikler
@@ -63,7 +63,7 @@ ekleme yapılmayacak; yapılırsa bu belgeye ayrıca ve gerekçesiyle yazılacak
 
 ## 4. Sonuçlar
 
-Kayıt `812c75b` ile girdi; değişiklikler ondan sonraki commit'tedir.
+Kayıt `6c1c6ff` ile girdi; değişiklikler ondan sonraki commit'tedir.
 Listeye ekleme yapılmadı. Bir sapma: D1'in kapsam sütununda "boğum" da
 yazıyordu; k→ğ yumuşaması çelişki sayılmadığı için D1 onu ayıklamaz
 (yalnızca ASCII "boga" D2 ile çıkar). Liste genişletilmedi.

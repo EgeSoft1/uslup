@@ -55,11 +55,11 @@ bu sayede engellendi.
 
 ## 3. Duyarlılığı kim yükseltti — ve neden bu bir genelleme kanıtı değil
 
-Son commit (`1fc86e5`, D8) ile bugünkü çalışma ağacı arasındaki fark ölçüldü.
+Son commit (`0d13176`, D8) ile bugünkü çalışma ağacı arasındaki fark ölçüldü.
 Geçici bir çalışma ağacı (`git worktree`) kurulup iki durum aynı kümede
 karşılaştırıldı:
 
-| | `1fc86e5` (D8) | Bugün |
+| | `0d13176` (D8) | Bugün |
 |---|---|---|
 | Kesinlik | %96,2 | %100,0 |
 | Duyarlılık | %41,7 | %46,7 |

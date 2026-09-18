@@ -2,7 +2,7 @@
 
 **Tarih:** 13 Eylül 2026
 **Küme:** `packages/civility_core/lib/src/eval/generalization5_dataset.dart`
-**Küme commit'i (ölçümden önce):** `9179ee4` — 2026-09-13 12:22 (+03:00)
+**Küme commit'i (ölçümden önce):** `55881fb` — 2026-09-13 12:22 (+03:00)
 **Komut:** `dart run bin/evaluate.dart --genelleme5`
 
 Bu belge ölçümün **düzeltilmemiş** kaydıdır. Kümeye bakılarak motorda hiçbir
