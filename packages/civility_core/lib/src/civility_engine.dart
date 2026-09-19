@@ -370,6 +370,11 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   /// geçme olasılıkları uzunlukla hızla düşer.
   final List<({String despaced, LexiconEntry entry})> _despacedPrefixes = [];
 
+  /// Yazılışında ikili taşıyan tek kelimelik girdilerin ikilisi indirilmiş
+  /// hâlleri: "namussuz" → "namusuz". Gerekçe: `_squeezedEntryFor`.
+  final List<({String squeezed, List<String> pairs, LexiconEntry entry})>
+      _squeezedEntries = [];
+
   /// `_despacedPrefixes`, ilk harfe göre — uzundan kısaya sırası korunur.
   final Map<int, List<({String despaced, LexiconEntry entry})>>
       _despacedPrefixByFirst = {};
@@ -475,6 +480,22 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
         final spelling = TurkishMorphology.toLowerTr(entry.term);
         if (spelling.length == normalized.length) {
           _shortRootSpelling[entry] = spelling;
+        }
+      }
+
+      if (!normalized.contains(' ') &&
+          normalized.length >= 4 &&
+          !entry.requiresDirection) {
+        final squeezed = _squeeze(normalized);
+        if (squeezed != null) {
+          _squeezedEntries.add((
+            squeezed: squeezed,
+            pairs: [
+              for (var k = 1; k < normalized.length; k++)
+                if (normalized[k] == normalized[k - 1]) normalized.substring(k - 1, k + 1),
+            ],
+            entry: entry,
+          ));
         }
       }
 
@@ -828,8 +849,10 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
       // Kuyruk yalnızca SONDAN kesildiği için kökün harf konumları özgün
       // metinde yerinde kalır; `_dedouble`'ın aksine yüzey kanıtı denetimi
       // (`_surfaceContradictsRoot`) bu yolda da geçerlidir ve atlanmaz.
+      // Uzatma kuyruğu ikileme yolunda da aday üretir; bir kez hesaplanır.
+      ({String value, String aggressive})? stripped;
       if (matched == null) {
-        final stripped = _stripElongationTail(normalized, token);
+        stripped = _stripElongationTail(normalized, token);
         if (stripped != null) {
           for (final form in {stripped.value, stripped.aggressive}) {
             if (form.length < 3 || _isMasked(form)) continue;
@@ -840,6 +863,50 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
               matched = candidate;
               break;
             }
+          }
+        }
+      }
+
+      // ── KELİME İÇİ HARF İKİLEMESİ (docs/32) ──────────────────────────────
+      // `_dedouble` ünsüz ikilisini yalnızca kelime SONUNDA indirir; kelime
+      // içindeki ikili ve ikiliden sonra düşen tek harflik kuyruk kaçıyordu:
+      //
+      //   "sikerriimmo" · "şerrefsiz" · "pezzevenk" · "orrospu" · "ssalak"
+      //   · "göttveren" · "gerizekkalı" · "sikttir"                → Temiz ✗
+      //
+      // Bu yol yalnızca önceki yolların HİÇBİRİ eşleşmediğinde çalışır ve
+      // `_dedouble`'ın kelime içi ünsüz sınırını kaldırır. Sınırın gerekçesi
+      // ("yıllanma" → "yılanma") geçerliliğini korur; ama o gerekçe masum bir
+      // kelimenin BAŞKA bir masum kelimeye inmesiyle ilgilidir. Burada iniş
+      // yalnızca sözlükte geçerli bir kök + ek bulursa sonuç verir ve bu,
+      // 91.861 biçimlik kelime listesinde denetlendi (docs/32).
+      //
+      // Maliyet: yol, eşleşmeyen HER token'da çalışır. Kopya üretmeden önce
+      // iki ucuz kapı sorulur — token'da ikili var mı, özgün yazılış normalize
+      // biçimden uzun mu (3+ tekrar daraltılmış olabilir). Gündelik token'ların
+      // çoğu ikisinden de geçemez ve hiçbir dizgi üretilmez.
+      if (matched == null) {
+        final capped = _originalLonger(normalized, token)
+            ? _cappedElongationForms(normalized, token)
+            : null;
+        if (capped != null ||
+            stripped != null ||
+            _hasDouble(token.text) ||
+            _hasDouble(aggressiveText)) {
+          final squeezed = _squeezeLookup(
+            normalized,
+            token,
+            {
+              token.text,
+              aggressiveText,
+              if (stripped != null) ...[stripped.value, stripped.aggressive],
+              ...?capped,
+            },
+            direct: capped ?? const {},
+          );
+          if (squeezed != null) {
+            matched = squeezed;
+            dedoubled = true;
           }
         }
       }
@@ -1610,6 +1677,206 @@ class LexicalTurkishClassifier implements ToxicityClassifier {
   }
 
   static const Set<int> _vowelCodes = {0x61, 0x65, 0x69, 0x6F, 0x75}; // a e i o u
+
+  /// Kelime içi ikilileri de teke indirerek sözlükte arar (docs/32).
+  ///
+  /// [forms] token'ın normalize biçimleridir (temkinli, agresif ve varsa
+  /// uzatma kuyruğu atılmış hâlleri). Her biri için iki aday denenir:
+  ///   • bütün ikilileri indirilmiş biçim     "sikerriimm"  → "sikerim"
+  ///   • ikiliden sonra düşen tek harf atılmış "sikerriimmo" → "sikerim"
+  ///
+  /// Kuyruk yalnızca bir İKİLİNİN hemen ardındaysa atılır: tuş basılı
+  /// tutulurken ikinci harfle birlikte bir sonraki tuş da düşer. Kuyruklu
+  /// bir biçimin yakalanması için kökün en az dört harf olması gerekir.
+  ///
+  /// Kısa kökler (D1) bu yoldan eşleşemez; tek istisna, kökün Türkçeye özgü
+  /// harfinin ("piç" → ç) özgün metinde fiilen yazılmış olmasıdır: "piiç",
+  /// "piçç". ASCII "mall" (AVM) ya da "itt" bu yüzden hiçbir şey tetiklemez.
+  ///
+  /// [direct] biçimleri ikilileri indirilmeden de denenir: özgün metindeki
+  /// 3+ tekrarın ikiye indirildiği hâller ("namusssuz" → "namussuz").
+  LexiconEntry? _squeezeLookup(
+      NormalizedText normalized, Token token, Set<String> forms,
+      {Set<String> direct = const {}}) {
+    LexiconEntry? accept(String form, String written, {required bool tail}) {
+      if (form.length < (tail ? 4 : 3) ||
+          _isMasked(form) ||
+          ToxicityLexicon.shortRootCollisions.contains(form)) {
+        return null;
+      }
+      final candidate = _lookup(form) ??
+          _squeezedEntryFor(form, written) ??
+          _despacedPhrases[form] ??
+          (tail ? null : _despacedPrefix(form));
+      if (candidate == null) return null;
+      // Yönelim şartlı girdiler gündelik kelimelerdir ("yılan", "eşek");
+      // belirsiz bir kelimenin üstüne belirsiz bir gizleme kanıtı yığılmaz.
+      // Kelime listesinde: "sen yıllanma" → yılan ✗.
+      if (candidate.requiresDirection) return null;
+      if (_shortRoots.contains(candidate) &&
+          candidate.matchMode != MatchMode.verbatim &&
+          (tail || !_writesTurkishLetterOf(normalized, token, candidate))) {
+        return null;
+      }
+      if (_squeezedSpellingContradicts(normalized, token, candidate)) {
+        return null;
+      }
+      return candidate;
+    }
+
+    for (final form in forms) {
+      if (direct.contains(form)) {
+        final hit = accept(form, form, tail: false);
+        if (hit != null) return hit;
+      }
+      final squeezed = _squeeze(form);
+      if (squeezed == null) continue;
+      final hit = accept(squeezed, form, tail: false);
+      if (hit != null) return hit;
+      final n = form.length;
+      if (n >= 4 &&
+          form.codeUnitAt(n - 2) == form.codeUnitAt(n - 3) &&
+          form.codeUnitAt(n - 1) != form.codeUnitAt(n - 2)) {
+        final cut = accept(squeezed.substring(0, squeezed.length - 1),
+            form.substring(0, n - 1),
+            tail: true);
+        if (cut != null) return cut;
+      }
+    }
+    return null;
+  }
+
+  /// Yazılışında zaten ikili taşıyan girdiler ("namussuz", "dallama",
+  /// "deyyus"): ikilileri indirilmiş token, girdinin de indirilmiş hâliyle
+  /// karşılaştırılır. Aksi hâlde "namusssuz" → "namusuz" hiçbir girdiye
+  /// denk gelmez.
+  ///
+  /// [written] ikilileri indirilmemiş biçimdir ve girdinin kendi ikilisini
+  /// ("ss", "ll") fiilen taşımalıdır. Yoksa eşleşme, ikilisi indirilmiş
+  /// girdinin denk geldiği BAŞKA bir kelimeye kayar — kelime listesinde:
+  /// "Şiilik" → "silik" = "şıllık"ın indirilmiş hâli ✗.
+  LexiconEntry? _squeezedEntryFor(String squeezed, String written) {
+    for (final s in _squeezedEntries) {
+      if (squeezed.startsWith(s.squeezed) &&
+          s.pairs.any(written.contains) &&
+          TurkishMorphology.isValidInflectedForm(squeezed, s.squeezed,
+              stemSpelling: s.entry.term)) {
+        return s.entry;
+      }
+    }
+    return null;
+  }
+
+  /// Bütün ardışık ikilileri teke indirir; ikili yoksa null.
+  static String? _squeeze(String text) {
+    var any = false;
+    for (var k = 1; k < text.length && !any; k++) {
+      any = text.codeUnitAt(k) == text.codeUnitAt(k - 1);
+    }
+    if (!any) return null;
+    final buffer = StringBuffer();
+    for (var k = 0; k < text.length; k++) {
+      if (k > 0 && text.codeUnitAt(k) == text.codeUnitAt(k - 1)) continue;
+      buffer.writeCharCode(text.codeUnitAt(k));
+    }
+    return buffer.toString();
+  }
+
+  /// Kökün Türkçeye özgü harflerinden biri (ç ğ ı ö ş ü) token'ın özgün
+  /// yazılışında geçiyor mu? Kısa kökün ikileme yoluyla eşleşmesi için
+  /// kanıttır: "piiç" yazan kişi "pic" ile başlayan bir yabancı kelime
+  /// yazmıyordur.
+  bool _writesTurkishLetterOf(
+      NormalizedText normalized, Token token, LexiconEntry entry) {
+    if (token.end - token.start != token.text.length) return false;
+    final spelling = TurkishMorphology.toLowerTr(entry.term);
+    final range = normalized.toOriginalRange(token.start, token.end);
+    final raw = TurkishMorphology.toLowerTr(
+        normalized.original.substring(range.start, range.end));
+    for (final letter in _turkishOnlyLetters.split('')) {
+      if (spelling.contains(letter) && raw.contains(letter)) return true;
+    }
+    return false;
+  }
+
+  /// İkilileri indirilmiş özgün yazılış, kökün Türkçe yazılışıyla çelişiyor
+  /// mu? `_surfaceContradictsRoot`'un ikileme yolundaki karşılığı: orada
+  /// konumlar birebir hizalıdır, burada ikisi de indirildikten sonra
+  /// hizalanır. Kelime listesinde: "şallak" → salak ✗ ("ş" yazılmış).
+  ///
+  /// Noktasız "ı" kanıt sayılmaz: "sıkerriim" bir çelişki değil, gizleme
+  /// denemesidir (gerekçe: `ToxicityLexicon.spellingSensitiveTerms`).
+  bool _squeezedSpellingContradicts(
+      NormalizedText normalized, Token token, LexiconEntry entry) {
+    if (token.end - token.start != token.text.length) return false;
+    final spelling = TurkishMorphology.toLowerTr(entry.term);
+    if (spelling.contains(' ')) return false;
+    final range = normalized.toOriginalRange(token.start, token.end);
+    final raw = TurkishMorphology.toLowerTr(
+        normalized.original.substring(range.start, range.end));
+    final written = _squeeze(raw) ?? raw;
+    final n = written.length < spelling.length ? written.length : spelling.length;
+    for (var k = 0; k < n; k++) {
+      final w = written[k];
+      final e = spelling[k];
+      if (w == e || w == 'ı' || !_turkishOnlyLetters.contains(w)) continue;
+      if (k == spelling.length - 1 && e == 'k' && w == 'ğ') continue;
+      return true;
+    }
+    return false;
+  }
+
+  /// Özgün yazılıştaki 3+ tekrarlar İKİYE indirilerek normalize edilmiş
+  /// biçimler; 3+ tekrar yoksa null.
+  ///
+  /// Normalizasyon 3+ tekrarı TEK harfe indirir ("çoookk" → "cok") ve bu,
+  /// yazılışında ikili taşıyan girdilerin uzatılmış hâlini siler:
+  /// "namusssuz" → "namusuz", "zavalllı" → "zavali", "sikkko" → "siko".
+  Set<String>? _cappedElongationForms(NormalizedText normalized, Token token) {
+    if (token.end - token.start != token.text.length) return null;
+    final range = normalized.toOriginalRange(token.start, token.end);
+    final raw = normalized.original.substring(range.start, range.end);
+    final out = StringBuffer();
+    var capped = false;
+    var run = 0;
+    for (var k = 0; k < raw.length; k++) {
+      final c = raw.codeUnitAt(k);
+      run = (k > 0 &&
+              TurkishNormalizer.sameIgnoringCaseCode(c, raw.codeUnitAt(k - 1)))
+          ? run + 1
+          : 1;
+      if (run > 2) {
+        capped = true;
+        continue;
+      }
+      out.writeCharCode(c);
+    }
+    if (!capped) return null;
+    final n = _normalizer.normalize(out.toString());
+    if (n.value.isEmpty || n.value.contains(' ')) return null;
+    return {n.value, n.aggressive};
+  }
+
+  /// Token'da ardışık iki özdeş karakter var mı? Kopya üretmez.
+  static bool _hasDouble(String text) {
+    for (var k = 1; k < text.length; k++) {
+      if (text.codeUnitAt(k) == text.codeUnitAt(k - 1)) return true;
+    }
+    return false;
+  }
+
+  /// Token'ın özgün metinde kapladığı aralık, normalize uzunluğundan uzun
+  /// mu? Değilse normalizasyon hiçbir karakter silmemiştir ve 3+ tekrar da
+  /// yoktur. Kopya üretmez.
+  static bool _originalLonger(NormalizedText normalized, Token token) {
+    final indices = normalized.sourceIndices;
+    if (token.end - token.start != token.text.length ||
+        token.end > indices.length) {
+      return false;
+    }
+    return indices[token.end - 1] - indices[token.start] + 1 >
+        token.text.length;
+  }
 
   /// Uzatma kuyruğu atılmış token'ın normalize biçimleri. Kuyruk yoksa `null`.
   ///

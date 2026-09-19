@@ -12,6 +12,46 @@ diye yazılır; boş bırakılmaz.
 
 ---
 
+## 2.1.0 — 19 Eylül 2026
+
+Taban: 2.0.0. Ayrıntı ve ölçüm kaydı: `docs/32_IKILEME_VE_SOZ_VARLIGI.md`.
+
+### Kırıcı
+
+Yok. Genel API değişmedi.
+
+### Değişen davranış
+
+- **Kelime içi harf ikilemesi** (docs/32): "sikerriimmo", "şerrefsiz",
+  "pezzevenk", "orrospu", "ssalak" artık işaretlenir. Önceki yollar
+  (`_dedouble`, uzatma kuyruğu) eşleşmediğinde bütün ikililer teke indirilir;
+  ikiliden sonra düşen tek harflik kuyruk ("…mm-o") atılır; özgün metindeki
+  3+ tekrar ikiye indirilerek yazılışında ikili olan girdiler ("namusssuz")
+  bulunur. Yönelim şartlı girdiler bu yoldan eşleşemez; yazılan Türkçe harf
+  kökle çelişirse ("şallak" ≠ "salak") eşleşme reddedilir.
+- **"sikke" maskesi daraltıldı**: tek bir `sikke` ön eki "sikkerim"
+  ikilemesini de temizliyordu. Yerine para anlamının çekimleri yazıldı.
+- **Söz varlığı**: sözlük 310 → 327 girdi (17 yeni: `kevaşe`, `kaşar`,
+  `kancık`, `yosma`, `boynuzlu`, `enayi`, `angut`, `sümsük`, `sapık`,
+  `ucube`, `hanzo`, `tipsiz`, `bok çuvalı`, `allahın belası`, `sik kafalı`,
+  `ağzını burnunu kır`, `bıçaklarım`). Gündelik somut anlamı olanlar
+  yönelim şartlıdır ("kaşar peyniri", "angut kuşu"). Denetlenip alınmayanlar
+  docs/32 §3'te.
+- Üslup Asistanı'nın "Nasıl çalışıyor?" cevabındaki sayılar artık motordan
+  sayılır; önceden elle yazılmış "310 girdi" bayatlamıştı.
+
+### Ölçüm (2.0.0 → 2.1.0)
+
+| Ölçüm | 2.0.0 | 2.1.0 |
+|---|:--:|:--:|
+| 13 etiketli küme (1.115 cümle) — değişen karar | — | **0** (toksisite değerleri dahil) |
+| Kelime listesi (91.861 biçim) — tek başına yeni masum işaretleme | — | **0** |
+| Sözlük girdilerinin ikileme varyantları — yakalanan | %34,4 (3.636) | **%99,2** (3.668) |
+| Mesaj p50 · uzun gönderi p50 (AOT, aynı makine, dönüşümlü) | 70 µs · 1.070 µs | 72 µs · 1.128 µs |
+| Çekirdek test sayısı | 765 | 839 |
+
+---
+
 ## 2.0.0 — 15 Eylül 2026
 
 Taban: 1.0.0 (`0d13176`, 13 Eylül 2026). Bu sürüm henüz commit edilmedi;

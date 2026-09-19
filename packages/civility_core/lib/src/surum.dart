@@ -10,5 +10,5 @@
 
 abstract final class CivilityCoreSurum {
   /// Anlamsal sürüm (MAJOR.MINOR.PATCH).
-  static const String surum = '2.0.0';
+  static const String surum = '2.1.0';
 }

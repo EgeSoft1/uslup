@@ -12,7 +12,7 @@
 name: civility_core
 description: Türkçe saldırgan dil tespiti ve bağlam çözümlemesi — saf Dart çekirdek.
 publish_to: 'none'
-version: 2.0.0 # CHANGELOG.md ve lib/src/surum.dart ile aynı olmalı
+version: 2.1.0 # CHANGELOG.md ve lib/src/surum.dart ile aynı olmalı
 
 environment:
   sdk: '>=3.3.0 <4.0.0'

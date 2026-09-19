@@ -154,8 +154,15 @@ class ToxicityLexicon {
   static const List<String> maskedPrefixes = [
     // "şikayet" → "sikayet" → "sik" ile çakışır
     'sikaye',
-    // "sikke" (para birimi)
-    'sikke',
+    // "sikke" (para birimi) ve çekimleri: sikkeler · sikkeyi · sikkesi ·
+    // sikkede · sikkenin · sikkem · sikkeci · sikkelemek. Önceden tek bir
+    // 'sikke' ön eki vardı ve "sikkerim" gibi bir ikileme gizlemesini de
+    // sessizce temizliyordu (docs/32); "sikker-" bir sikke çekimi değildir.
+    // "sikkey-" ve "sikkec-" maskelenmedi: "sikkeyim", "sikkecem" ("sikeyim",
+    // "sikecem" ikilemesi) kaçardı. "sikkeyi", "sikkeye" zaten hiçbir girdiye
+    // bağlanmaz; "sikkeci" ayrıca maskelenir.
+    'sikkel', 'sikkes', 'sikked', 'sikken', 'sikkem', 'sikkeci', 'sikkez',
+    'sikkeb',
     // "götür-" fiili → "goturdu", "goturecek" → "got" ile çakışır
     'gotur',
     // "göreceli, görüş, görev" → "gor" güvenli ama "göt" ile karışmasın
@@ -208,6 +215,9 @@ class ToxicityLexicon {
     // "tembellik etmek" bir davranış eleştirisidir, kişi hakareti değil;
     // "tembel" girdisi yönelim şartıyla korunuyor, bu ek güvence
     'tembelh',
+    // ── docs/32 ölçümüyle eklenen ────────────────────────────────────────
+    // "kasara" (gemi baş üstü) → ASCII "kaşara" ile aynı dizgi
+    'kasara',
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -418,8 +428,9 @@ class ToxicityLexicon {
     'eşek', 'eşşek', 'öküz', 'domuz', 'maymun', 'köpek', 'hayvan', 'it', 'kaz', 'ayı',
     'keçi', 'katır', 'manda', 'fare', 'sıçan', 'solucan', 'böcek',
     'hamamböceği', 'kurbağa', 'karga', 'akbaba', 'çakal', 'yılan', 'sırtlan',
-    'kene', 'sülük',
-    // gündelik somut anlamı olan diğer adlar
+    'kene', 'sülük', 'angut', 'sümsük', 'kancık', 'boynuzlu',
+    // gündelik somut anlamı olan diğer adlar ("kaşar peyniri")
+    'kaşar',
     'hıyar', 'parazit', 'asalak', 'mal', 'kof',
     'komedi', 'trajikomik', 'saçmalık', 'palavra', 'zırva', 'gevezelik',
   };
@@ -1020,6 +1031,43 @@ class ToxicityLexicon {
     LexiconEntry(term: 'kahrolasıca', category: ToxicityCategory.hakaret, severity: 0.62),
     LexiconEntry(term: 'lanet olası', category: ToxicityCategory.hakaret, severity: 0.55),
     LexiconEntry(term: 'belanı versin', category: ToxicityCategory.hakaret, severity: 0.65),
+
+    // ── docs/32 · SÖZ VARLIĞI GENİŞLETMESİ (19 Eylül 2026) ──────────────────
+    // Yaygın hakaret listesiyle yapılan taramada sözlükte HİÇ bulunmayan
+    // biçimler. Kurulum docs/25 ile aynı: her girdi 91.861 biçimlik kelime
+    // listesinde tek başına ve "sen X" kalıbında denetlendi, 13 etiketli
+    // kümede karar değişmediği ayrıca doğrulandı.
+    //
+    // Gündelik bir somut anlamı olanlar yönelim şartlıdır ve
+    // `predicativeDirectionTerms` listesindedir: "kaşar peyniri", "angut
+    // kuşu", "sümsük kuşu", "boynuzlu hayvan", "kancık köpek".
+    //
+    // ⛔ DENETLENİP ALINMAYANLAR:
+    //   "top"          → "top oynadık"; ayırt edecek yapı yok
+    //   "vururum"      → "topa vururum"; "sana pas ver, vururum" yakınlıkla yanılır
+    //   "siktiğimin"   → ASCII "sıktığımın" ile aynı dizgi
+    //   "lan", "ulan"  → hitap ünlemi; tek başına hakaret değil
+    //   "çüş"          → şaşkınlık ünlemi
+    //   "sg", "s.g"    → altyazı listesinde "SG-1" (dizi adı) işaretlendi
+    //   "bok ye"       → öbek sağ sınır denetlemez: "sınavda bok yedim" (öz-ifade)
+    LexiconEntry(term: 'kevaşe', category: ToxicityCategory.kufur, severity: 0.88),
+    LexiconEntry(term: 'yosma', category: ToxicityCategory.hakaret, severity: 0.72, requiresDirection: true),
+    LexiconEntry(term: 'kaşar', category: ToxicityCategory.kufur, severity: 0.80, matchMode: MatchMode.exact, requiresDirection: true),
+    LexiconEntry(term: 'kancık', category: ToxicityCategory.kufur, severity: 0.80, requiresDirection: true),
+    LexiconEntry(term: 'boynuzlu', category: ToxicityCategory.hakaret, severity: 0.75, requiresDirection: true),
+    LexiconEntry(term: 'enayi', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true, neutralAlternative: 'saf'),
+    LexiconEntry(term: 'angut', category: ToxicityCategory.hakaret, severity: 0.58, requiresDirection: true),
+    LexiconEntry(term: 'sümsük', category: ToxicityCategory.hakaret, severity: 0.52, requiresDirection: true),
+    LexiconEntry(term: 'sapık', category: ToxicityCategory.hakaret, severity: 0.70, requiresDirection: true),
+    LexiconEntry(term: 'ucube', category: ToxicityCategory.hakaret, severity: 0.62, requiresDirection: true),
+    LexiconEntry(term: 'hanzo', category: ToxicityCategory.hakaret, severity: 0.55, requiresDirection: true),
+    LexiconEntry(term: 'tipsiz', category: ToxicityCategory.asagilama, severity: 0.45, requiresDirection: true),
+    LexiconEntry(term: 'bok çuvalı', category: ToxicityCategory.kufur, severity: 0.75),
+    LexiconEntry(term: 'allahın belası', category: ToxicityCategory.hakaret, severity: 0.65),
+    LexiconEntry(term: 'sik kafalı', category: ToxicityCategory.kufur, severity: 0.90),
+    LexiconEntry(term: 'ağzını burnunu kır', category: ToxicityCategory.tehdit, severity: 0.90),
+    // "bıçaklarım keskin" (bıçaklar + ım) → yalnızca yöneltilince.
+    LexiconEntry(term: 'bıçaklarım', category: ToxicityCategory.tehdit, severity: 0.92, matchMode: MatchMode.exact, requiresDirection: true),
   ];
 }
 

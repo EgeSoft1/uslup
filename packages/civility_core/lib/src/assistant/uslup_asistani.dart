@@ -29,7 +29,16 @@
 // =============================================================================
 
 import '../civility_engine.dart';
+import '../detect/hate_patterns.dart';
+import '../detect/idiom_patterns.dart';
+import '../detect/implicit_patterns.dart';
+import '../lexicon/toxicity_lexicon.dart';
 import '../normalization/turkish_normalizer.dart';
+
+/// Edimbilimsel örüntü sayısı: örüntü kataloğunun deyim ve nefret
+/// kuruluşları dışındaki kısmı (`bin/_dbg.dart` ile aynı hesap).
+int _edimbilimselSayisi() =>
+    ImplicitPatterns.all.length - IdiomPatterns.all.length - HatePatterns.all.length;
 
 /// Kullanıcının ne istediği.
 enum AsistanNiyeti {
@@ -400,16 +409,21 @@ class UslupAsistani {
         ],
       );
 
-  AsistanCevabi _nasilCalisir() => const AsistanCevabi(
+  // Sayılar elle yazılmaz, motordan sayılır: 19 Eylül'de burada "310 girdi"
+  // yazıyordu ve sözlük büyüyünce bayatladı (docs/32).
+  AsistanCevabi _nasilCalisir() => AsistanCevabi(
         niyet: AsistanNiyeti.nasilCalisir,
         baslik: 'Yedi katman, tamamı cihazda',
         govde: 'Bir dil modeli yok. Kural ve örüntü katmanları var; her karar '
             'hangi katmandan geldiğini söyleyebiliyor.',
         maddeler: [
-          '1. Normalizasyon — gizleme çözülür: \$3r3fsiz, a p t a l, ş*refsiz',
-          '2. Sözlük + biçimbilim — 310 girdi, Türkçe ek ve ünsüz yumuşaması',
-          '3. Edimbilimsel örüntü — 131 örüntü, 59 deyim: küfürsüz düşmanlık',
-          '4. Nefret söylemi — 31 kuruluş, 104 kimlik terimi; kimlik adı tek başına tetiklemez',
+          '1. Normalizasyon — gizleme çözülür: \$3r3fsiz, a p t a l, ş*refsiz, şerrefsiz',
+          '2. Sözlük + biçimbilim — ${ToxicityLexicon.entries.length} girdi, '
+              'Türkçe ek ve ünsüz yumuşaması',
+          '3. Edimbilimsel örüntü — ${_edimbilimselSayisi()} örüntü, '
+              '${IdiomPatterns.all.length} deyim: küfürsüz düşmanlık',
+          '4. Nefret söylemi — ${HatePatterns.all.length} kuruluş, '
+              '${IdentityTerms.all.length} kimlik terimi; kimlik adı tek başına tetiklemez',
           '5. Gönderge — “Bunların…” zamirini önceki cümledeki öncüle bağlar',
           '6. Bağlam — saldırı, iltifat, şikâyet, öz-ifade ve alıntı ayrımı',
           '7. Öneri — yerel, deterministik yeniden yazım; üç ton',
@@ -626,9 +640,19 @@ class UslupAsistani {
         aciklama: 'Rakamlar harfe geri çevrilir.',
       ),
       AsistanOrnegi(
+        metin: 'şerrefsizz herif',
+        isaretlenir: true,
+        aciklama: 'Kelime içi harf ikilemesi teke indirilir.',
+      ),
+      AsistanOrnegi(
         metin: 'Canım sıkıldı',
         isaretlenir: false,
         aciklama: 'Gizleme çözümü masum cümleyi bozmaz.',
+      ),
+      AsistanOrnegi(
+        metin: 'Yıllanmış şarabı sikke koleksiyonunun yanına koydum',
+        isaretlenir: false,
+        aciklama: 'Gerçek ikili harfler ("ll", "kk") gizleme sayılmaz.',
       ),
     ],
     IcerikKonusu.deyim: [
