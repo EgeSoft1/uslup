@@ -1,7 +1,9 @@
 # Jüri Sunumu — Konuşma Metni (İstanbul, 15 dakika)
 
 **Sunum dosyası:** `NSosyal_Inovasyon_Yarisma_Sunum_FINAL.pdf` · 17 slayt
-**Sayılar:** 18 Eylül 2026'da motordan yeniden ölçüldü. Metindeki her sayı
+**Sayılar:** 18 Eylül 2026'da motordan yeniden ölçüldü; 19 Eylül'de tek bir
+sayı değişti: **sözlük 310 → 327 girdi** (docs/32). Slaytta hâlâ 310 yazıyor,
+uygulama ekranında 327 görünür — sorulursa cevabı §6'da. Diğer bütün sayılar
 slayttakiyle aynıdır.
 
 > **Nasıl kullanılır.** Bu metni kelimesi kelimesine ezberleme. Her slaytın
@@ -33,9 +35,9 @@ slayttakiyle aynıdır.
 Bunları duraksamadan söyleyebilmelisin.
 
 **Ürünün büyüklüğü**
-- **310** sözlük girdisi · **221** örüntü (131 edimbilimsel + 59 deyim + 31 nefret) · **104** kimlik terimi
+- **327** sözlük girdisi (slaytta 310) · **221** örüntü (131 edimbilimsel + 59 deyim + 31 nefret) · **104** kimlik terimi
 - **1.115** etiketli cümle · **13** ayrı küme
-- **846** otomatik test (765 motor + 81 arayüz)
+- **920** otomatik test (839 motor + 81 arayüz)
 
 **Geçerli kör ölçüm — İP-29, 90 cümle**
 - Kesinlik **%100,0** — 30 masum cümlenin 30'u temiz
@@ -116,7 +118,7 @@ Bunları duraksamadan söyleyebilmelisin.
 > her zaman kullanıcının.**
 >
 > Elimizde çalışan bir prototip var: mobil uygulama, Android klavye servisi
-> ve web sürümü. Arkasında 310 girdilik Türkçe toksisite sözlüğü, 221 örüntü
+> ve web sürümü. Arkasında 327 girdilik Türkçe toksisite sözlüğü, 221 örüntü
 > ve 1.115 etiketli cümlelik bir ölçüm altyapısı."
 
 ---
@@ -407,7 +409,7 @@ Bunları duraksamadan söyleyebilmelisin.
 
 | # | Ne yapılacak | Ne söylenecek | Süre |
 |---|---|---|:--:|
-| 1 | Üslup Paneli → başlık kartı | "310 sözlük girdisi, 221 örüntü, 1.115 etiketli örnek. Bu sayılar slayttan değil, motorun kendisinden sayılıyor." | 15 sn |
+| 1 | Üslup Paneli → başlık kartı | "327 sözlük girdisi, 221 örüntü, 1.115 etiketli örnek. Bu sayılar slayttan değil, motorun kendisinden sayılıyor." | 15 sn |
 | 2 | `Doğrudan saldırı` çipi | "Kelimenin altı çiziliyor, kutu turuncuya dönüyor. 'Neden uyarıldın?' diyor ve cevap veriyor: hangi ifade, hangi katman, neden." | 45 sn |
 | 3 | Öneriyi göster | "Ve alternatif: *'Bu konuda sana katılmıyorum.'* Aynı fikir, saldırı yok." | 20 sn |
 | 4 | `Mağdur anlatısı` çipi | **"Şimdi en kritik an. Aynı ağır kelime, ama bu sefer anlatan kişi mağdur. Uyarı YOK. Çünkü tacizi anlatan kişi susturulmamalı."** | 40 sn |
@@ -472,6 +474,44 @@ gösteriyor, kullanıcıyı engellemiyor. Not alıyoruz."* de ve cümleyi yaz.
 > sayılıyordu; kriz anındaki birine "suç oluşturabilir" demek yapılabilecek
 > en yanlış şeydi, düzelttik.
 
+**"Kütüphane olarak ekleniyor dediniz — nasıl?"** *(slayt 12 ve 16)*
+> Katman bir sunucu değil, uygulamanın içine konan bir paket. Platform onu
+> kendi uygulamasına ekliyor ve metin kutusu her değiştiğinde tek bir
+> fonksiyon çağırıyor: metni veriyor; basamak, gerekçe ve öneri geri geliyor.
+> Sunucu kurulumu yok, API anahtarı yok.
+>
+> Platformun yazıldığı dile göre üç yol var ve üçü de depoda çalışıyor:
+> **Flutter** uygulamasına tek satır bağımlılıkla — bizim gönderi ve yanıt
+> kutumuz böyle. **Yerel Android** uygulamasına, klavyemizde yaptığımız gibi:
+> uygulamanın içinde küçük bir Dart motoru açılıyor, metin bir kanal üzerinden
+> gidip geliyor. **Web sitesine** motoru JavaScript'e derleyip tek bir script
+> etiketiyle — 200 KB civarı, çözümleme tarayıcıda yapılıyor. Dördüncüsü
+> entegrasyon bile istemiyor: klavye olarak her uygulamada çalışıyor.
+
+*Takip sorusu gelirse — "Gerçek bir platforma eklediniz mi?"*
+> Hayır, henüz değil. Pilot entegrasyon yedinci iş paketinde, final sonrası.
+> Yerel iOS köprüsünü de henüz denemedik. Bugün gösterebildiğimiz: aynı
+> paketin mobil uygulamada, klavyede ve web'de birebir aynı kararı vermesi.
+
+**"Slaytta 310 sözlük girdisi yazıyor, ekranda 327 görünüyor?"**
+> Sunumu hazırladıktan sonra bir kullanıcı "sikerriimmo" gibi harf
+> ikilemeli bir yazımın kaçtığını gösterdi. Düzelttik ve 17 girdi ekledik.
+> Ama önce ölçtük: 91.861 kelimelik listede tek bir masum kelime yeni
+> işaretlenmedi, 13 ölçüm kümesinde tek bir karar değişmedi. Panel sayıyı
+> motordan okuduğu için 327 görüyorsunuz. Kör küme sayılarımız aynı.
+
+*Slayt 9 görselinde ve slayt 15 tablosunda "308 girdi · 126 örüntü · 29
+kuruluş · 760 + 79 test" yazıyor — bunlar 15 Eylül'ün sayıları.* Sorulursa:
+> "O görseller 15 Eylül'de üretildi; o günden beri sözlük ve örüntü kataloğu
+> büyüdü. Güncel sayılar ekranda: panel onları motordan sayıyor."
+
+**"Gizlenmiş küfürleri yakalıyor musunuz?"**
+> Rakamla ($3r3fsiz), harf arası boşlukla, yıldızla, bitişik yazımla ve harf
+> ikilemesiyle (şerrefsiz, sikerriimmo) yazılanları çözüyoruz. Sözlüğümüzdeki
+> kelimelerden otomatik ürettiğimiz 3.668 ikileme varyantının %99,2'sini
+> yakalıyoruz. Ama bu sözlükteki kelimeler için; sözlükte olmayan bir
+> hakareti gizlemesiz yazılsa da kaçırırız.
+
 **"Ölçeklenince maliyet ne olur?"**
 > Artmaz. Çözümleme kullanıcının cihazında yapılıyor; bir milyon kullanıcı
 > da olsa çıkarım maliyetimiz sıfır. Giderimiz sadece geliştirme ve söz
@@ -501,6 +541,8 @@ gösteriyor, kullanıcıyı engellemiyor. Not alıyoruz."* de ve cümleyi yaz.
 - ❌ **"Nefret söylemini engelliyoruz."** Engellemiyoruz; öneriyoruz.
 - ❌ **"Yanlış uyarı oranımız sıfır."** Beş kişilik oturumda on denemede kusur görülmedi — bu bir oran iddiası değildir.
 - ❌ **"Kullanıcılarımız beğendi."** Beş katılımcılı bir oturum var, kullanıcı kitlesi yok.
+- ❌ **"Her küfrü yakalıyoruz."** %99,2 sözlükteki kelimelerin ikileme varyantları içindir; kör kümede duyarlılık %46,7.
+- ❌ **"Bir platforma entegre ettik."** Etmedik; üç entegrasyon yolu çalışıyor, pilot 7. iş paketinde.
 - ❌ Ölçmediğin bir şeyi ölçmüş gibi anlatmak. Kappa **yok**; sorulursa olduğu gibi söyle.
 
 > **Altın kural:** Bilmediğin bir sayı sorulursa **"Onu şu an ezbere
