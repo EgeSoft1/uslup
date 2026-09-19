@@ -1,0 +1,40 @@
+<!doctype html>
+<!--
+  Flutter'sız bir web sayfasına Üslup entegrasyonu — tek script etiketi.
+  Önce: dart compile js -O2 example/web/uslup_js.dart -o example/web/uslup.js
+  Sonra bu dosyayı tarayıcıda açın. İnternet gerekmez.
+-->
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Üslup — web entegrasyonu</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+  textarea { width: 100%; min-height: 90px; font: inherit; padding: 10px; border: 2px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+  textarea.riskli, textarea.yuksek { border-color: #c2410c; }
+  textarea.dikkat { border-color: #ca8a04; }
+  #sonuc { margin-top: 12px; color: #333; }
+</style>
+</head>
+<body>
+<h1>Gönderi kutusu</h1>
+<textarea id="kutu" placeholder="Bir şey yaz…">sen tam bir şerrefsizsin</textarea>
+<div id="sonuc"></div>
+
+<script src="uslup.js"></script>
+<script>
+  const kutu = document.getElementById('kutu');
+  const sonuc = document.getElementById('sonuc');
+  function guncelle() {
+    const s = JSON.parse(uslupCozumle(kutu.value));
+    kutu.className = s.risk;
+    sonuc.textContent = s.bulgular.length
+      ? `${s.riskEtiketi} · ${s.bulgular.map(b => `"${b.ifade}": ${b.gerekce}`).join(' · ')} (${s.sure_us} µs)`
+      : `${s.riskEtiketi} (${s.sure_us} µs)`;
+  }
+  kutu.addEventListener('input', guncelle);
+  guncelle();
+</script>
+</body>
+</html>

@@ -305,6 +305,35 @@ Sunum akışı ve hazır cevaplar: [`docs/17_JURI_DEMO_SENARYOSU.md`](docs/17_JU
 
 ---
 
+## Bir platforma nasıl eklenir
+
+Katman sunucu değil, **kütüphanedir**: platform onu kendi uygulamasının
+içine koyar, metin kutusunun her değişiminde `analyze()` çağırır. Sunucu
+kurulumu, API anahtarı ve ağ çağrısı yoktur. Bugün üç yol çalışır durumda:
+
+| Platformun yazıldığı ortam | Yol | Depoda çalışan örneği |
+|---|---|---|
+| **Flutter / Dart** | `pubspec.yaml` → `civility_core` bağımlılığı; `LexicalTurkishClassifier().analyze(metin)` | Gönderi ve yanıt kutusu: `mobile/lib/presentation/compose/civility_composer.dart` · en kısa hâli: `packages/civility_core/example/entegrasyon.dart` |
+| **Yerel Android (Kotlin/Java)** | Flutter "add-to-app": uygulama içinde başsız bir Dart motoru açılır, metin `MethodChannel` ile gider, sonuç geri döner | Üslup klavyesi tam olarak bunu yapar: `CivilityInputMethodService.kt` → `imeMain` (`mobile/lib/main.dart`), kanal `uslup/ime` |
+| **Web (React, Vue, düz HTML)** | Motor JavaScript'e derlenir; sayfa tek bir `<script>` etiketiyle ekler, çözümleme tarayıcıda yapılır | `packages/civility_core/example/web/` — `uslupCozumle(metin)` |
+
+```bash
+cd packages/civility_core
+dart run example/entegrasyon.dart                                     # Dart
+dart compile js -O2 example/web/uslup_js.dart -o example/web/uslup.js  # Web (~200 KB)
+node example/web/dene.js                                              # JS derlemesini dene
+```
+
+Dördüncü yol entegrasyon gerektirmez: **Üslup klavyesi** kullanıcının
+telefonundaki her uygulamada çalışır. Dört yolda da karar aynı paketten gelir;
+mobil, klavye ve web aynı cümleye aynı cevabı verir.
+
+**Sınır.** iOS'a yerel (Swift) bir köprü ve gerçek bir platformla pilot
+entegrasyon henüz yapılmadı — 7. iş paketi. Flutter iOS'ta aynı kod çalışır,
+ama yerel bir iOS uygulamasına eklenmesi denenmedi.
+
+---
+
 ## Depo yapısı
 
 | Dizin | İçerik |

@@ -76,3 +76,8 @@ __pycache__/
 # Geçici hata ayıklama betikleri — alt çizgiyle başlayanlar tek seferliktir,
 # depoya girmez (ölçüm okuyucuları, jüri prova betikleri vb.)
 packages/*/bin/_*.dart
+
+# Motorun JavaScript derlemesi — `dart compile js` her seferinde yeniden üretir
+# (README · Bir platforma nasıl eklenir).
+packages/civility_core/example/web/uslup.js
+packages/civility_core/example/web/uslup.js.*
